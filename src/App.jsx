@@ -1,0 +1,86 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+
+// Pages
+import Login             from './pages/dashboard/Login';
+import DashboardLayout   from './pages/dashboard/DashboardLayout';
+import DashboardHome     from './pages/dashboard/DashboardHome';
+import StartupEvaluation from './pages/dashboard/StartupEvaluation';
+import StartupDiscovery  from './pages/dashboard/StartupDiscovery';
+import StartupProfile    from './pages/dashboard/StartupProfile';
+import RegisterStartup   from './pages/dashboard/RegisterStartup';
+import Evaluations       from './pages/dashboard/Evaluations';
+import Cohorts           from './pages/dashboard/Cohorts';
+import Mentors           from './pages/dashboard/Mentors';
+import IPRDatabase       from './pages/dashboard/IPRDatabase';
+import Infrastructure    from './pages/dashboard/Infrastructure';
+import Knowledge         from './pages/dashboard/Knowledge';
+import StartupCrawling   from './pages/dashboard/StartupCrawling';
+import ProjectManagement from './pages/dashboard/ProjectManagement';
+import Messaging         from './pages/dashboard/Messaging';
+import StartupPipeline   from './pages/dashboard/StartupPipeline';
+import DocumentRepository   from './pages/dashboard/DocumentRepository';
+import StartupWatchlist     from './pages/dashboard/StartupWatchlist';
+import DeepTechQualification from './pages/dashboard/DeepTechQualification';
+import EventsRepository     from './pages/dashboard/EventsRepository';
+import SMEManagement        from './pages/dashboard/SMEManagement';
+import StartupFeedback      from './pages/dashboard/StartupFeedback';
+import GovtAPIIntegrations  from './pages/dashboard/GovtAPIIntegrations';
+
+// ── Guard: redirect to login if not authenticated ─────────────
+function ProtectedRoute({ children }) {
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/dashboard/login" replace />;
+}
+
+// ── App ───────────────────────────────────────────────────────
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Root → dashboard */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+          {/* Auth */}
+          <Route path="/dashboard/login" element={<Login />} />
+
+          {/* Protected dashboard shell */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index                      element={<DashboardHome />} />
+            <Route path="evaluate"            element={<StartupEvaluation />} />
+            <Route path="startups"            element={<StartupDiscovery />} />
+            <Route path="startup-profile"     element={<StartupProfile />} />
+            <Route path="startup-profile/:id" element={<StartupProfile />} />
+            <Route path="register"            element={<RegisterStartup />} />
+            <Route path="evaluations"         element={<Evaluations />} />
+            <Route path="cohorts"             element={<Cohorts />} />
+            <Route path="mentors"             element={<Mentors />} />
+            <Route path="ipr"                 element={<IPRDatabase />} />
+            <Route path="infrastructure"      element={<Infrastructure />} />
+            <Route path="knowledge"           element={<Knowledge />} />
+            <Route path="crawling"            element={<StartupCrawling />} />
+            <Route path="projects"            element={<ProjectManagement />} />
+            <Route path="messaging"           element={<Messaging />} />
+            <Route path="pipeline"            element={<StartupPipeline />} />
+            <Route path="documents"           element={<DocumentRepository />} />
+            <Route path="watchlist"           element={<StartupWatchlist />} />
+            <Route path="deeptech"            element={<DeepTechQualification />} />
+            <Route path="events"              element={<EventsRepository />} />
+            <Route path="sme"                 element={<SMEManagement />} />
+            <Route path="feedback"            element={<StartupFeedback />} />
+            <Route path="govt-apis"           element={<GovtAPIIntegrations />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}

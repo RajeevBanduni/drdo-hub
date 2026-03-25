@@ -1,0 +1,318 @@
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import {
+  Rocket, ClipboardCheck, DollarSign, Zap,
+  ArrowRight, Star, TrendingUp, Activity,
+  Users, BarChart2, CheckCircle, Clock,
+} from "lucide-react";
+
+// OpenI light-theme tokens
+const G = "#D5AA5B";   // gold
+const GH = "#C9983F";  // gold hover
+
+const STATS = [
+  { value: "1,284", label: "Startups Registered", Icon: Rocket,     bg: "#fff8ec", fg: "#D5AA5B", border: "rgba(213,170,91,0.2)" },
+  { value: "47",    label: "Active Projects",      Icon: Zap,        bg: "#f0fdf4", fg: "#16a34a", border: "rgba(22,163,74,0.2)" },
+  { value: "₹284 Cr", label: "Grants Disbursed",  Icon: DollarSign, bg: "#fef3c7", fg: "#d97706", border: "rgba(217,119,6,0.2)" },
+  { value: "312",   label: "DeepTech Startups",    Icon: BarChart2,  bg: "#f5f3ff", fg: "#7c3aed", border: "rgba(124,58,237,0.2)" },
+];
+
+const VECTORS = [
+  "People", "Strategic Direction", "Revenue Management", "Technology",
+  "Financials", "Info Visibility", "GRC", "Step Change",
+];
+
+const RECENT = [
+  { name: "ArmorTech AI",         sector: "AI / ML",      score: 4.2, status: "Completed" },
+  { name: "DroneShield Systems",  sector: "UAV",           score: 3.8, status: "In Review" },
+  { name: "QuantumDefense",       sector: "Quantum Tech",  score: 4.6, status: "Completed" },
+  { name: "CyberSentinel",        sector: "Cybersecurity", score: null,status: "Pending"   },
+  { name: "BioScan Technologies", sector: "BioTech",       score: 3.5, status: "In Review" },
+];
+
+const STATUS_STYLE = {
+  Completed:   { bg: "#f0fdf4", color: "#16a34a", border: "#bbf7d0" },
+  "In Review": { bg: "#fff8ec", color: "#D5AA5B", border: "rgba(213,170,91,0.4)" },
+  Pending:     { bg: "#f8fafc", color: "#64748b", border: "#e2e8f0" },
+};
+
+const PROGRESS = [
+  { label: "Recommended", pct: 58, color: "#16a34a" },
+  { label: "Under Review", pct: 30, color: "#D5AA5B" },
+  { label: "Needs Work",   pct: 11, color: "#ef4444" },
+];
+
+const card = {
+  background: "#ffffff",
+  border: "1px solid #eeeeee",
+  borderRadius: 14,
+  boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+};
+
+export default function DashboardHome() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const firstName = user?.name?.split(" ")[0] || null;
+
+  return (
+    <div style={{ padding: "28px", maxWidth: 1200, minHeight: "100%", background: "#f5f5f5" }}>
+
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28, flexWrap:"wrap", gap:12 }}>
+        <div>
+          <h1 style={{ margin:0, color:"#1a1a1a", fontSize:22, fontWeight:700 }}>
+            Welcome back{firstName ? `, ${firstName}` : ""} 👋
+          </h1>
+          <p style={{ margin:"4px 0 0", color:"#888888", fontSize:13 }}>
+            DRDO Innovation Hub · OpenI Assessment Platform
+          </p>
+        </div>
+        <button
+          onClick={() => navigate("/dashboard/evaluate")}
+          style={{
+            display:"flex", alignItems:"center", gap:8,
+            padding:"9px 18px",
+            background: G, color:"#fff",
+            border:"none", borderRadius:10, cursor:"pointer",
+            fontSize:13, fontWeight:700,
+            boxShadow:"0 2px 12px rgba(213,170,91,0.35)",
+            transition:"all 0.2s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = GH}
+          onMouseLeave={e => e.currentTarget.style.background = G}
+        >
+          <Zap size={15} /> New Evaluation
+        </button>
+      </div>
+
+      {/* ── Stats ──────────────────────────────────────────────── */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:14, marginBottom:24 }}>
+        {STATS.map(({ value, label, Icon, bg, fg, border }) => (
+          <div key={label} style={{ ...card, padding:20 }}>
+            <div style={{
+              width:40, height:40, borderRadius:10,
+              background: bg, border:`1px solid ${border}`,
+              display:"flex", alignItems:"center", justifyContent:"center", marginBottom:12,
+            }}>
+              <Icon size={18} color={fg} />
+            </div>
+            <div style={{ fontSize:24, fontWeight:700, color:"#1a1a1a", marginBottom:2 }}>{value}</div>
+            <div style={{ fontSize:12, color:"#888" }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 300px", gap:20, marginBottom:24 }}
+        className="grid-cols-1 lg:grid-cols-[1fr_300px]">
+
+        {/* ── 8-Vector Feature Card ──────────────────────────── */}
+        <div style={{
+          ...card,
+          border:"1px solid rgba(213,170,91,0.3)",
+          background:"linear-gradient(135deg, #fffdf7 0%, #fff8ec 100%)",
+          overflow:"hidden",
+        }}>
+          <div style={{ padding:24 }}>
+            <div style={{ display:"flex", alignItems:"flex-start", gap:14, marginBottom:20, flexWrap:"wrap" }}>
+              <div style={{
+                width:48, height:48, borderRadius:12,
+                background:"rgba(213,170,91,0.15)",
+                border:"1px solid rgba(213,170,91,0.25)",
+                display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0,
+              }}>
+                <ClipboardCheck size={22} color={G} />
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6, flexWrap:"wrap" }}>
+                  <h2 style={{ margin:0, color:"#1a1a1a", fontSize:17, fontWeight:700 }}>
+                    8-Vector Startup Evaluation
+                  </h2>
+                  <span style={{
+                    fontSize:10, fontWeight:700,
+                    padding:"2px 8px", background: G,
+                    color:"#fff", borderRadius:20,
+                  }}>NEW</span>
+                </div>
+                <p style={{ margin:0, color:"#666", fontSize:13, lineHeight:1.5, maxWidth:500 }}>
+                  OpenI due diligence across 8 vectors and 100+ criteria.
+                  Score, track, and generate evaluation reports for any startup.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate("/dashboard/evaluate")}
+                style={{
+                  display:"flex", alignItems:"center", gap:7,
+                  padding:"9px 16px", background: G,
+                  color:"#fff", border:"none", borderRadius:9,
+                  cursor:"pointer", fontSize:13, fontWeight:700,
+                  whiteSpace:"nowrap", flexShrink:0,
+                  boxShadow:"0 2px 8px rgba(213,170,91,0.3)",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = GH}
+                onMouseLeave={e => e.currentTarget.style.background = G}
+              >
+                Start Evaluation <ArrowRight size={14} />
+              </button>
+            </div>
+
+            {/* Vector chips */}
+            <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+              {VECTORS.map((v, i) => (
+                <span key={v} style={{
+                  display:"flex", alignItems:"center", gap:6,
+                  padding:"5px 11px",
+                  background:"#fff",
+                  border:"1px solid #e8e3d8",
+                  borderRadius:20, fontSize:12, color:"#555",
+                }}>
+                  <span style={{
+                    width:17, height:17, borderRadius:"50%",
+                    background:"rgba(213,170,91,0.15)",
+                    color: G, fontSize:10, fontWeight:700,
+                    display:"inline-flex", alignItems:"center", justifyContent:"center",
+                  }}>{i+1}</span>
+                  {v}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Mini stats row */}
+          <div style={{
+            borderTop:"1px solid rgba(213,170,91,0.2)",
+            display:"grid", gridTemplateColumns:"repeat(4, 1fr)",
+            background:"rgba(255,255,255,0.7)",
+          }}>
+            {[
+              { v:"38",  l:"Evaluations Done", Icon: ClipboardCheck, c: G },
+              { v:"3.9", l:"Avg Score / 5",    Icon: Star,           c: G },
+              { v:"12",  l:"Pending Review",   Icon: Activity,       c:"#ef4444" },
+              { v:"94%", l:"Completion Rate",  Icon: TrendingUp,     c:"#16a34a" },
+            ].map(({ v, l, Icon, c }) => (
+              <div key={l} style={{
+                display:"flex", alignItems:"center", gap:10,
+                padding:"14px 16px",
+                borderRight:"1px solid rgba(213,170,91,0.15)",
+              }}>
+                <Icon size={15} color={c} />
+                <div>
+                  <div style={{ color:"#1a1a1a", fontSize:15, fontWeight:700 }}>{v}</div>
+                  <div style={{ color:"#888", fontSize:11 }}>{l}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Progress Card ──────────────────────────────────── */}
+        <div style={{ ...card, padding:22 }}>
+          <h3 style={{ margin:"0 0 18px", color:"#1a1a1a", fontSize:14, fontWeight:600 }}>
+            Evaluation Status
+          </h3>
+          {PROGRESS.map(({ label, pct, color }) => (
+            <div key={label} style={{ marginBottom:14 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
+                <span style={{ fontSize:12, color:"#555" }}>{label}</span>
+                <span style={{ fontSize:12, color:"#888" }}>{pct}%</span>
+              </div>
+              <div style={{ height:7, background:"#f0f0f0", borderRadius:4, overflow:"hidden" }}>
+                <div style={{
+                  width:`${pct}%`, height:"100%",
+                  background:color, borderRadius:4,
+                  transition:"width 0.6s ease",
+                }} />
+              </div>
+            </div>
+          ))}
+
+          <div style={{ borderTop:"1px solid #eeeeee", marginTop:20, paddingTop:18 }}>
+            <h3 style={{ margin:"0 0 14px", color:"#1a1a1a", fontSize:14, fontWeight:600 }}>
+              Score Distribution
+            </h3>
+            {[
+              { range:"80–100", label:"Excellent", pct:24 },
+              { range:"60–79",  label:"Good",      pct:41 },
+              { range:"40–59",  label:"Average",   pct:27 },
+              { range:"0–39",   label:"Poor",      pct:8  },
+            ].map((b) => (
+              <div key={b.range} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+                <span style={{ fontSize:11, color:"#888", width:44 }}>{b.range}</span>
+                <div style={{ flex:1, height:5, background:"#f0f0f0", borderRadius:3, overflow:"hidden" }}>
+                  <div style={{ width:`${b.pct}%`, height:"100%", background: G, borderRadius:3 }} />
+                </div>
+                <span style={{ fontSize:11, color:"#888", width:26, textAlign:"right" }}>{b.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Recent Evaluations ─────────────────────────────────── */}
+      <div style={{ ...card, overflow:"hidden" }}>
+        <div style={{
+          padding:"16px 24px",
+          borderBottom:"1px solid #eeeeee",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+        }}>
+          <h3 style={{ margin:0, color:"#1a1a1a", fontSize:14, fontWeight:600 }}>Recent Evaluations</h3>
+          <button
+            onClick={() => navigate("/dashboard/evaluate")}
+            style={{
+              display:"flex", alignItems:"center", gap:4,
+              fontSize:12, color: G,
+              background:"transparent", border:"none",
+              cursor:"pointer", fontWeight:600,
+            }}
+          >
+            New evaluation <ArrowRight size={12} />
+          </button>
+        </div>
+        {RECENT.map((ev) => {
+          const s = STATUS_STYLE[ev.status];
+          return (
+            <div
+              key={ev.name}
+              onClick={() => navigate("/dashboard/evaluate")}
+              style={{
+                padding:"13px 24px",
+                display:"flex", alignItems:"center", gap:14,
+                borderBottom:"1px solid #f5f5f5",
+                cursor:"pointer", transition:"background 0.15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background="#fafafa"}
+              onMouseLeave={e => e.currentTarget.style.background="transparent"}
+            >
+              <div style={{
+                width:36, height:36, borderRadius:9,
+                background:"rgba(213,170,91,0.12)",
+                color: G, fontWeight:700, fontSize:14,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                flexShrink:0, border:"1px solid rgba(213,170,91,0.2)",
+              }}>
+                {ev.name[0]}
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ color:"#1a1a1a", fontSize:13, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{ev.name}</div>
+                <div style={{ color:"#888", fontSize:11 }}>{ev.sector}</div>
+              </div>
+              <span style={{
+                padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:600,
+                background: s.bg, color: s.color, border:`1px solid ${s.border}`,
+                whiteSpace:"nowrap",
+              }}>
+                {ev.status}
+              </span>
+              {ev.score != null ? (
+                <div style={{ display:"flex", alignItems:"center", gap:4, color: G, fontSize:13, fontWeight:700, width:36, justifyContent:"flex-end", flexShrink:0 }}>
+                  <Star size={11} style={{ fill: G, color: G }} />
+                  {ev.score}
+                </div>
+              ) : <div style={{ width:36 }} />}
+            </div>
+          );
+        })}
+      </div>
+
+    </div>
+  );
+}
