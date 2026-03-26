@@ -49,31 +49,25 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#111E21' }}>
-      {/* Background glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(213,170,91,0.08)' }} />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(110,193,228,0.05)' }} />
-      </div>
-
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#f5f5f5' }}>
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg" style={{ backgroundColor: '#D5AA5B', boxShadow: '0 8px 24px rgba(213,170,91,0.3)' }}>
-            <Shield size={26} style={{ color: '#111E21' }} />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-md" style={{ backgroundColor: '#D5AA5B' }}>
+            <Shield size={26} style={{ color: '#ffffff' }} />
           </div>
-          <h1 className="text-2xl font-display font-bold text-white">DRDO Innovation Hub</h1>
-          <p className="text-sm mt-1" style={{ color: '#6EC1E4' }}>Secure portal for startup ecosystem</p>
+          <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a', fontFamily: 'Plus Jakarta Sans, Inter, sans-serif' }}>DRDO Innovation Hub</h1>
+          <p className="text-sm mt-1" style={{ color: '#6b7280' }}>Secure portal for startup ecosystem</p>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl p-8 shadow-2xl" style={{ backgroundColor: '#1a2b2f', border: '1px solid rgba(110,193,228,0.15)' }}>
+        <div className="rounded-2xl p-8 shadow-sm" style={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb' }}>
           {!mfaStep ? (
             <>
-              <h2 className="text-white font-semibold text-lg mb-6">Sign in to your account</h2>
+              <h2 className="font-semibold text-lg mb-6" style={{ color: '#1a1a1a' }}>Sign in to your account</h2>
 
               {error && (
-                <div className="flex items-center gap-2 text-red-400 text-sm rounded-xl px-4 py-3 mb-5" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <div className="flex items-center gap-2 text-sm rounded-xl px-4 py-3 mb-5" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
                   <AlertCircle size={15} className="shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -81,43 +75,43 @@ export default function Login() {
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#6EC1E4' }}>Email address</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>Email address</label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#D5AA5B' }} />
+                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9ca3af' }} />
                     <input
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="you@drdo.gov.in"
                       required
-                      className="w-full text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-all"
-                      style={{ backgroundColor: '#0f1e21', border: '1px solid rgba(110,193,228,0.2)', color: 'white' }}
-                      onFocus={e => e.target.style.borderColor = 'rgba(213,170,91,0.6)'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(110,193,228,0.2)'}
+                      className="login-input w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-all"
+                      style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', color: '#1a1a1a' }}
+                      onFocus={e => { e.target.style.borderColor = '#D5AA5B'; e.target.style.backgroundColor = '#ffffff'; }}
+                      onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.backgroundColor = '#f9fafb'; }}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#6EC1E4' }}>Password</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>Password</label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#D5AA5B' }} />
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#9ca3af' }} />
                     <input
                       type={showPwd ? 'text' : 'password'}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="w-full rounded-xl pl-10 pr-11 py-3 text-sm focus:outline-none transition-all"
-                      style={{ backgroundColor: '#0f1e21', border: '1px solid rgba(110,193,228,0.2)', color: 'white' }}
-                      onFocus={e => e.target.style.borderColor = 'rgba(213,170,91,0.6)'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(110,193,228,0.2)'}
+                      className="login-input w-full rounded-xl pl-10 pr-11 py-3 text-sm focus:outline-none transition-all"
+                      style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', color: '#1a1a1a' }}
+                      onFocus={e => { e.target.style.borderColor = '#D5AA5B'; e.target.style.backgroundColor = '#ffffff'; }}
+                      onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.backgroundColor = '#f9fafb'; }}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPwd(!showPwd)}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
-                      style={{ color: '#6EC1E4' }}
+                      style={{ color: '#9ca3af' }}
                     >
                       {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -128,8 +122,8 @@ export default function Login() {
                   type="submit"
                   disabled={loading}
                   className="w-full font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm mt-2"
-                  style={{ backgroundColor: '#D5AA5B', color: '#111E21' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#CFA745'}
+                  style={{ backgroundColor: '#D5AA5B', color: '#ffffff' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#c49a4a'}
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D5AA5B'}
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : null}
@@ -138,20 +132,20 @@ export default function Login() {
               </form>
 
               {/* Demo accounts */}
-              <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(110,193,228,0.1)' }}>
-                <p className="text-xs text-center mb-3" style={{ color: 'rgba(110,193,228,0.5)' }}>Quick login (click to fill credentials)</p>
+              <div className="mt-6 pt-5" style={{ borderTop: '1px solid #f3f4f6' }}>
+                <p className="text-xs text-center mb-3" style={{ color: '#9ca3af' }}>Quick login (click to fill credentials)</p>
                 <div className="grid grid-cols-2 gap-2">
                   {DEMO_ACCOUNTS.map(({ email: e, password: p, role }) => (
                     <button
                       key={e}
                       onClick={() => { setEmail(e); setPassword(p); }}
-                      className="text-left px-3 py-2 rounded-lg transition-all group"
-                      style={{ backgroundColor: '#0f1e21', border: '1px solid rgba(110,193,228,0.15)' }}
-                      onMouseEnter={el => { el.currentTarget.style.borderColor = 'rgba(213,170,91,0.4)'; el.currentTarget.style.backgroundColor = '#152428'; }}
-                      onMouseLeave={el => { el.currentTarget.style.borderColor = 'rgba(110,193,228,0.15)'; el.currentTarget.style.backgroundColor = '#0f1e21'; }}
+                      className="text-left px-3 py-2 rounded-lg transition-all"
+                      style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
+                      onMouseEnter={el => { el.currentTarget.style.borderColor = '#D5AA5B'; el.currentTarget.style.backgroundColor = '#fffbf0'; }}
+                      onMouseLeave={el => { el.currentTarget.style.borderColor = '#e5e7eb'; el.currentTarget.style.backgroundColor = '#f9fafb'; }}
                     >
                       <div className="text-xs font-medium" style={{ color: '#D5AA5B' }}>{role}</div>
-                      <div className="text-[10px] truncate" style={{ color: 'rgba(110,193,228,0.5)' }}>{e}</div>
+                      <div className="text-[10px] truncate" style={{ color: '#9ca3af' }}>{e}</div>
                     </button>
                   ))}
                 </div>
@@ -159,11 +153,11 @@ export default function Login() {
             </>
           ) : (
             <>
-              <h2 className="text-white font-semibold text-lg mb-2">Two-Factor Authentication</h2>
-              <p className="text-sm mb-6" style={{ color: '#6EC1E4' }}>Enter the 6-digit OTP sent to your registered device.</p>
+              <h2 className="font-semibold text-lg mb-2" style={{ color: '#1a1a1a' }}>Two-Factor Authentication</h2>
+              <p className="text-sm mb-6" style={{ color: '#6b7280' }}>Enter the 6-digit OTP sent to your registered device.</p>
 
               {error && (
-                <div className="flex items-center gap-2 text-red-400 text-sm rounded-xl px-4 py-3 mb-5" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <div className="flex items-center gap-2 text-sm rounded-xl px-4 py-3 mb-5" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
                   <AlertCircle size={15} className="shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -171,7 +165,7 @@ export default function Login() {
 
               <form onSubmit={handleMFA} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#6EC1E4' }}>OTP Code</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>OTP Code</label>
                   <input
                     type="text"
                     value={otp}
@@ -179,20 +173,20 @@ export default function Login() {
                     placeholder="123456"
                     maxLength={6}
                     required
-                    className="w-full rounded-xl px-4 py-3 text-sm text-center tracking-widest text-lg focus:outline-none transition-all"
-                    style={{ backgroundColor: '#0f1e21', border: '1px solid rgba(110,193,228,0.2)', color: 'white' }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(213,170,91,0.6)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(110,193,228,0.2)'}
+                    className="login-input w-full rounded-xl px-4 py-3 text-sm text-center tracking-widest text-lg focus:outline-none transition-all"
+                    style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', color: '#1a1a1a' }}
+                    onFocus={e => { e.target.style.borderColor = '#D5AA5B'; e.target.style.backgroundColor = '#ffffff'; }}
+                    onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.backgroundColor = '#f9fafb'; }}
                   />
-                  <p className="text-xs mt-2 text-center" style={{ color: 'rgba(110,193,228,0.5)' }}>Demo OTP: 123456</p>
+                  <p className="text-xs mt-2 text-center" style={{ color: '#9ca3af' }}>Demo OTP: 123456</p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading || otp.length < 6}
                   className="w-full font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm"
-                  style={{ backgroundColor: '#D5AA5B', color: '#111E21' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#CFA745'}
+                  style={{ backgroundColor: '#D5AA5B', color: '#ffffff' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#c49a4a'}
                   onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D5AA5B'}
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : null}
@@ -203,7 +197,7 @@ export default function Login() {
           )}
         </div>
 
-        <p className="text-center text-xs mt-6" style={{ color: 'rgba(110,193,228,0.3)' }}>
+        <p className="text-center text-xs mt-6" style={{ color: '#9ca3af' }}>
           © 2024 DRDO Innovation Hub. All rights reserved.
         </p>
       </div>

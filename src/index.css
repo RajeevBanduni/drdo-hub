@@ -13,3 +13,14 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* Override browser autofill background on login inputs */
+.login-input:-webkit-autofill,
+.login-input:-webkit-autofill:hover,
+.login-input:-webkit-autofill:focus,
+.login-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 9999px #0f1e21 inset !important;
+  box-shadow: 0 0 0 9999px #0f1e21 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+}
