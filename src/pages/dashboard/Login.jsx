@@ -49,31 +49,31 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#111E21' }}>
       {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(213,170,91,0.08)' }} />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(110,193,228,0.05)' }} />
       </div>
 
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-primary-500 rounded-2xl mb-4 shadow-lg shadow-primary-500/30">
-            <Shield size={26} className="text-dark-950" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-lg" style={{ backgroundColor: '#D5AA5B', boxShadow: '0 8px 24px rgba(213,170,91,0.3)' }}>
+            <Shield size={26} style={{ color: '#111E21' }} />
           </div>
           <h1 className="text-2xl font-display font-bold text-white">DRDO Innovation Hub</h1>
-          <p className="text-dark-400 text-sm mt-1">Secure portal for startup ecosystem</p>
+          <p className="text-sm mt-1" style={{ color: '#6EC1E4' }}>Secure portal for startup ecosystem</p>
         </div>
 
         {/* Card */}
-        <div className="bg-dark-900 border border-dark-800 rounded-2xl p-8 shadow-2xl">
+        <div className="rounded-2xl p-8 shadow-2xl" style={{ backgroundColor: '#1a2b2f', border: '1px solid rgba(110,193,228,0.15)' }}>
           {!mfaStep ? (
             <>
               <h2 className="text-white font-semibold text-lg mb-6">Sign in to your account</h2>
 
               {error && (
-                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl px-4 py-3 mb-5">
+                <div className="flex items-center gap-2 text-red-400 text-sm rounded-xl px-4 py-3 mb-5" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
                   <AlertCircle size={15} className="shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -81,36 +81,43 @@ export default function Login() {
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-dark-300 text-sm font-medium mb-2">Email address</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#6EC1E4' }}>Email address</label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-500" />
+                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#D5AA5B' }} />
                     <input
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="you@drdo.gov.in"
                       required
-                      className="w-full bg-dark-800 border border-dark-700 text-white placeholder-dark-500 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-primary-500/60 focus:ring-1 focus:ring-primary-500/30 transition-all"
+                      className="w-full text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-all"
+                      style={{ backgroundColor: '#0f1e21', border: '1px solid rgba(110,193,228,0.2)', color: 'white' }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(213,170,91,0.6)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(110,193,228,0.2)'}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-dark-300 text-sm font-medium mb-2">Password</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#6EC1E4' }}>Password</label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-dark-500" />
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#D5AA5B' }} />
                     <input
                       type={showPwd ? 'text' : 'password'}
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="w-full bg-dark-800 border border-dark-700 text-white placeholder-dark-500 rounded-xl pl-10 pr-11 py-3 text-sm focus:outline-none focus:border-primary-500/60 focus:ring-1 focus:ring-primary-500/30 transition-all"
+                      className="w-full rounded-xl pl-10 pr-11 py-3 text-sm focus:outline-none transition-all"
+                      style={{ backgroundColor: '#0f1e21', border: '1px solid rgba(110,193,228,0.2)', color: 'white' }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(213,170,91,0.6)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(110,193,228,0.2)'}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPwd(!showPwd)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-dark-500 hover:text-dark-300 transition-colors"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
+                      style={{ color: '#6EC1E4' }}
                     >
                       {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -120,7 +127,10 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-primary-500 hover:bg-primary-600 disabled:opacity-60 text-dark-950 font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm mt-2"
+                  className="w-full font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm mt-2"
+                  style={{ backgroundColor: '#D5AA5B', color: '#111E21' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#CFA745'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D5AA5B'}
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : null}
                   {loading ? 'Signing in…' : 'Sign In'}
@@ -128,17 +138,20 @@ export default function Login() {
               </form>
 
               {/* Demo accounts */}
-              <div className="mt-6 pt-5 border-t border-dark-800">
-                <p className="text-dark-500 text-xs text-center mb-3">Quick login (click to fill credentials)</p>
+              <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(110,193,228,0.1)' }}>
+                <p className="text-xs text-center mb-3" style={{ color: 'rgba(110,193,228,0.5)' }}>Quick login (click to fill credentials)</p>
                 <div className="grid grid-cols-2 gap-2">
                   {DEMO_ACCOUNTS.map(({ email: e, password: p, role }) => (
                     <button
                       key={e}
                       onClick={() => { setEmail(e); setPassword(p); }}
-                      className="text-left px-3 py-2 rounded-lg bg-dark-800 hover:bg-dark-700 border border-dark-700 hover:border-primary-500/30 transition-all group"
+                      className="text-left px-3 py-2 rounded-lg transition-all group"
+                      style={{ backgroundColor: '#0f1e21', border: '1px solid rgba(110,193,228,0.15)' }}
+                      onMouseEnter={el => { el.currentTarget.style.borderColor = 'rgba(213,170,91,0.4)'; el.currentTarget.style.backgroundColor = '#152428'; }}
+                      onMouseLeave={el => { el.currentTarget.style.borderColor = 'rgba(110,193,228,0.15)'; el.currentTarget.style.backgroundColor = '#0f1e21'; }}
                     >
-                      <div className="text-primary-400 text-xs font-medium group-hover:text-primary-300">{role}</div>
-                      <div className="text-dark-500 text-[10px] truncate">{e}</div>
+                      <div className="text-xs font-medium" style={{ color: '#D5AA5B' }}>{role}</div>
+                      <div className="text-[10px] truncate" style={{ color: 'rgba(110,193,228,0.5)' }}>{e}</div>
                     </button>
                   ))}
                 </div>
@@ -147,10 +160,10 @@ export default function Login() {
           ) : (
             <>
               <h2 className="text-white font-semibold text-lg mb-2">Two-Factor Authentication</h2>
-              <p className="text-dark-400 text-sm mb-6">Enter the 6-digit OTP sent to your registered device.</p>
+              <p className="text-sm mb-6" style={{ color: '#6EC1E4' }}>Enter the 6-digit OTP sent to your registered device.</p>
 
               {error && (
-                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl px-4 py-3 mb-5">
+                <div className="flex items-center gap-2 text-red-400 text-sm rounded-xl px-4 py-3 mb-5" style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
                   <AlertCircle size={15} className="shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -158,7 +171,7 @@ export default function Login() {
 
               <form onSubmit={handleMFA} className="space-y-4">
                 <div>
-                  <label className="block text-dark-300 text-sm font-medium mb-2">OTP Code</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#6EC1E4' }}>OTP Code</label>
                   <input
                     type="text"
                     value={otp}
@@ -166,15 +179,21 @@ export default function Login() {
                     placeholder="123456"
                     maxLength={6}
                     required
-                    className="w-full bg-dark-800 border border-dark-700 text-white placeholder-dark-500 rounded-xl px-4 py-3 text-sm text-center tracking-widest text-lg focus:outline-none focus:border-primary-500/60 focus:ring-1 focus:ring-primary-500/30 transition-all"
+                    className="w-full rounded-xl px-4 py-3 text-sm text-center tracking-widest text-lg focus:outline-none transition-all"
+                    style={{ backgroundColor: '#0f1e21', border: '1px solid rgba(110,193,228,0.2)', color: 'white' }}
+                    onFocus={e => e.target.style.borderColor = 'rgba(213,170,91,0.6)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(110,193,228,0.2)'}
                   />
-                  <p className="text-dark-500 text-xs mt-2 text-center">Demo OTP: 123456</p>
+                  <p className="text-xs mt-2 text-center" style={{ color: 'rgba(110,193,228,0.5)' }}>Demo OTP: 123456</p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading || otp.length < 6}
-                  className="w-full bg-primary-500 hover:bg-primary-600 disabled:opacity-60 text-dark-950 font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm"
+                  className="w-full font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-all text-sm"
+                  style={{ backgroundColor: '#D5AA5B', color: '#111E21' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = '#CFA745'}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = '#D5AA5B'}
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : null}
                   {loading ? 'Verifying…' : 'Verify & Continue'}
@@ -184,7 +203,7 @@ export default function Login() {
           )}
         </div>
 
-        <p className="text-center text-dark-600 text-xs mt-6">
+        <p className="text-center text-xs mt-6" style={{ color: 'rgba(110,193,228,0.3)' }}>
           © 2024 DRDO Innovation Hub. All rights reserved.
         </p>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { startupAPI } from '../../services/api';
+import { STARTUPS } from '../../data/mockData';
 import {
   Star, MapPin, Users, TrendingUp, Award, Shield, FileText, ChevronRight,
   ExternalLink, Bookmark, BookmarkCheck, Share2, Globe, Cpu, Target,
@@ -43,7 +44,14 @@ export default function StartupProfile() {
         setStartup(s);
         setWatchlisted(s.watchlisted || false);
       })
-      .catch(() => {})
+      .catch(() => {
+        // Fall back to mock data while backend routes are being built
+        const fallback = STARTUPS.find(s => s.id === id) || STARTUPS.find(s => String(s.id) === String(id)) || STARTUPS[0];
+        if (fallback) {
+          setStartup(fallback);
+          setWatchlisted(fallback.watchlisted || false);
+        }
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
