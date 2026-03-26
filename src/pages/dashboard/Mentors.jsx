@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MENTORS, STARTUPS } from '../../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { mentorAPI } from '../../services/api';
 import { UserCheck, Star, Calendar, Users, MessageSquare, Plus, Search, Filter, CheckCircle2, BookOpen, Award } from 'lucide-react';
 
 const BG_COLORS = ['bg-dark-700', 'bg-primary-600', 'bg-accent-700', 'bg-blue-700'];
@@ -8,7 +8,7 @@ const BACKGROUND_COLORS = { academia: 'bg-blue-100 text-blue-700', retired_defen
 
 function MentorDetail({ mentor, onClose }) {
   const [sessionOpen, setSessionOpen] = useState(false);
-  const assignedStartups = STARTUPS.filter(s => mentor.assignedStartups.includes(s.id));
+  const assignedStartups = mentor.assigned_startups || mentor.assignedStartups || [];
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -63,12 +63,17 @@ function MentorDetail({ mentor, onClose }) {
                 <button className="text-xs text-primary-600 font-semibold">Assign More →</button>
               </div>
               <div className="space-y-3">
+                {assignedStartups.length === 0 && (
+                  <p className="text-sm text-gray-400">No startups assigned yet.</p>
+                )}
                 {assignedStartups.map(startup => (
-                  <div key={startup.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-dark-950 font-bold text-sm">{startup.logo}</div>
+                  <div key={startup.id || startup} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                    <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-dark-950 font-bold text-sm">
+                      {(startup.name || startup.toString())[0]}
+                    </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-800 text-sm">{startup.name}</div>
-                      <div className="text-xs text-gray-500">{startup.sector}</div>
+                      <div className="font-semibold text-gray-800 text-sm">{startup.name || startup}</div>
+                      <div className="text-xs text-gray-500">{startup.sector || ''}</div>
                     </div>
                     <button className="flex items-center gap-1 px-2.5 py-1 bg-primary-100 text-primary-700 rounded-lg text-xs font-semibold">
                       <MessageSquare size={11} /> Message
@@ -141,17 +146,39 @@ function MentorDetail({ mentor, onClose }) {
 }
 
 export default function Mentors() {
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
+  useEffect(() => {
+    mentorAPI.list()
+      .then(data => setMentors(data.mentors || data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   if (selected) return <MentorDetail mentor={selected} onClose={() => setSelected(null)} />;
 
-  const filtered = MENTORS.filter(m => {
-    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase()) || m.expertise.some(e => e.toLowerCase().includes(search.toLowerCase()));
+  const filtered = mentors.filter(m => {
+    const name = m.name || '';
+    const expertise = m.expertise || [];
+    const matchSearch = name.toLowerCase().includes(search.toLowerCase()) || expertise.some(e => e.toLowerCase().includes(search.toLowerCase()));
     const matchFilter = filter === 'all' || m.background === filter;
     return matchSearch && matchFilter;
   });
+
+  const totalSessions = mentors.reduce((s, m) => s + (m.sessions || 0), 0);
+  const avgRating = mentors.length
+    ? (mentors.reduce((s, m) => s + (m.rating || 0), 0) / mentors.length).toFixed(1)
+    : '—';
+
+  if (loading) return (
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="text-center py-16 text-gray-400">Loading mentors…</div>
+    </div>
+  );
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -167,10 +194,10 @@ export default function Mentors() {
 
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total Mentors', value: MENTORS.length, color: 'text-gray-800' },
-          { label: 'Available', value: MENTORS.filter(m => m.available).length, color: 'text-accent-600' },
-          { label: 'Total Sessions', value: MENTORS.reduce((s, m) => s + m.sessions, 0), color: 'text-primary-600' },
-          { label: 'Avg Rating', value: (MENTORS.reduce((s, m) => s + m.rating, 0) / MENTORS.length).toFixed(1) + ' ⭐', color: 'text-yellow-600' },
+          { label: 'Total Mentors',  value: mentors.length,                              color: 'text-gray-800' },
+          { label: 'Available',      value: mentors.filter(m => m.available).length,     color: 'text-accent-600' },
+          { label: 'Total Sessions', value: totalSessions,                               color: 'text-primary-600' },
+          { label: 'Avg Rating',     value: avgRating + ' ⭐',                           color: 'text-yellow-600' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <div className={`text-2xl font-display font-bold ${s.color}`}>{s.value}</div>
@@ -220,7 +247,7 @@ export default function Mentors() {
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-              <span>{mentor.sessions} sessions · {mentor.assignedStartups.length} startups</span>
+              <span>{mentor.sessions || 0} sessions · {(mentor.assigned_startups || mentor.assignedStartups || []).length} startups</span>
               <span className={`font-semibold ${mentor.available ? 'text-accent-600' : 'text-gray-400'}`}>{mentor.available ? '● Available' : '● Busy'}</span>
             </div>
           </div>

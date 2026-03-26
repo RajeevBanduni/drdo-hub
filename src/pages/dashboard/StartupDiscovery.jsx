@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { STARTUPS } from '../../data/mockData';
+import { startupAPI } from '../../services/api';
 import { Search, Filter, Star, Cpu, MapPin, Users, DollarSign, Shield, Bookmark, BookmarkCheck, SlidersHorizontal, ChevronDown, BarChart3, Target, Award } from 'lucide-react';
 
 const SECTORS = ['All', 'Defence Electronics', 'Aerospace & Defence', 'Cybersecurity', 'Robotics & Autonomous Systems', 'Life Sciences & CBRN', 'Semiconductors'];
@@ -67,21 +67,34 @@ function StartupCard({ startup, onWatchlist, watchlisted, onClick }) {
 
 export default function StartupDiscovery() {
   const navigate = useNavigate();
+  const [startups, setStartups] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sector, setSector] = useState('All');
   const [stage, setStage] = useState('All');
   const [trl, setTrl] = useState('All');
   const [deeptech, setDeeptech] = useState(false);
-  const [watchlist, setWatchlist] = useState(STARTUPS.filter(s => s.watchlisted).map(s => s.id));
+  const [watchlist, setWatchlist] = useState([]);
   const [sortBy, setSortBy] = useState('score');
   const [showFilters, setShowFilters] = useState(false);
   const [view, setView] = useState('grid');
 
+  useEffect(() => {
+    startupAPI.list()
+      .then(data => {
+        const list = data.startups || data || [];
+        setStartups(list);
+        setWatchlist(list.filter(s => s.watchlisted).map(s => s.id));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const toggleWatchlist = (id) => setWatchlist(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
-  const filtered = STARTUPS
+  const filtered = startups
     .filter(s => {
-      if (search && !s.name.toLowerCase().includes(search.toLowerCase()) && !s.technology.toLowerCase().includes(search.toLowerCase()) && !s.sector.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !s.name.toLowerCase().includes(search.toLowerCase()) && !(s.technology||'').toLowerCase().includes(search.toLowerCase()) && !(s.sector||'').toLowerCase().includes(search.toLowerCase())) return false;
       if (sector !== 'All' && s.sector !== sector) return false;
       if (stage !== 'All' && s.stage !== stage) return false;
       if (deeptech && !s.deeptech) return false;
@@ -92,18 +105,24 @@ export default function StartupDiscovery() {
       return true;
     })
     .sort((a, b) => {
-      if (sortBy === 'score') return b.score - a.score;
-      if (sortBy === 'trl') return b.trl - a.trl;
-      if (sortBy === 'funding') return b.funding - a.funding;
+      if (sortBy === 'score') return (b.score||0) - (a.score||0);
+      if (sortBy === 'trl') return (b.trl||0) - (a.trl||0);
+      if (sortBy === 'funding') return (b.funding||0) - (a.funding||0);
       return a.name.localeCompare(b.name);
     });
+
+  if (loading) return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="text-center py-16 text-gray-400">Loading startups…</div>
+    </div>
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-gray-900">Startup Discovery</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{STARTUPS.length.toLocaleString()} startups · Filter by sector, technology, and DRDO relevance</p>
+          <p className="text-gray-500 text-sm mt-0.5">{startups.length.toLocaleString()} startups · Filter by sector, technology, and DRDO relevance</p>
         </div>
         <div className="flex gap-2">
           <button className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-2">

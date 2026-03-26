@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { STARTUPS } from '../../data/mockData';
+import { startupAPI } from '../../services/api';
 import {
   Star, MapPin, Users, TrendingUp, Award, Shield, FileText, ChevronRight,
   ExternalLink, Bookmark, BookmarkCheck, Share2, Globe, Cpu, Target,
@@ -27,17 +27,42 @@ function TRLBadge({ trl }) {
 export default function StartupProfile() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const startup = (id ? STARTUPS.find(s => s.id === id) : null) || STARTUPS[0];
+  const [startup, setStartup] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Overview');
-  const [watchlisted, setWatchlisted] = useState(startup.watchlisted);
+  const [watchlisted, setWatchlisted] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
+
+  useEffect(() => {
+    if (!id) { setLoading(false); return; }
+    startupAPI.get(id)
+      .then(data => {
+        const s = data.startup || data;
+        setStartup(s);
+        setWatchlisted(s.watchlisted || false);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const sendFeedback = () => {
     setFeedbackSent(true);
     setTimeout(() => { setFeedbackOpen(false); setFeedbackSent(false); setFeedbackText(''); }, 1500);
   };
+
+  if (loading) return (
+    <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+      <p className="text-gray-400">Loading startup profile…</p>
+    </div>
+  );
+
+  if (!startup) return (
+    <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+      <p className="text-gray-500">Startup not found.</p>
+    </div>
+  );
 
   return (
     <div className="bg-gray-50 min-h-screen">

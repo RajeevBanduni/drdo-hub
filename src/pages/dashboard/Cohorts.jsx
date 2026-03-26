@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { COHORTS, STARTUPS, MENTORS } from '../../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { cohortAPI } from '../../services/api';
 import { GraduationCap, Users, Calendar, Building2, Plus, ChevronRight, CheckCircle2, Clock, Award, Target, BarChart3 } from 'lucide-react';
 
 const STATUS_COLORS = {
@@ -9,8 +9,8 @@ const STATUS_COLORS = {
 };
 
 function CohortDetail({ cohort, onClose }) {
-  const members = STARTUPS.filter(s => cohort.members.includes(s.id));
-  const mentors = MENTORS.filter(m => cohort.mentors.includes(m.id));
+  const members = cohort.members || [];
+  const mentors = cohort.mentors || [];
   const [tab, setTab] = useState('members');
 
   return (
@@ -171,10 +171,25 @@ function CohortDetail({ cohort, onClose }) {
 }
 
 export default function Cohorts() {
+  const [cohorts, setCohorts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
 
+  useEffect(() => {
+    cohortAPI.list()
+      .then(data => setCohorts(data.cohorts || data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   if (selected) return <CohortDetail cohort={selected} onClose={() => setSelected(null)} />;
+
+  if (loading) return (
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="text-center py-16 text-gray-400">Loading cohorts…</div>
+    </div>
+  );
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -190,9 +205,9 @@ export default function Cohorts() {
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Active Cohorts', value: COHORTS.filter(c => c.status === 'Active').length, color: 'text-accent-600' },
-          { label: 'Total Startups', value: COHORTS.reduce((s, c) => s + c.members.length, 0), color: 'text-primary-600' },
-          { label: 'Graduated Startups', value: COHORTS.reduce((s, c) => s + c.graduated, 0), color: 'text-blue-600' },
+          { label: 'Active Cohorts',     value: cohorts.filter(c => c.status === 'Active').length,               color: 'text-accent-600' },
+          { label: 'Total Startups',     value: cohorts.reduce((s, c) => s + (c.members || []).length, 0),       color: 'text-primary-600' },
+          { label: 'Graduated Startups', value: cohorts.reduce((s, c) => s + (c.graduated || 0), 0),             color: 'text-blue-600' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <div className={`text-3xl font-display font-bold ${s.color}`}>{s.value}</div>
@@ -202,7 +217,10 @@ export default function Cohorts() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {COHORTS.map(cohort => (
+        {cohorts.map(cohort => {
+          const members = cohort.members || [];
+          const maxStartups = cohort.max_startups || cohort.maxStartups || 1;
+          return (
           <div key={cohort.id} onClick={() => setSelected(cohort)} className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-md transition-all cursor-pointer group">
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 bg-primary-500/20 rounded-xl flex items-center justify-center">
@@ -214,13 +232,13 @@ export default function Cohorts() {
             <div className="space-y-1.5 text-xs text-gray-500 mb-4">
               <div className="flex items-center gap-1.5"><Building2 size={12} /> {cohort.lab}</div>
               <div className="flex items-center gap-1.5"><GraduationCap size={12} /> {cohort.incubator}</div>
-              <div className="flex items-center gap-1.5"><Calendar size={12} /> {cohort.start} to {cohort.end}</div>
+              <div className="flex items-center gap-1.5"><Calendar size={12} /> {cohort.start_date || cohort.start} to {cohort.end_date || cohort.end}</div>
             </div>
             <div className="grid grid-cols-3 gap-2 mb-4">
               {[
-                { label: 'Enrolled', value: cohort.members.length },
-                { label: 'Capacity', value: cohort.maxStartups },
-                { label: 'Graduated', value: cohort.graduated },
+                { label: 'Enrolled',  value: members.length },
+                { label: 'Capacity',  value: maxStartups },
+                { label: 'Graduated', value: cohort.graduated || 0 },
               ].map(s => (
                 <div key={s.label} className="text-center bg-gray-50 rounded-lg py-2">
                   <div className="font-bold text-gray-800">{s.value}</div>
@@ -229,11 +247,12 @@ export default function Cohorts() {
               ))}
             </div>
             <div className="bg-gray-100 rounded-full h-1.5">
-              <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${(cohort.members.length / cohort.maxStartups) * 100}%` }} />
+              <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${Math.min((members.length / maxStartups) * 100, 100)}%` }} />
             </div>
-            <div className="text-xs text-gray-400 mt-1">{Math.round((cohort.members.length / cohort.maxStartups) * 100)}% capacity used</div>
+            <div className="text-xs text-gray-400 mt-1">{Math.round((members.length / maxStartups) * 100)}% capacity used</div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {showCreate && (

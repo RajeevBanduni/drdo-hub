@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { projectAPI } from '../../services/api';
 import {
   FolderKanban, Plus, ChevronRight, CheckCircle2, Clock, AlertTriangle,
   Users, Calendar, DollarSign, TrendingUp, BarChart3, Target,
@@ -136,21 +137,50 @@ const TASK_STATUS = {
 };
 
 export default function ProjectManagement() {
+  const [projects, setProjects]     = useState([]);
+  const [allTasks, setAllTasks]     = useState([]);
+  const [loading, setLoading]       = useState(true);
   const [view, setView]             = useState('projects'); // 'projects' | 'tasks' | 'detail'
   const [selected, setSelected]     = useState(null);
   const [taskFilter, setTaskFilter] = useState('All');
   const [search, setSearch]         = useState('');
 
-  const filteredTasks = TASKS_MOCK.filter(t => {
+  useEffect(() => {
+    projectAPI.list()
+      .then(data => {
+        const list = data.projects || data || [];
+        setProjects(list);
+        // Flatten tasks from all projects
+        const tasks = list.flatMap(p =>
+          (p.tasks || []).map(t => ({ ...t, project: p.name, startup: p.startup_name || p.startup }))
+        );
+        setAllTasks(tasks);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filteredTasks = allTasks.filter(t => {
     const matchFilter = taskFilter === 'All' || t.status === taskFilter;
-    const matchSearch = t.title.toLowerCase().includes(search.toLowerCase()) ||
-                        t.project.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (t.title || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (t.project || '').toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
   });
 
+  if (loading) return (
+    <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading projects…</div>
+    </div>
+  );
+
   if (view === 'detail' && selected) {
-    return <ProjectDetail project={selected} onBack={() => setView('projects')} />;
+    return <ProjectDetail project={selected} onBack={() => setView('projects')} tasks={allTasks} />;
   }
+
+  // Summary aggregates from real data
+  const activeCount   = projects.filter(p => p.status === 'Active').length;
+  const pendingTasks  = allTasks.filter(t => t.status !== 'Done' && t.status !== 'Completed').length;
+  const blockedTasks  = allTasks.filter(t => t.status === 'Blocked').length;
 
   return (
     <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
@@ -194,11 +224,10 @@ export default function ProjectManagement() {
       {/* Summary stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 24 }}>
         {[
-          { label: 'Total Projects', value: PROJECTS.length, icon: FolderKanban, bg: '#fff8ec', fg: G },
-          { label: 'Active',         value: PROJECTS.filter(p => p.status === 'Active').length, icon: PlayCircle, bg: '#f0fdf4', fg: '#16a34a' },
-          { label: 'Tasks Pending',  value: TASKS_MOCK.filter(t => t.status !== 'Done').length, icon: Clock, bg: '#f0f9ff', fg: '#0284c7' },
-          { label: 'Blocked Tasks',  value: TASKS_MOCK.filter(t => t.status === 'Blocked').length, icon: AlertTriangle, bg: '#fef2f2', fg: '#dc2626' },
-          { label: 'Total Budget',   value: '₹12.5 Cr', icon: DollarSign, bg: '#fdf4ff', fg: '#9333ea' },
+          { label: 'Total Projects', value: projects.length, icon: FolderKanban, bg: '#fff8ec', fg: G },
+          { label: 'Active',         value: activeCount,     icon: PlayCircle,   bg: '#f0fdf4', fg: '#16a34a' },
+          { label: 'Tasks Pending',  value: pendingTasks,    icon: Clock,        bg: '#f0f9ff', fg: '#0284c7' },
+          { label: 'Blocked Tasks',  value: blockedTasks,    icon: AlertTriangle,bg: '#fef2f2', fg: '#dc2626' },
         ].map(({ label, value, icon: Icon, bg, fg }) => (
           <div key={label} style={{ ...card, padding: 18 }}>
             <div style={{ width: 36, height: 36, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
@@ -213,10 +242,17 @@ export default function ProjectManagement() {
       {/* Projects view */}
       {view === 'projects' && (
         <div style={{ display: 'grid', gap: 16 }}>
-          {PROJECTS.map(p => {
+          {projects.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa', fontSize: 13 }}>No projects found.</div>
+          )}
+          {projects.map(p => {
             const ss = STATUS_STYLE[p.status] || STATUS_STYLE['Planning'];
             const ps = PRIORITY_STYLE[p.priority] || PRIORITY_STYLE['Medium'];
-            const pctSpent = Math.round((parseFloat(p.spent.replace(/[₹\sCr]/g, '')) / parseFloat(p.budget.replace(/[₹\sCr]/g, ''))) * 100);
+            const budgetNum = parseFloat((p.budget || '0').toString().replace(/[₹\sCr,]/g, '')) || 0;
+            const spentNum  = parseFloat((p.spent  || '0').toString().replace(/[₹\sCr,]/g, '')) || 0;
+            const pctSpent  = budgetNum > 0 ? Math.round((spentNum / budgetNum) * 100) : 0;
+            const tasks     = p.tasks || { total: 0, done: 0, pending: 0, blocked: 0 };
+            const milestones = p.milestones || [];
             return (
               <div key={p.id} style={{ ...card, padding: 22, cursor: 'pointer', transition: 'box-shadow 0.15s' }}
                 onClick={() => { setSelected(p); setView('detail'); }}
@@ -247,9 +283,9 @@ export default function ProjectManagement() {
                   {/* Middle: tasks */}
                   <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                     {[
-                      { label: 'Done',    value: p.tasks.done,    color: '#16a34a' },
-                      { label: 'Pending', value: p.tasks.pending, color: G },
-                      { label: 'Blocked', value: p.tasks.blocked, color: '#dc2626' },
+                      { label: 'Done',    value: tasks.done    || 0, color: '#16a34a' },
+                      { label: 'Pending', value: tasks.pending || 0, color: G },
+                      { label: 'Blocked', value: tasks.blocked || 0, color: '#dc2626' },
                     ].map(({ label, value, color }) => (
                       <div key={label} style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: 18, fontWeight: 700, color }}>{value}</div>
@@ -267,8 +303,8 @@ export default function ProjectManagement() {
                     <div style={{ height: 5, background: '#f0f0f0', borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
                       <div style={{ width: `${pctSpent}%`, height: '100%', background: pctSpent > 85 ? '#dc2626' : '#16a34a', borderRadius: 3 }} />
                     </div>
-                    <div style={{ fontSize: 11, color: '#888' }}>{p.spent} of {p.budget}</div>
-                    <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{p.start} → {p.end}</div>
+                    <div style={{ fontSize: 11, color: '#888' }}>{p.spent || '—'} of {p.budget || '—'}</div>
+                    <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{p.start_date || p.start} → {p.end_date || p.end}</div>
                   </div>
 
                   <ChevronRight size={16} color="#ccc" style={{ alignSelf: 'center' }} />
@@ -276,7 +312,7 @@ export default function ProjectManagement() {
 
                 {/* Milestones */}
                 <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {p.milestones.map((m, i) => (
+                  {milestones.map((m, i) => (
                     <span key={i} style={{
                       display: 'flex', alignItems: 'center', gap: 5,
                       fontSize: 11, padding: '3px 9px', borderRadius: 20,
@@ -363,10 +399,14 @@ export default function ProjectManagement() {
   );
 }
 
-function ProjectDetail({ project: p, onBack }) {
+function ProjectDetail({ project: p, onBack, tasks: allTasks = [] }) {
   const [tab, setTab] = useState('overview');
   const ss = STATUS_STYLE[p.status] || STATUS_STYLE['Planning'];
-  const pctSpent = Math.round((parseFloat(p.spent.replace(/[₹\sCr]/g, '')) / parseFloat(p.budget.replace(/[₹\sCr]/g, ''))) * 100);
+  const budgetNum = parseFloat((p.budget || '0').toString().replace(/[₹\sCr,]/g, '')) || 0;
+  const spentNum  = parseFloat((p.spent  || '0').toString().replace(/[₹\sCr,]/g, '')) || 0;
+  const pctSpent  = budgetNum > 0 ? Math.round((spentNum / budgetNum) * 100) : 0;
+  const projectTasks = p.tasks_list || allTasks.filter(t => t.project === p.name) || [];
+  const milestones   = p.milestones || [];
 
   const TABS = ['overview', 'tasks', 'milestones', 'financials', 'team'];
 
@@ -385,7 +425,7 @@ function ProjectDetail({ project: p, onBack }) {
               <h1 style={{ margin: 0, color: '#1a1a1a', fontSize: 20, fontWeight: 700 }}>{p.name}</h1>
               <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>{p.status}</span>
             </div>
-            <p style={{ margin: 0, color: '#666', fontSize: 13 }}>{p.sector} · {p.start} → {p.end} · PM: {p.pm}</p>
+            <p style={{ margin: 0, color: '#666', fontSize: 13 }}>{p.sector} · {p.start_date || p.start} → {p.end_date || p.end} · PM: {p.pm || p.project_manager}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a' }}>{p.progress}%</div>
@@ -413,12 +453,12 @@ function ProjectDetail({ project: p, onBack }) {
       {tab === 'overview' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
           {[
-            { label: 'Tasks Done',     value: `${p.tasks.done}/${p.tasks.total}`, color: '#16a34a' },
-            { label: 'Tasks Pending',  value: p.tasks.pending,  color: G },
-            { label: 'Tasks Blocked',  value: p.tasks.blocked,  color: '#dc2626' },
-            { label: 'Budget Used',    value: `${pctSpent}%`,   color: pctSpent > 85 ? '#dc2626' : '#16a34a' },
-            { label: 'Budget Spent',   value: p.spent,          color: '#1a1a1a' },
-            { label: 'Remaining',      value: `₹${(parseFloat(p.budget.replace(/[₹\sCr]/g,'')) - parseFloat(p.spent.replace(/[₹\sCr]/g,''))).toFixed(2)} Cr`, color: '#1a1a1a' },
+            { label: 'Tasks Done',    value: `${(p.tasks||{}).done||0}/${(p.tasks||{}).total||0}`, color: '#16a34a' },
+            { label: 'Tasks Pending', value: (p.tasks||{}).pending || 0,  color: G },
+            { label: 'Tasks Blocked', value: (p.tasks||{}).blocked || 0,  color: '#dc2626' },
+            { label: 'Budget Used',   value: `${pctSpent}%`,              color: pctSpent > 85 ? '#dc2626' : '#16a34a' },
+            { label: 'Budget Spent',  value: p.spent || '—',              color: '#1a1a1a' },
+            { label: 'Remaining',     value: budgetNum > 0 ? `₹${(budgetNum - spentNum).toFixed(2)} Cr` : '—', color: '#1a1a1a' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ ...card, padding: 18 }}>
               <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
@@ -434,29 +474,32 @@ function ProjectDetail({ project: p, onBack }) {
           <div style={{ padding: '16px 22px', borderBottom: '1px solid #eee' }}>
             <h3 style={{ margin: 0, color: '#1a1a1a', fontSize: 14, fontWeight: 600 }}>Milestones</h3>
           </div>
-          {p.milestones.map((m, i) => (
+          {milestones.length === 0 && (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#aaa', fontSize: 13 }}>No milestones yet.</div>
+          )}
+          {milestones.map((m, i) => (
             <div key={i} style={{
-              padding: '14px 22px', borderBottom: i < p.milestones.length - 1 ? '1px solid #f5f5f5' : 'none',
+              padding: '14px 22px', borderBottom: i < milestones.length - 1 ? '1px solid #f5f5f5' : 'none',
               display: 'flex', alignItems: 'center', gap: 14,
             }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                background: m.done ? '#f0fdf4' : '#f8fafc',
-                border: `2px solid ${m.done ? '#16a34a' : '#e2e8f0'}`,
+                background: m.done || m.completed ? '#f0fdf4' : '#f8fafc',
+                border: `2px solid ${m.done || m.completed ? '#16a34a' : '#e2e8f0'}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <CheckCircle2 size={14} color={m.done ? '#16a34a' : '#ccc'} />
+                <CheckCircle2 size={14} color={m.done || m.completed ? '#16a34a' : '#ccc'} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ color: '#1a1a1a', fontSize: 13, fontWeight: 500 }}>{m.name}</div>
-                <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>{m.date}</div>
+                <div style={{ color: '#1a1a1a', fontSize: 13, fontWeight: 500 }}>{m.name || m.title}</div>
+                <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>{m.date || m.due_date}</div>
               </div>
               <span style={{
                 fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 20,
-                background: m.done ? '#f0fdf4' : '#f8fafc',
-                color: m.done ? '#16a34a' : '#64748b',
-                border: `1px solid ${m.done ? '#bbf7d0' : '#e2e8f0'}`,
-              }}>{m.done ? 'Completed' : 'Upcoming'}</span>
+                background: m.done || m.completed ? '#f0fdf4' : '#f8fafc',
+                color: m.done || m.completed ? '#16a34a' : '#64748b',
+                border: `1px solid ${m.done || m.completed ? '#bbf7d0' : '#e2e8f0'}`,
+              }}>{m.done || m.completed ? 'Completed' : 'Upcoming'}</span>
             </div>
           ))}
         </div>
@@ -468,10 +511,10 @@ function ProjectDetail({ project: p, onBack }) {
           <div style={{ ...card, padding: 22 }}>
             <h3 style={{ margin: '0 0 16px', color: '#1a1a1a', fontSize: 14, fontWeight: 600 }}>Budget Overview</h3>
             {[
-              { label: 'Total Budget',  value: p.budget,  color: '#1a1a1a' },
-              { label: 'Spent to Date', value: p.spent,   color: pctSpent > 85 ? '#dc2626' : '#16a34a' },
-              { label: 'Remaining',     value: `₹${(parseFloat(p.budget.replace(/[₹\sCr]/g,'')) - parseFloat(p.spent.replace(/[₹\sCr]/g,''))).toFixed(2)} Cr`, color: '#1a1a1a' },
-              { label: '% Utilized',    value: `${pctSpent}%`, color: pctSpent > 85 ? '#dc2626' : G },
+              { label: 'Total Budget',  value: p.budget || '—',  color: '#1a1a1a' },
+              { label: 'Spent to Date', value: p.spent || '—',   color: pctSpent > 85 ? '#dc2626' : '#16a34a' },
+              { label: 'Remaining',     value: budgetNum > 0 ? `₹${(budgetNum - spentNum).toFixed(2)} Cr` : '—', color: '#1a1a1a' },
+              { label: '% Utilized',    value: `${pctSpent}%`,   color: pctSpent > 85 ? '#dc2626' : G },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
                 <span style={{ fontSize: 13, color: '#666' }}>{label}</span>
@@ -483,19 +526,14 @@ function ProjectDetail({ project: p, onBack }) {
             </div>
           </div>
           <div style={{ ...card, padding: 22 }}>
-            <h3 style={{ margin: '0 0 16px', color: '#1a1a1a', fontSize: 14, fontWeight: 600 }}>Monthly Burn Rate</h3>
-            {['Jan', 'Feb', 'Mar', 'Apr'].map((m, i) => {
-              const vals = [18, 22, 15, 25];
-              return (
-                <div key={m} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, color: '#888', width: 28 }}>{m}</span>
-                  <div style={{ flex: 1, height: 6, background: '#f0f0f0', borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ width: `${vals[i]}%`, height: '100%', background: G, borderRadius: 3 }} />
-                  </div>
-                  <span style={{ fontSize: 11, color: '#888', width: 40, textAlign: 'right' }}>₹{vals[i]}L</span>
-                </div>
-              );
-            })}
+            <h3 style={{ margin: '0 0 16px', color: '#1a1a1a', fontSize: 14, fontWeight: 600 }}>Budget Utilization</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 12, color: '#888', width: 60 }}>Spent</span>
+              <div style={{ flex: 1, height: 6, background: '#f0f0f0', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${pctSpent}%`, height: '100%', background: G, borderRadius: 3 }} />
+              </div>
+              <span style={{ fontSize: 11, color: '#888', width: 40, textAlign: 'right' }}>{pctSpent}%</span>
+            </div>
           </div>
         </div>
       )}
@@ -508,33 +546,39 @@ function ProjectDetail({ project: p, onBack }) {
               {tab === 'tasks' ? 'Project Tasks' : 'Team Members'}
             </h3>
           </div>
-          {tab === 'tasks' && TASKS_MOCK.filter(t => t.project.includes(p.startup?.split(' ')[0] || '')).map((t, i, arr) => {
-            const ts = TASK_STATUS[t.status] || TASK_STATUS['Todo'];
-            const StatusIcon = ts.icon;
-            return (
-              <div key={t.id} style={{ padding: '13px 22px', borderBottom: i < arr.length - 1 ? '1px solid #f5f5f5' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <StatusIcon size={15} color={ts.color} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ color: '#1a1a1a', fontSize: 13, fontWeight: 500 }}>{t.title}</div>
-                  <div style={{ color: '#888', fontSize: 11 }}>{t.assignee} · Due {t.due}</div>
-                </div>
-                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: ts.bg, color: ts.color, border: `1px solid ${ts.border}` }}>{t.status}</span>
-              </div>
-            );
-          })}
+          {tab === 'tasks' && (
+            projectTasks.length === 0
+              ? <div style={{ padding: '24px', textAlign: 'center', color: '#aaa', fontSize: 13 }}>No tasks yet.</div>
+              : projectTasks.map((t, i, arr) => {
+                  const ts = TASK_STATUS[t.status] || TASK_STATUS['Todo'];
+                  const StatusIcon = ts.icon;
+                  return (
+                    <div key={t.id || i} style={{ padding: '13px 22px', borderBottom: i < arr.length - 1 ? '1px solid #f5f5f5' : 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <StatusIcon size={15} color={ts.color} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: '#1a1a1a', fontSize: 13, fontWeight: 500 }}>{t.title}</div>
+                        <div style={{ color: '#888', fontSize: 11 }}>{t.assignee || t.assigned_to} · Due {t.due || t.due_date}</div>
+                      </div>
+                      <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: ts.bg, color: ts.color, border: `1px solid ${ts.border}` }}>{t.status}</span>
+                    </div>
+                  );
+                })
+          )}
           {tab === 'team' && (
             <div style={{ padding: 22 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(213,170,91,0.12)', color: G, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, border: '1.5px solid rgba(213,170,91,0.3)' }}>
-                  {p.pm[0]}
+              {(p.pm || p.project_manager) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid #f5f5f5' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(213,170,91,0.12)', color: G, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, border: '1.5px solid rgba(213,170,91,0.3)' }}>
+                    {(p.pm || p.project_manager || '?')[0]}
+                  </div>
+                  <div>
+                    <div style={{ color: '#1a1a1a', fontSize: 13, fontWeight: 600 }}>{p.pm || p.project_manager}</div>
+                    <div style={{ color: '#888', fontSize: 11 }}>Project Manager</div>
+                  </div>
+                  <span style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 8px', borderRadius: 20, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Lead</span>
                 </div>
-                <div>
-                  <div style={{ color: '#1a1a1a', fontSize: 13, fontWeight: 600 }}>{p.pm}</div>
-                  <div style={{ color: '#888', fontSize: 11 }}>Project Manager</div>
-                </div>
-                <span style={{ marginLeft: 'auto', fontSize: 11, padding: '2px 8px', borderRadius: 20, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>Lead</span>
-              </div>
-              <div style={{ color: '#888', fontSize: 12, padding: '12px 0' }}>+ {p.team - 1} more team members</div>
+              )}
+              {p.team > 1 && <div style={{ color: '#888', fontSize: 12, padding: '12px 0' }}>+ {p.team - 1} more team members</div>}
             </div>
           )}
         </div>

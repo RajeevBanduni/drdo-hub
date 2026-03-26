@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { dashboardAPI, evaluationAPI } from "../../services/api";
 import {
   Rocket, ClipboardCheck, DollarSign, Zap,
   ArrowRight, Star, TrendingUp, Activity,
@@ -10,24 +12,9 @@ import {
 const G = "#D5AA5B";   // gold
 const GH = "#C9983F";  // gold hover
 
-const STATS = [
-  { value: "1,284", label: "Startups Registered", Icon: Rocket,     bg: "#fff8ec", fg: "#D5AA5B", border: "rgba(213,170,91,0.2)" },
-  { value: "47",    label: "Active Projects",      Icon: Zap,        bg: "#f0fdf4", fg: "#16a34a", border: "rgba(22,163,74,0.2)" },
-  { value: "₹284 Cr", label: "Grants Disbursed",  Icon: DollarSign, bg: "#fef3c7", fg: "#d97706", border: "rgba(217,119,6,0.2)" },
-  { value: "312",   label: "DeepTech Startups",    Icon: BarChart2,  bg: "#f5f3ff", fg: "#7c3aed", border: "rgba(124,58,237,0.2)" },
-];
-
 const VECTORS = [
   "People", "Strategic Direction", "Revenue Management", "Technology",
   "Financials", "Info Visibility", "GRC", "Step Change",
-];
-
-const RECENT = [
-  { name: "ArmorTech AI",         sector: "AI / ML",      score: 4.2, status: "Completed" },
-  { name: "DroneShield Systems",  sector: "UAV",           score: 3.8, status: "In Review" },
-  { name: "QuantumDefense",       sector: "Quantum Tech",  score: 4.6, status: "Completed" },
-  { name: "CyberSentinel",        sector: "Cybersecurity", score: null,status: "Pending"   },
-  { name: "BioScan Technologies", sector: "BioTech",       score: 3.5, status: "In Review" },
 ];
 
 const STATUS_STYLE = {
@@ -36,12 +23,6 @@ const STATUS_STYLE = {
   Pending:     { bg: "#f8fafc", color: "#64748b", border: "#e2e8f0" },
 };
 
-const PROGRESS = [
-  { label: "Recommended", pct: 58, color: "#16a34a" },
-  { label: "Under Review", pct: 30, color: "#D5AA5B" },
-  { label: "Needs Work",   pct: 11, color: "#ef4444" },
-];
-
 const card = {
   background: "#ffffff",
   border: "1px solid #eeeeee",
@@ -49,10 +30,61 @@ const card = {
   boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
 };
 
+// Fallback stats shown while loading or on API error
+const FALLBACK_STATS = [
+  { value: "—", label: "Startups Registered", Icon: Rocket,     bg: "#fff8ec", fg: "#D5AA5B", border: "rgba(213,170,91,0.2)" },
+  { value: "—", label: "Active Projects",      Icon: Zap,        bg: "#f0fdf4", fg: "#16a34a", border: "rgba(22,163,74,0.2)" },
+  { value: "—", label: "Grants Disbursed",     Icon: DollarSign, bg: "#fef3c7", fg: "#d97706", border: "rgba(217,119,6,0.2)" },
+  { value: "—", label: "DeepTech Startups",    Icon: BarChart2,  bg: "#f5f3ff", fg: "#7c3aed", border: "rgba(124,58,237,0.2)" },
+];
+
 export default function DashboardHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const firstName = user?.name?.split(" ")[0] || null;
+
+  const [stats, setStats] = useState(FALLBACK_STATS);
+  const [recentEvals, setRecentEvals] = useState([]);
+  const [evalMeta, setEvalMeta] = useState({ done: 0, avgScore: 0, pending: 0 });
+  const [progress, setProgress] = useState([
+    { label: "Recommended", pct: 0, color: "#16a34a" },
+    { label: "Under Review", pct: 0, color: "#D5AA5B" },
+    { label: "Needs Work",   pct: 0, color: "#ef4444" },
+  ]);
+
+  useEffect(() => {
+    // Fetch dashboard stats
+    dashboardAPI.stats()
+      .then(data => {
+        setStats([
+          { value: (data.totalStartups ?? "—").toLocaleString(), label: "Startups Registered", Icon: Rocket,     bg: "#fff8ec", fg: "#D5AA5B", border: "rgba(213,170,91,0.2)" },
+          { value: String(data.activeProjects ?? "—"),            label: "Active Projects",      Icon: Zap,        bg: "#f0fdf4", fg: "#16a34a", border: "rgba(22,163,74,0.2)" },
+          { value: data.grantsDisplay ?? "—",                     label: "Grants Disbursed",     Icon: DollarSign, bg: "#fef3c7", fg: "#d97706", border: "rgba(217,119,6,0.2)" },
+          { value: String(data.deeptechStartups ?? "—"),          label: "DeepTech Startups",    Icon: BarChart2,  bg: "#f5f3ff", fg: "#7c3aed", border: "rgba(124,58,237,0.2)" },
+        ]);
+        if (data.evaluationProgress) {
+          setProgress([
+            { label: "Recommended", pct: data.evaluationProgress.recommended ?? 0, color: "#16a34a" },
+            { label: "Under Review", pct: data.evaluationProgress.underReview ?? 0, color: "#D5AA5B" },
+            { label: "Needs Work",   pct: data.evaluationProgress.needsWork ?? 0,   color: "#ef4444" },
+          ]);
+        }
+      })
+      .catch(() => {}); // keep fallback values on error
+
+    // Fetch recent evaluations
+    evaluationAPI.list({ limit: 5, sort: 'recent' })
+      .then(data => {
+        const evals = data.evaluations || data || [];
+        setRecentEvals(evals.slice(0, 5));
+        const done    = evals.filter(e => e.status === 'Completed').length;
+        const pending = evals.filter(e => e.status === 'Pending').length;
+        const scores  = evals.filter(e => e.score != null).map(e => e.score);
+        const avg     = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
+        setEvalMeta({ done, avgScore: avg, pending });
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div style={{ padding: "28px", maxWidth: 1200, minHeight: "100%", background: "#f5f5f5" }}>
@@ -87,7 +119,7 @@ export default function DashboardHome() {
 
       {/* ── Stats ──────────────────────────────────────────────── */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:14, marginBottom:24 }}>
-        {STATS.map(({ value, label, Icon, bg, fg, border }) => (
+        {stats.map(({ value, label, Icon, bg, fg, border }) => (
           <div key={label} style={{ ...card, padding:20 }}>
             <div style={{
               width:40, height:40, borderRadius:10,
@@ -184,10 +216,10 @@ export default function DashboardHome() {
             background:"rgba(255,255,255,0.7)",
           }}>
             {[
-              { v:"38",  l:"Evaluations Done", Icon: ClipboardCheck, c: G },
-              { v:"3.9", l:"Avg Score / 5",    Icon: Star,           c: G },
-              { v:"12",  l:"Pending Review",   Icon: Activity,       c:"#ef4444" },
-              { v:"94%", l:"Completion Rate",  Icon: TrendingUp,     c:"#16a34a" },
+              { v: evalMeta.done || "—",      l:"Evaluations Done", Icon: ClipboardCheck, c: G },
+              { v: evalMeta.avgScore || "—",  l:"Avg Score / 5",    Icon: Star,           c: G },
+              { v: evalMeta.pending || "—",   l:"Pending Review",   Icon: Activity,       c:"#ef4444" },
+              { v: evalMeta.done && recentEvals.length ? Math.round((evalMeta.done/recentEvals.length)*100)+"%" : "—", l:"Completion Rate", Icon: TrendingUp, c:"#16a34a" },
             ].map(({ v, l, Icon, c }) => (
               <div key={l} style={{
                 display:"flex", alignItems:"center", gap:10,
@@ -209,7 +241,7 @@ export default function DashboardHome() {
           <h3 style={{ margin:"0 0 18px", color:"#1a1a1a", fontSize:14, fontWeight:600 }}>
             Evaluation Status
           </h3>
-          {PROGRESS.map(({ label, pct, color }) => (
+          {progress.map(({ label, pct, color }) => (
             <div key={label} style={{ marginBottom:14 }}>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:5 }}>
                 <span style={{ fontSize:12, color:"#555" }}>{label}</span>
@@ -267,11 +299,19 @@ export default function DashboardHome() {
             New evaluation <ArrowRight size={12} />
           </button>
         </div>
-        {RECENT.map((ev) => {
-          const s = STATUS_STYLE[ev.status];
+        {recentEvals.length === 0 && (
+          <div style={{ padding:"24px", textAlign:"center", color:"#aaa", fontSize:13 }}>
+            No evaluations yet.
+          </div>
+        )}
+        {recentEvals.map((ev) => {
+          const statusKey = ev.status || "Pending";
+          const s = STATUS_STYLE[statusKey] || STATUS_STYLE["Pending"];
+          const displayName = ev.startup_name || ev.name || "Unnamed";
+          const displaySector = ev.sector || ev.startup_sector || "";
           return (
             <div
-              key={ev.name}
+              key={ev.id || ev.name}
               onClick={() => navigate("/dashboard/evaluate")}
               style={{
                 padding:"13px 24px",
@@ -289,18 +329,18 @@ export default function DashboardHome() {
                 display:"flex", alignItems:"center", justifyContent:"center",
                 flexShrink:0, border:"1px solid rgba(213,170,91,0.2)",
               }}>
-                {ev.name[0]}
+                {displayName[0]}
               </div>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ color:"#1a1a1a", fontSize:13, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{ev.name}</div>
-                <div style={{ color:"#888", fontSize:11 }}>{ev.sector}</div>
+                <div style={{ color:"#1a1a1a", fontSize:13, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{displayName}</div>
+                <div style={{ color:"#888", fontSize:11 }}>{displaySector}</div>
               </div>
               <span style={{
                 padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:600,
                 background: s.bg, color: s.color, border:`1px solid ${s.border}`,
                 whiteSpace:"nowrap",
               }}>
-                {ev.status}
+                {statusKey}
               </span>
               {ev.score != null ? (
                 <div style={{ display:"flex", alignItems:"center", gap:4, color: G, fontSize:13, fontWeight:700, width:36, justifyContent:"flex-end", flexShrink:0 }}>

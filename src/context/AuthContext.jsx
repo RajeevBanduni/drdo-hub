@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -8,6 +8,23 @@ export function AuthProvider({ children }) {
   const [user, setUser]               = useState(null);
   const [mfaStep, setMfaStep]         = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
+  const [loading, setLoading]         = useState(true);
+
+  // Restore session from localStorage on page load
+  useEffect(() => {
+    try {
+      const storedToken = localStorage.getItem('drdo_token');
+      const storedUser  = localStorage.getItem('drdo_user');
+      if (storedToken && storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch {
+      localStorage.removeItem('drdo_token');
+      localStorage.removeItem('drdo_user');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const login = async (email, password) => {
     const res = await fetch(`${API_URL}/auth/login`, {
@@ -42,6 +59,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('drdo_token');
     localStorage.removeItem('drdo_user');
   };
+
+  if (loading) return null;
 
   return (
     <AuthContext.Provider value={{ user, login, logout, verifyMFA, mfaStep }}>
