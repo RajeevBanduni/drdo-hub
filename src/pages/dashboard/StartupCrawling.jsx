@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Globe, RefreshCw, Play, Pause, CheckCircle2, XCircle, Clock,
   AlertCircle, Search, Filter, ChevronDown, ExternalLink, Plus,
   Download, Eye, ThumbsUp, ThumbsDown, Zap, Database, TrendingUp,
-  Activity, AlertTriangle, RotateCcw, Settings, Info
+  Activity, AlertTriangle, RotateCcw, Settings, Info, Loader2
 } from 'lucide-react';
-import { CRAWL_SOURCES, CRAWLED_STARTUPS, CRAWL_JOBS } from '../../data/mockData';
+import { crawlAPI } from '../../services/api';
 
 const STATUS_CONFIG = {
   pending_review: { label: 'Pending Review', color: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-400' },
@@ -68,64 +68,102 @@ export default function StartupCrawling() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSector, setFilterSector] = useState('all');
   const [selectedStartup, setSelectedStartup] = useState(null);
-  const [sources, setSources] = useState(CRAWL_SOURCES);
-  const [crawledStartups, setCrawledStartups] = useState(CRAWLED_STARTUPS);
-  const [jobs, setJobs] = useState(CRAWL_JOBS);
+
+  // Data from API
+  const [sources, setSources] = useState([]);
+  const [crawledStartups, setCrawledStartups] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [stats, setStats] = useState({ total_indexed: 0, new_today: 0, pending_review: 0, approved: 0, active_sources: 0, total_sources: 0 });
+
+  const [loading, setLoading] = useState(true);
   const [triggerSource, setTriggerSource] = useState(null);
 
-  const pendingCount = crawledStartups.filter(s => s.status === 'pending_review').length;
-  const approvedCount = crawledStartups.filter(s => s.status === 'approved').length;
-  const totalIndexed = sources.reduce((a, s) => a + s.totalIndexed, 0);
-  const todayNew = sources.reduce((a, s) => a + s.newToday, 0);
+  // ── Fetch data on mount ────────────────────────────────────
+  const fetchAll = useCallback(async () => {
+    try {
+      const [srcRes, startupRes, jobRes, statsRes] = await Promise.all([
+        crawlAPI.listSources(),
+        crawlAPI.listStartups(),
+        crawlAPI.listJobs(),
+        crawlAPI.stats(),
+      ]);
+      setSources(srcRes);
+      setCrawledStartups(startupRes);
+      setJobs(jobRes);
+      setStats(statsRes);
+    } catch (err) {
+      console.error('Failed to load crawl data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const sectors = [...new Set(crawledStartups.map(s => s.sector))];
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // ── Derived ────────────────────────────────────────────────
+  const sectors = [...new Set(crawledStartups.map(s => s.sector).filter(Boolean))];
 
   const filteredStartups = crawledStartups.filter(s => {
     const q = search.toLowerCase();
-    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.sector.toLowerCase().includes(q) || s.technology.toLowerCase().includes(q) || s.tags.some(t => t.toLowerCase().includes(q));
+    const tags = s.tags || [];
+    const matchSearch = !q || s.name.toLowerCase().includes(q) || (s.sector || '').toLowerCase().includes(q) || (s.technology || '').toLowerCase().includes(q) || tags.some(t => t.toLowerCase().includes(q));
     const matchStatus = filterStatus === 'all' || s.status === filterStatus;
     const matchSector = filterSector === 'all' || s.sector === filterSector;
     return matchSearch && matchStatus && matchSector;
   });
 
-  const handleApprove = (id) => {
-    setCrawledStartups(prev => prev.map(s => s.id === id ? { ...s, status: 'approved' } : s));
-    if (selectedStartup?.id === id) setSelectedStartup(prev => ({ ...prev, status: 'approved' }));
+  const pendingCount = stats.pending_review;
+  const approvedCount = stats.approved;
+
+  // ── Handlers ───────────────────────────────────────────────
+  const handleApprove = async (id) => {
+    try {
+      const updated = await crawlAPI.approveStartup(id);
+      setCrawledStartups(prev => prev.map(s => s.id === id ? updated : s));
+      setStats(prev => ({ ...prev, pending_review: Math.max(0, prev.pending_review - 1), approved: prev.approved + 1 }));
+      if (selectedStartup?.id === id) setSelectedStartup(updated);
+    } catch (err) { console.error('Approve failed:', err); }
   };
 
-  const handleReject = (id) => {
-    setCrawledStartups(prev => prev.map(s => s.id === id ? { ...s, status: 'rejected' } : s));
-    if (selectedStartup?.id === id) setSelectedStartup(prev => ({ ...prev, status: 'rejected' }));
+  const handleReject = async (id) => {
+    try {
+      const updated = await crawlAPI.rejectStartup(id);
+      setCrawledStartups(prev => prev.map(s => s.id === id ? updated : s));
+      setStats(prev => ({ ...prev, pending_review: Math.max(0, prev.pending_review - 1) }));
+      if (selectedStartup?.id === id) setSelectedStartup(updated);
+    } catch (err) { console.error('Reject failed:', err); }
   };
 
-  const handleToggleSource = (id) => {
-    setSources(prev => prev.map(s => s.id === id ? { ...s, status: s.status === 'active' ? 'paused' : 'active' } : s));
+  const handleToggleSource = async (id) => {
+    try {
+      const updated = await crawlAPI.toggleSource(id);
+      setSources(prev => prev.map(s => s.id === id ? updated : s));
+    } catch (err) { console.error('Toggle failed:', err); }
   };
 
-  const handleCrawlNow = (source) => {
+  const handleCrawlNow = async (source) => {
     setTriggerSource(source.id);
-    const newJob = {
-      id: `job_${Date.now()}`,
-      sourceId: source.id,
-      sourceName: source.name,
-      status: 'running',
-      startedAt: new Date().toISOString(),
-      completedAt: null,
-      found: 0, added: 0, duplicates: 0, rejected: 0,
-      progress: 0,
-    };
-    setJobs(prev => [newJob, ...prev]);
-    setTimeout(() => {
-      setJobs(prev => prev.map(j => j.id === newJob.id
-        ? { ...j, status: 'completed', completedAt: new Date().toISOString(), found: 12, added: 9, duplicates: 2, rejected: 1, progress: 100 }
-        : j
-      ));
-      setSources(prev => prev.map(s => s.id === source.id
-        ? { ...s, lastCrawled: new Date().toISOString(), newToday: s.newToday + 9 }
-        : s
-      ));
+    try {
+      const newJob = await crawlAPI.triggerCrawl(source.id);
+      setJobs(prev => [newJob, ...prev]);
+      // Poll for completion after 4 seconds
+      setTimeout(async () => {
+        try {
+          const [updatedJobs, updatedSources, updatedStats] = await Promise.all([
+            crawlAPI.listJobs(),
+            crawlAPI.listSources(),
+            crawlAPI.stats(),
+          ]);
+          setJobs(updatedJobs);
+          setSources(updatedSources);
+          setStats(updatedStats);
+        } catch (_) {}
+        setTriggerSource(null);
+      }, 4000);
+    } catch (err) {
+      console.error('Crawl trigger failed:', err);
       setTriggerSource(null);
-    }, 3000);
+    }
   };
 
   const tabs = [
@@ -133,6 +171,14 @@ export default function StartupCrawling() {
     { id: 'sources', label: 'Crawl Sources', count: sources.length },
     { id: 'jobs', label: 'Crawl Jobs', count: jobs.length },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 size={32} className="animate-spin text-primary-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -144,7 +190,7 @@ export default function StartupCrawling() {
               <Globe size={20} className="text-primary-500" />
               <h1 className="text-xl font-display font-bold text-gray-900">Startup Crawling</h1>
               <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-semibold rounded-full">
-                {todayNew} new today
+                {stats.new_today} new today
               </span>
             </div>
             <p className="text-sm text-gray-500">Automatically discover and ingest startups from government databases and innovation portals</p>
@@ -165,10 +211,10 @@ export default function StartupCrawling() {
       <div className="flex-1 overflow-y-auto p-6">
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Total Indexed" value={totalIndexed.toLocaleString()} sub="Across all sources" icon={Database} color="bg-primary-500" />
+          <StatCard label="Total Indexed" value={stats.total_indexed.toLocaleString()} sub="Across all sources" icon={Database} color="bg-primary-500" />
           <StatCard label="Pending Review" value={pendingCount} sub="Needs your attention" icon={AlertCircle} color="bg-yellow-400" />
           <StatCard label="Approved" value={approvedCount} sub="Added to database" icon={CheckCircle2} color="bg-accent-500" />
-          <StatCard label="Active Sources" value={sources.filter(s => s.status === 'active').length} sub={`of ${sources.length} configured`} icon={Globe} color="bg-blue-500" />
+          <StatCard label="Active Sources" value={stats.active_sources} sub={`of ${stats.total_sources} configured`} icon={Globe} color="bg-blue-500" />
         </div>
 
         {/* Tabs */}
@@ -280,14 +326,14 @@ export default function StartupCrawling() {
                               <span className="text-xs text-gray-400">via {startup.source}</span>
                               <span className="text-xs text-gray-400">TRL {startup.trl}</span>
                               <span className="text-xs text-gray-400">{startup.stage}</span>
-                              <span className="text-xs text-primary-600 font-medium">{startup.matchedThrust}</span>
+                              <span className="text-xs text-primary-600 font-medium">{startup.matched_thrust}</span>
                             </div>
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${statusCfg.color}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
-                            {statusCfg.label}
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${statusCfg?.color || 'bg-gray-100 text-gray-600'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${statusCfg?.dot || 'bg-gray-400'}`} />
+                            {statusCfg?.label || startup.status}
                           </span>
                           {startup.status === 'pending_review' && (
                             <div className="flex gap-1">
@@ -352,22 +398,22 @@ export default function StartupCrawling() {
 
                   <div className="mb-4">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">DRDO Thrust Area</p>
-                    <p className="text-sm text-primary-600 font-medium">{selectedStartup.matchedThrust}</p>
+                    <p className="text-sm text-primary-600 font-medium">{selectedStartup.matched_thrust}</p>
                     <ConfidenceBadge score={selectedStartup.confidence} />
                   </div>
 
                   <div className="mb-4">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tags</p>
                     <div className="flex flex-wrap gap-1">
-                      {selectedStartup.tags.map(tag => (
+                      {(selectedStartup.tags || []).map(tag => (
                         <span key={tag} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">{tag}</span>
                       ))}
                     </div>
                   </div>
 
-                  {selectedStartup.rejectionReason && (
+                  {selectedStartup.rejection_reason && (
                     <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-4">
-                      <p className="text-xs text-red-600"><span className="font-semibold">Rejection reason:</span> {selectedStartup.rejectionReason}</p>
+                      <p className="text-xs text-red-600"><span className="font-semibold">Rejection reason:</span> {selectedStartup.rejection_reason}</p>
                     </div>
                   )}
 
@@ -431,9 +477,9 @@ export default function StartupCrawling() {
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">{source.url}</p>
                   <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
-                    <span><span className="font-semibold text-gray-700">{source.totalIndexed.toLocaleString()}</span> total indexed</span>
-                    <span><span className="font-semibold text-accent-600">+{source.newToday}</span> today</span>
-                    <span>Last crawled {new Date(source.lastCrawled).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span><span className="font-semibold text-gray-700">{(source.total_indexed || 0).toLocaleString()}</span> total indexed</span>
+                    <span><span className="font-semibold text-accent-600">+{source.new_today || 0}</span> today</span>
+                    <span>Last crawled {source.last_crawled ? new Date(source.last_crawled).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Never'}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -478,12 +524,12 @@ export default function StartupCrawling() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900 text-sm">{job.sourceName}</h3>
+                          <h3 className="font-semibold text-gray-900 text-sm">{job.source_name}</h3>
                           <JobStatusBadge status={job.status} />
                         </div>
                         <p className="text-xs text-gray-400 mt-0.5">
-                          {job.startedAt ? `Started ${new Date(job.startedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` : 'Not started yet'}
-                          {job.completedAt && ` · Completed ${new Date(job.completedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`}
+                          {job.started_at ? `Started ${new Date(job.started_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` : 'Not started yet'}
+                          {job.completed_at && ` · Completed ${new Date(job.completed_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`}
                         </p>
                       </div>
                     </div>

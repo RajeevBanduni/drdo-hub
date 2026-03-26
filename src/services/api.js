@@ -121,3 +121,17 @@ export const smeAPI = {
   create: (data)        => post('/sme', data),
   update: (id, data)    => put(`/sme/${id}`, data),
 };
+
+// ── Crawling ────────────────────────────────────────────────
+export const crawlAPI = {
+  stats:           ()                => get('/crawl/stats'),
+  listSources:     ()                => get('/crawl/sources'),
+  createSource:    (data)            => post('/crawl/sources', data),
+  toggleSource:    (id)              => put(`/crawl/sources/${id}/toggle`),
+  triggerCrawl:    (id)              => post(`/crawl/sources/${id}/trigger`),
+  listStartups:    (params = {})     => get(`/crawl/startups?${new URLSearchParams(params)}`),
+  getStartup:      (id)              => get(`/crawl/startups/${id}`),
+  approveStartup:  (id)              => put(`/crawl/startups/${id}/approve`),
+  rejectStartup:   (id, reason)      => put(`/crawl/startups/${id}/reject`, { reason }),
+  listJobs:        ()                => get('/crawl/jobs'),
+};
