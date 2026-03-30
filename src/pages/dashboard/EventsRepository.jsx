@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Calendar, MapPin, Users, Plus, Search, Filter,
   ChevronRight, Clock, Tag, ExternalLink, Download,
   Mic, Trophy, BookOpen, Zap, Globe, Video,
   CheckCircle2, AlertCircle, ArrowRight, X,
 } from 'lucide-react';
+import { eventAPI } from '../../services/api';
 
 const G = '#D5AA5B';
 const GH = '#C9983F';
@@ -23,164 +24,97 @@ const EVENT_TYPES = {
   demo_day:    { label: 'Demo Day',     color: G,          bg: '#fff8ec', icon: Trophy },
   webinar:     { label: 'Webinar',      color: '#ea580c', bg: '#fff7ed', icon: Video },
   networking:  { label: 'Networking',   color: '#dc2626', bg: '#fef2f2', icon: Users },
+  Hackathon:   { label: 'Hackathon',    color: '#7c3aed', bg: '#f5f3ff', icon: Zap },
+  Workshop:    { label: 'Workshop',     color: '#0284c7', bg: '#f0f9ff', icon: BookOpen },
+  Conference:  { label: 'Conference',   color: '#16a34a', bg: '#f0fdf4', icon: Mic },
+  'Demo Day':  { label: 'Demo Day',     color: G,          bg: '#fff8ec', icon: Trophy },
+  Webinar:     { label: 'Webinar',      color: '#ea580c', bg: '#fff7ed', icon: Video },
+  Networking:  { label: 'Networking',   color: '#dc2626', bg: '#fef2f2', icon: Users },
 };
 
 const STATUS_STYLE = {
   Upcoming:   { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' },
+  upcoming:   { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' },
   Live:       { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
+  ongoing:    { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
   Completed:  { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0' },
+  completed:  { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0' },
   Cancelled:  { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+  cancelled:  { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
 };
 
-const EVENTS = [
-  {
-    id: 1,
-    title: 'DRDO DeepTech Hackathon 2025',
-    type: 'hackathon',
-    status: 'Upcoming',
-    date: '15 May 2025',
-    endDate: '17 May 2025',
-    location: 'DRDO Bhawan, New Delhi',
-    mode: 'In-Person',
-    organiser: 'DRDO Innovation Hub',
-    registrations: 142,
-    capacity: 200,
-    description: 'A 3-day intensive hackathon challenging startups to solve DRDO\'s priority problem statements across AI, cyber defence, quantum, and space tech domains.',
-    tags: ['deeptech', 'AI', 'quantum', 'defence'],
-    agenda: [
-      { time: '09:00 AM', title: 'Inauguration & Problem Statement Release' },
-      { time: '10:00 AM', title: 'Team Formation & Ideation' },
-      { time: '06:00 PM', title: 'Day 1 Check-in' },
-      { time: 'Day 2',   title: 'Build Phase & Mentoring Sessions' },
-      { time: 'Day 3',   title: 'Demo Day & Award Ceremony' },
-    ],
-    speakers: ['Dr. A. Kapoor', 'Dr. R. Sharma', 'Guest – IIT Delhi'],
-  },
-  {
-    id: 2,
-    title: 'OpenI Startup Evaluation Workshop',
-    type: 'workshop',
-    status: 'Upcoming',
-    date: '28 Apr 2025',
-    endDate: '28 Apr 2025',
-    location: 'Virtual (MS Teams)',
-    mode: 'Online',
-    organiser: 'OpenI Assessment Cell',
-    registrations: 34,
-    capacity: 50,
-    description: 'Training workshop for DRDO evaluators on the OpenI 8-Vector Assessment Framework. Covers scoring methodology, calibration, and report generation.',
-    tags: ['training', 'evaluation', 'OpenI'],
-    agenda: [
-      { time: '10:00 AM', title: 'Introduction to OpenI Framework' },
-      { time: '11:30 AM', title: 'Live Scoring Walkthrough' },
-      { time: '02:00 PM', title: 'Calibration Exercise' },
-      { time: '04:00 PM', title: 'Q&A and Close' },
-    ],
-    speakers: ['Dr. S. Mehta', 'OpenI Team'],
-  },
-  {
-    id: 3,
-    title: 'DRDO–Startup Demo Day Q1 2025',
-    type: 'demo_day',
-    status: 'Completed',
-    date: '15 Mar 2025',
-    endDate: '15 Mar 2025',
-    location: 'DRDO HQ, New Delhi',
-    mode: 'In-Person',
-    organiser: 'DRDO Innovation Hub',
-    registrations: 68,
-    capacity: 80,
-    description: 'Quarterly demo day where shortlisted startups present their prototypes and progress updates to DRDO directors and potential partners.',
-    tags: ['demo', 'Q1-2025', 'prototype'],
-    agenda: [
-      { time: '09:30 AM', title: 'Opening Remarks' },
-      { time: '10:00 AM', title: 'Startup Demos (ArmorTech AI, DroneShield, QuantumDefense)' },
-      { time: '12:30 PM', title: 'Panel Discussion' },
-      { time: '02:00 PM', title: 'Networking Lunch' },
-    ],
-    speakers: ['Dr. P. Nair', 'Director DRDO', 'CTO Panel'],
-  },
-  {
-    id: 4,
-    title: 'Cybersecurity Landscape – DRDO Webinar',
-    type: 'webinar',
-    status: 'Completed',
-    date: '10 Mar 2025',
-    endDate: '10 Mar 2025',
-    location: 'Virtual (Zoom)',
-    mode: 'Online',
-    organiser: 'DRDO Cyber Cell',
-    registrations: 210,
-    capacity: 500,
-    description: 'A webinar covering the emerging cybersecurity threat landscape for defence systems and the role of startups in building resilient solutions.',
-    tags: ['cyber', 'webinar', 'threat-intel'],
-    agenda: [
-      { time: '11:00 AM', title: 'Keynote: Cyber Threats in 2025' },
-      { time: '12:00 PM', title: 'Startup Spotlight: CyberSentinel' },
-      { time: '12:30 PM', title: 'Open Q&A' },
-    ],
-    speakers: ['Dr. S. Mehta', 'CyberSentinel CEO'],
-  },
-  {
-    id: 5,
-    title: 'Quantum Technology Conclave 2025',
-    type: 'conference',
-    status: 'Upcoming',
-    date: '20 Jun 2025',
-    endDate: '21 Jun 2025',
-    location: 'IIT Delhi, New Delhi',
-    mode: 'Hybrid',
-    organiser: 'DRDO + IIT Delhi + DST',
-    registrations: 290,
-    capacity: 400,
-    description: 'India\'s premier quantum technology conference bringing together DRDO, academia, startups, and international experts to discuss QKD, quantum computing, and quantum sensing for defence.',
-    tags: ['quantum', 'conference', 'international'],
-    agenda: [
-      { time: 'Day 1', title: 'Research Presentations & Panel Discussions' },
-      { time: 'Day 2', title: 'Startup Showcase & Policy Roundtable' },
-    ],
-    speakers: ['Dr. A. Kapoor', 'Prof. IIT Delhi', 'ISRO rep', 'International Expert – MIT'],
-  },
-  {
-    id: 6,
-    title: 'DRDO Startup Networking – Bangalore',
-    type: 'networking',
-    status: 'Upcoming',
-    date: '05 May 2025',
-    endDate: '05 May 2025',
-    location: 'DRDO-CABS, Bangalore',
-    mode: 'In-Person',
-    organiser: 'DRDO Innovation Hub',
-    registrations: 55,
-    capacity: 75,
-    description: 'An informal networking session connecting DRDO scientists with Bangalore-based defence tech startups. Focus sectors: aerospace, robotics, and AI.',
-    tags: ['networking', 'bangalore', 'aerospace'],
-    agenda: [
-      { time: '06:00 PM', title: 'Welcome & Icebreakers' },
-      { time: '07:00 PM', title: 'Speed Pitches (2 min each)' },
-      { time: '08:00 PM', title: 'Open Networking' },
-    ],
-    speakers: ['DRDO-CABS Director'],
-  },
-];
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const normalizeEventStatus = (s) => {
+  if (!s) return 'Upcoming';
+  const map = { upcoming: 'Upcoming', ongoing: 'Live', completed: 'Completed', cancelled: 'Cancelled' };
+  return map[s.toLowerCase()] || s.charAt(0).toUpperCase() + s.slice(1);
+};
+const normalizeEventType = (t) => {
+  if (!t) return 'workshop';
+  return t.toLowerCase().replace(/\s+/g, '_');
+};
 
 export default function EventsRepository() {
-  const [view, setView]         = useState('grid');   // 'grid' | 'list' | 'calendar'
+  const [events, setEvents]     = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [view, setView]         = useState('grid');
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [search, setSearch]     = useState('');
   const [selected, setSelected] = useState(null);
 
-  const filtered = EVENTS.filter(e => {
+  useEffect(() => {
+    eventAPI.list()
+      .then(data => {
+        const raw = data.events || data || [];
+        setEvents(raw.map(e => ({
+          ...e,
+          type: normalizeEventType(e.type),
+          status: normalizeEventStatus(e.status),
+          date: fmtDate(e.start_date),
+          endDate: fmtDate(e.end_date),
+          location: e.location || '—',
+          mode: e.is_virtual ? 'Online' : 'In-Person',
+          organiser: e.organiser || 'DRDO Innovation Hub',
+          registrations: Number(e.registered) || 0,
+          capacity: Number(e.capacity) || 100,
+          description: e.description || '',
+          tags: e.tags || [],
+          agenda: e.agenda || [],
+          speakers: e.speakers || [],
+        })));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleRegister = (evId) => {
+    eventAPI.register(evId)
+      .then(() => {
+        setEvents(prev => prev.map(e => e.id === evId ? { ...e, registrations: e.registrations + 1 } : e));
+        if (selected && selected.id === evId) {
+          setSelected(prev => ({ ...prev, registrations: prev.registrations + 1 }));
+        }
+      })
+      .catch(() => {});
+  };
+
+  const filtered = events.filter(e => {
     const matchType   = typeFilter === 'All' || e.type === typeFilter;
     const matchStatus = statusFilter === 'All' || e.status === statusFilter;
-    const matchSearch = e.title.toLowerCase().includes(search.toLowerCase()) ||
-                        e.tags.some(t => t.toLowerCase().includes(search.toLowerCase()));
+    const matchSearch = (e.title || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (e.tags || []).some(t => t.toLowerCase().includes(search.toLowerCase()));
     return matchType && matchStatus && matchSearch;
   });
 
+  if (loading) return (
+    <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading events…</div>
+    </div>
+  );
+
   if (selected) {
-    return <EventDetail event={selected} onBack={() => setSelected(null)} />;
+    return <EventDetail event={selected} onBack={() => setSelected(null)} onRegister={handleRegister} />;
   }
 
   return (
@@ -202,10 +136,10 @@ export default function EventsRepository() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 22 }}>
         {[
-          { label: 'Total Events',   value: EVENTS.length, icon: Calendar, bg: '#fff8ec', fg: G },
-          { label: 'Upcoming',       value: EVENTS.filter(e => e.status === 'Upcoming').length, icon: Clock, bg: '#f0f9ff', fg: '#0284c7' },
-          { label: 'Live Now',       value: EVENTS.filter(e => e.status === 'Live').length, icon: Zap, bg: '#f0fdf4', fg: '#16a34a' },
-          { label: 'Total Registered', value: EVENTS.reduce((s, e) => s + e.registrations, 0), icon: Users, bg: '#fdf4ff', fg: '#9333ea' },
+          { label: 'Total Events',   value: events.length, icon: Calendar, bg: '#fff8ec', fg: G },
+          { label: 'Upcoming',       value: events.filter(e => e.status === 'Upcoming').length, icon: Clock, bg: '#f0f9ff', fg: '#0284c7' },
+          { label: 'Live Now',       value: events.filter(e => e.status === 'Live').length, icon: Zap, bg: '#f0fdf4', fg: '#16a34a' },
+          { label: 'Total Registered', value: events.reduce((s, e) => s + e.registrations, 0), icon: Users, bg: '#fdf4ff', fg: '#9333ea' },
         ].map(({ label, value, icon: Icon, bg, fg }) => (
           <div key={label} style={{ ...card, padding: 16 }}>
             <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
@@ -356,7 +290,7 @@ function EventCard({ ev, onClick }) {
   );
 }
 
-function EventDetail({ event: ev, onBack }) {
+function EventDetail({ event: ev, onBack, onRegister }) {
   const et = EVENT_TYPES[ev.type] || EVENT_TYPES.workshop;
   const ss = STATUS_STYLE[ev.status] || STATUS_STYLE['Upcoming'];
   const EIcon = et.icon;
@@ -409,7 +343,7 @@ function EventDetail({ event: ev, onBack }) {
 
         <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {ev.status !== 'Completed' && (
-            <button style={{ padding: '9px 20px', background: G, color: '#fff', border: 'none', borderRadius: 9, cursor: 'pointer', fontSize: 13, fontWeight: 700, boxShadow: '0 2px 10px rgba(213,170,91,0.3)' }}>
+            <button onClick={() => onRegister && onRegister(ev.id)} style={{ padding: '9px 20px', background: G, color: '#fff', border: 'none', borderRadius: 9, cursor: 'pointer', fontSize: 13, fontWeight: 700, boxShadow: '0 2px 10px rgba(213,170,91,0.3)' }}>
               Register Now
             </button>
           )}

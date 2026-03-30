@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Users, Plus, Search, Star, Mail, Phone, Briefcase,
   ChevronRight, Filter, Award, Globe, BookOpen,
   CheckCircle2, Clock, Tag, MessageSquare, Calendar,
   Building2, GraduationCap, X, Linkedin,
 } from 'lucide-react';
+import { smeAPI } from '../../services/api';
 
 const G = '#D5AA5B';
 const GH = '#C9983F';
@@ -18,122 +19,11 @@ const card = {
 
 const DOMAINS = ['AI / ML', 'Quantum Tech', 'Cybersecurity', 'UAV / Drones', 'Biodefence', 'Nanotechnology', 'Space Tech', 'Electronics', 'Materials Science', 'Robotics'];
 
-const EXPERTS = [
-  {
-    id: 1,
-    name: 'Prof. Anil Kumar Verma',
-    title: 'Professor, IIT Delhi',
-    domain: 'Quantum Tech',
-    subDomains: ['QKD', 'Quantum Computing', 'Quantum Sensing'],
-    org: 'IIT Delhi',
-    type: 'Academic',
-    email: 'a.verma@iitd.ac.in',
-    phone: '+91-11-2659-XXXX',
-    availability: 'Available',
-    rating: 4.8,
-    reviewsCount: 12,
-    engagements: 5,
-    publications: 47,
-    bio: 'Senior professor with 20+ years in quantum information science. Leads the Quantum Technology Lab at IIT Delhi. Collaborates with DRDO on QKD protocol research.',
-    assignedTo: ['QuantumDefense'],
-    expertise: ['QKD Protocol Design', 'Entanglement', 'Quantum Error Correction'],
-  },
-  {
-    id: 2,
-    name: 'Dr. Sunita Rajan',
-    title: 'Principal Scientist, DRDO CAIR',
-    domain: 'AI / ML',
-    subDomains: ['Computer Vision', 'NLP', 'Edge AI'],
-    org: 'DRDO CAIR',
-    type: 'DRDO Scientist',
-    email: 's.rajan@cair.drdo.in',
-    phone: '+91-80-2505-XXXX',
-    availability: 'Busy',
-    rating: 4.6,
-    reviewsCount: 8,
-    engagements: 7,
-    publications: 33,
-    bio: 'Principal Scientist at DRDO CAIR with expertise in defence AI applications. Has mentored 7 startups in the DRDO AI Challenge program.',
-    assignedTo: ['ArmorTech AI', 'CyberSentinel'],
-    expertise: ['Defence AI', 'Autonomous Systems', 'Pattern Recognition'],
-  },
-  {
-    id: 3,
-    name: 'Mr. Vikram Mehta',
-    title: 'CEO, CyberShield India',
-    domain: 'Cybersecurity',
-    subDomains: ['SOC', 'Threat Intelligence', 'Zero-Trust Architecture'],
-    org: 'CyberShield India',
-    type: 'Industry',
-    email: 'v.mehta@cybershield.in',
-    phone: '+91-22-XXXX-XXXX',
-    availability: 'Available',
-    rating: 4.5,
-    reviewsCount: 6,
-    engagements: 4,
-    publications: 5,
-    bio: 'Serial entrepreneur with 15 years in cybersecurity. Founded CyberShield India, an enterprise security company. Mentor for DRDO Cyber Security Program startups.',
-    assignedTo: ['CyberSentinel'],
-    expertise: ['Cyber Strategy', 'Startup Mentoring', 'Product-Market Fit'],
-  },
-  {
-    id: 4,
-    name: 'Dr. Priya Nambiar',
-    title: 'Associate Professor, IISc',
-    domain: 'Biodefence',
-    subDomains: ['Biosensors', 'Point-of-Care Diagnostics', 'Molecular Biology'],
-    org: 'IISc Bangalore',
-    type: 'Academic',
-    email: 'p.nambiar@iisc.ac.in',
-    phone: '+91-80-2293-XXXX',
-    availability: 'Available',
-    rating: 4.7,
-    reviewsCount: 9,
-    engagements: 3,
-    publications: 58,
-    bio: 'Expert in bio-defence technologies with focus on rapid detection systems. Collaborates with DRDO on dual-use biosensor platforms.',
-    assignedTo: ['BioScan Technologies'],
-    expertise: ['Biosensor Design', 'Pathogen Detection', 'Lab-on-Chip'],
-  },
-  {
-    id: 5,
-    name: 'Wg Cdr (Retd.) Arvind Singh',
-    title: 'Defence Advisor',
-    domain: 'UAV / Drones',
-    subDomains: ['Unmanned Systems', 'Swarm Drones', 'Counter-UAV'],
-    org: 'Independent Consultant',
-    type: 'Defence Veteran',
-    email: 'a.singh@defadvisory.in',
-    phone: '+91-98XXXX-XXXX',
-    availability: 'Available',
-    rating: 4.9,
-    reviewsCount: 14,
-    engagements: 6,
-    publications: 3,
-    bio: 'Retired Wing Commander with 25 years in IAF. Expertise in UAS operations, procurement, and counter-drone systems. Mentors UAV defence startups.',
-    assignedTo: ['DroneShield Systems'],
-    expertise: ['UAS Operations', 'Military Requirements', 'Procurement Strategy'],
-  },
-  {
-    id: 6,
-    name: 'Dr. Meena Krishnaswamy',
-    title: 'Head R&D, NanoMat Corp',
-    domain: 'Nanotechnology',
-    subDomains: ['Advanced Materials', 'Nanocomposites', 'Stealth Coatings'],
-    org: 'NanoMat Corp',
-    type: 'Industry',
-    email: 'm.krishna@nanomat.co.in',
-    phone: '+91-44-XXXX-XXXX',
-    availability: 'Busy',
-    rating: 4.4,
-    reviewsCount: 5,
-    engagements: 2,
-    publications: 29,
-    bio: 'R&D head specialising in defence-grade nanomaterials. Has worked on stealth coating technologies and nanocomposite armour for DRDO projects.',
-    assignedTo: [],
-    expertise: ['Nanocomposites', 'Armour Materials', 'Stealth Technology'],
-  },
-];
+const normalizeAvailability = (a) => {
+  if (!a) return 'Available';
+  const map = { available: 'Available', busy: 'Busy', on_leave: 'Inactive', inactive: 'Inactive' };
+  return map[a.toLowerCase()] || a.charAt(0).toUpperCase() + a.slice(1);
+};
 
 const AVAIL_STYLE = {
   Available: { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
@@ -149,21 +39,54 @@ const TYPE_STYLE = {
 };
 
 export default function SMEManagement() {
+  const [experts, setExperts]   = useState([]);
+  const [loading, setLoading]   = useState(true);
   const [selected, setSelected] = useState(null);
   const [search, setSearch]     = useState('');
   const [domainFilter, setDomainFilter] = useState('All');
   const [typeFilter, setTypeFilter]     = useState('All');
   const [availFilter, setAvailFilter]   = useState('All');
 
-  const filtered = EXPERTS.filter(e => {
-    const matchSearch = e.name.toLowerCase().includes(search.toLowerCase()) ||
-                        e.domain.toLowerCase().includes(search.toLowerCase()) ||
-                        e.expertise.some(x => x.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    smeAPI.list()
+      .then(data => {
+        const raw = data.experts || data || [];
+        setExperts(raw.map(e => ({
+          ...e,
+          title: e.designation || e.title || '—',
+          domain: (e.domains && e.domains[0]) || e.domain || '—',
+          subDomains: (e.domains || []).slice(1),
+          org: e.organisation || e.org || '—',
+          type: e.type || 'Academic',
+          availability: normalizeAvailability(e.availability),
+          rating: Number(e.rating) || 0,
+          reviewsCount: 0,
+          engagements: Number(e.engagements) || 0,
+          publications: Number(e.publications) || 0,
+          bio: e.bio || '',
+          assignedTo: e.assignedTo || [],
+          expertise: (e.domains || []),
+        })));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = experts.filter(e => {
+    const matchSearch = (e.name || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (e.domain || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (e.expertise || []).some(x => x.toLowerCase().includes(search.toLowerCase()));
     const matchDomain = domainFilter === 'All' || e.domain === domainFilter;
     const matchType   = typeFilter === 'All' || e.type === typeFilter;
     const matchAvail  = availFilter === 'All' || e.availability === availFilter;
     return matchSearch && matchDomain && matchType && matchAvail;
   });
+
+  if (loading) return (
+    <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading experts…</div>
+    </div>
+  );
 
   if (selected) return <ExpertDetail expert={selected} onBack={() => setSelected(null)} />;
 
@@ -186,10 +109,10 @@ export default function SMEManagement() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 22 }}>
         {[
-          { label: 'Total Experts',  value: EXPERTS.length, icon: Users, bg: '#fff8ec', fg: G },
-          { label: 'Available',      value: EXPERTS.filter(e => e.availability === 'Available').length, icon: CheckCircle2, bg: '#f0fdf4', fg: '#16a34a' },
-          { label: 'Engagements',    value: EXPERTS.reduce((s, e) => s + e.engagements, 0), icon: Briefcase, bg: '#f0f9ff', fg: '#0284c7' },
-          { label: 'Avg Rating',     value: (EXPERTS.reduce((s, e) => s + e.rating, 0) / EXPERTS.length).toFixed(1), icon: Star, bg: '#fdf4ff', fg: '#9333ea' },
+          { label: 'Total Experts',  value: experts.length, icon: Users, bg: '#fff8ec', fg: G },
+          { label: 'Available',      value: experts.filter(e => e.availability === 'Available').length, icon: CheckCircle2, bg: '#f0fdf4', fg: '#16a34a' },
+          { label: 'Engagements',    value: experts.reduce((s, e) => s + e.engagements, 0), icon: Briefcase, bg: '#f0f9ff', fg: '#0284c7' },
+          { label: 'Avg Rating',     value: experts.length > 0 ? (experts.reduce((s, e) => s + e.rating, 0) / experts.length).toFixed(1) : '0.0', icon: Star, bg: '#fdf4ff', fg: '#9333ea' },
         ].map(({ label, value, icon: Icon, bg, fg }) => (
           <div key={label} style={{ ...card, padding: 16 }}>
             <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>

@@ -5,6 +5,7 @@ import {
   Plus, Users, Lock, Hash, Star, Clock, Filter,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { messageAPI } from '../../services/api';
 
 const G = '#D5AA5B';
 
@@ -15,106 +16,78 @@ const card = {
   boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
 };
 
-const CONVERSATIONS = [
-  {
-    id: 1,
-    type: 'direct',
-    name: 'Dr. Arjun Kapoor',
-    role: 'Evaluator',
-    avatar: 'A',
-    lastMsg: 'The QKD pilot results look very promising. Can we schedule a review next week?',
-    time: '10:32 AM',
-    unread: 2,
-    online: true,
-    messages: [
-      { id: 1, from: 'Dr. Arjun Kapoor', self: false, text: 'Hi, I have reviewed the QuantumDefense prototype report.', time: '10:15 AM', read: true },
-      { id: 2, from: 'Me', self: true, text: 'Great! What are your initial thoughts?', time: '10:18 AM', read: true },
-      { id: 3, from: 'Dr. Arjun Kapoor', self: false, text: 'The QKD pilot results look very promising. Can we schedule a review next week?', time: '10:32 AM', read: false },
-    ],
-  },
-  {
-    id: 2,
-    type: 'group',
-    name: 'ArmorTech AI – Project Team',
-    role: 'Project Group',
-    avatar: 'A',
-    lastMsg: 'Field trial date confirmed: 30 Apr 2025',
-    time: 'Yesterday',
-    unread: 5,
-    online: false,
-    messages: [
-      { id: 1, from: 'Lt. V. Singh', self: false, text: 'Site survey completed. Location cleared for trials.', time: 'Yesterday 3:00 PM', read: true },
-      { id: 2, from: 'Dr. R. Sharma', self: false, text: 'Excellent! Let\'s confirm date with the startup.', time: 'Yesterday 3:05 PM', read: true },
-      { id: 3, from: 'ArmorTech AI', self: false, text: 'We can be ready by 30th April.', time: 'Yesterday 4:20 PM', read: false },
-      { id: 4, from: 'Dr. R. Sharma', self: false, text: 'Field trial date confirmed: 30 Apr 2025', time: 'Yesterday 4:45 PM', read: false },
-    ],
-  },
-  {
-    id: 3,
-    type: 'direct',
-    name: 'CyberSentinel Team',
-    role: 'Startup',
-    avatar: 'C',
-    lastMsg: 'We have submitted the requirement document for review.',
-    time: 'Mon',
-    unread: 0,
-    online: false,
-    messages: [
-      { id: 1, from: 'CyberSentinel', self: false, text: 'Hello, we have completed the initial architecture draft.', time: 'Mon 11:00 AM', read: true },
-      { id: 2, from: 'Me', self: true, text: 'Please share it via the document repository.', time: 'Mon 11:15 AM', read: true },
-      { id: 3, from: 'CyberSentinel', self: false, text: 'We have submitted the requirement document for review.', time: 'Mon 12:30 PM', read: true },
-    ],
-  },
-  {
-    id: 4,
-    type: 'group',
-    name: 'DRDO Lab Directors – AI Cohort',
-    role: 'Internal Group',
-    avatar: 'D',
-    lastMsg: 'Quarterly review scheduled for 15 May',
-    time: 'Sun',
-    unread: 0,
-    online: false,
-    messages: [
-      { id: 1, from: 'Dr. P. Nair', self: false, text: 'All evaluators please submit Q1 reports by EOD Friday.', time: 'Sun 9:00 AM', read: true },
-      { id: 2, from: 'Dr. S. Mehta', self: false, text: 'Noted. Will share the CyberSentinel evaluation by Thursday.', time: 'Sun 9:30 AM', read: true },
-      { id: 3, from: 'Dr. A. Kapoor', self: false, text: 'Quarterly review scheduled for 15 May', time: 'Sun 10:00 AM', read: true },
-    ],
-  },
-  {
-    id: 5,
-    type: 'direct',
-    name: 'DroneShield Systems',
-    role: 'Startup',
-    avatar: 'D',
-    lastMsg: 'Hardware procurement approval is still pending.',
-    time: 'Fri',
-    unread: 1,
-    online: true,
-    messages: [
-      { id: 1, from: 'DroneShield', self: false, text: 'We are waiting on the procurement approval to proceed.', time: 'Fri 2:00 PM', read: true },
-      { id: 2, from: 'Me', self: true, text: 'I have escalated it to the admin team.', time: 'Fri 2:10 PM', read: true },
-      { id: 3, from: 'DroneShield', self: false, text: 'Hardware procurement approval is still pending.', time: 'Fri 5:30 PM', read: false },
-    ],
-  },
-];
+const fmtTime = (d) => {
+  if (!d) return '';
+  const dt = new Date(d);
+  const now = new Date();
+  const diffDays = Math.floor((now - dt) / 86400000);
+  if (diffDays === 0) return dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return dt.toLocaleDateString('en-US', { weekday: 'short' });
+  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+};
 
 export default function Messaging() {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState(CONVERSATIONS);
-  const [active, setActive] = useState(CONVERSATIONS[0]);
+  const [conversations, setConversations] = useState([]);
+  const [active, setActive] = useState(null);
+  const [activeMessages, setActiveMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [msgLoading, setMsgLoading] = useState(false);
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('All'); // All | Unread | Groups | Direct
+  const [filter, setFilter] = useState('All');
   const messagesEndRef = useRef(null);
+
+  // Load conversations from API
+  useEffect(() => {
+    messageAPI.listConversations()
+      .then(data => {
+        const list = (data.conversations || data || []).map(c => ({
+          ...c,
+          name: c.name || `Conversation #${c.id}`,
+          avatar: (c.name || 'C')[0],
+          lastMsg: c.last_message || '',
+          time: fmtTime(c.last_message_at || c.created_at),
+          unread: Number(c.unread_count) || 0,
+          online: false,
+          role: c.type === 'group' ? 'Group' : 'Direct',
+        }));
+        setConversations(list);
+        if (list.length > 0) {
+          setActive(list[0]);
+          loadMessages(list[0].id);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const loadMessages = (convId) => {
+    setMsgLoading(true);
+    messageAPI.getMessages(convId)
+      .then(data => {
+        const msgs = (data.messages || data || []).map(m => ({
+          id: m.id,
+          from: m.sender_name || 'Unknown',
+          self: m.sender_id === user?.id,
+          text: m.content,
+          time: fmtTime(m.created_at),
+          read: m.is_read,
+        }));
+        setActiveMessages(msgs);
+      })
+      .catch(() => setActiveMessages([]))
+      .finally(() => setMsgLoading(false));
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [active]);
+  }, [activeMessages]);
 
   const filteredConvs = conversations.filter(c => {
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
-                        c.lastMsg.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (c.lastMsg || '').toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === 'All' ||
                         (filter === 'Unread' && c.unread > 0) ||
                         (filter === 'Groups' && c.type === 'group') ||
@@ -123,22 +96,22 @@ export default function Messaging() {
   });
 
   const sendMessage = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !active) return;
+    const text = input.trim();
+    setInput('');
+    // Optimistic update
     const newMsg = {
       id: Date.now(),
       from: user?.name || 'Me',
       self: true,
-      text: input.trim(),
+      text,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       read: true,
     };
-    const updated = conversations.map(c => c.id === active.id
-      ? { ...c, messages: [...c.messages, newMsg], lastMsg: newMsg.text, time: newMsg.time }
-      : c
-    );
-    setConversations(updated);
-    setActive(prev => ({ ...prev, messages: [...prev.messages, newMsg], lastMsg: newMsg.text }));
-    setInput('');
+    setActiveMessages(prev => [...prev, newMsg]);
+    setConversations(prev => prev.map(c => c.id === active.id ? { ...c, lastMsg: text, time: newMsg.time } : c));
+
+    messageAPI.sendMessage(active.id, text).catch(() => {});
   };
 
   const handleKey = (e) => {
@@ -146,13 +119,19 @@ export default function Messaging() {
   };
 
   const openConv = (c) => {
-    // Mark as read
     const updated = conversations.map(cv => cv.id === c.id ? { ...cv, unread: 0 } : cv);
     setConversations(updated);
     setActive({ ...c, unread: 0 });
+    loadMessages(c.id);
   };
 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread, 0);
+
+  if (loading) return (
+    <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading conversations…</div>
+    </div>
+  );
 
   return (
     <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
@@ -295,7 +274,9 @@ export default function Messaging() {
 
             {/* Messages */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 10px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {active.messages.map((msg) => (
+              {msgLoading && <div style={{ textAlign: 'center', padding: 24, color: '#aaa', fontSize: 12 }}>Loading messages…</div>}
+              {!msgLoading && activeMessages.length === 0 && <div style={{ textAlign: 'center', padding: 24, color: '#aaa', fontSize: 12 }}>No messages yet — start the conversation!</div>}
+              {activeMessages.map((msg) => (
                 <div key={msg.id} style={{ display: 'flex', flexDirection: msg.self ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8 }}>
                   {!msg.self && (
                     <div style={{

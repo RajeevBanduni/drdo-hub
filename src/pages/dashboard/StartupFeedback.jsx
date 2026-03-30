@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   MessageSquare, Star, Send, ThumbsUp, ThumbsDown,
   Plus, Search, Filter, CheckCircle2, Clock, AlertCircle,
   BarChart3, TrendingUp, ChevronRight, X, Users,
 } from 'lucide-react';
+import { feedbackAPI } from '../../services/api';
 
 const G = '#D5AA5B';
 const GH = '#C9983F';
@@ -26,73 +27,12 @@ const CATEGORIES = [
   'Overall Experience',
 ];
 
-const FEEDBACK_DATA = [
-  {
-    id: 1,
-    startup: 'ArmorTech AI',
-    program: 'DRDO AI Challenge 2025',
-    date: '01 Apr 2025',
-    rating: 4,
-    category: 'Mentoring Quality',
-    sentiment: 'positive',
-    status: 'Reviewed',
-    text: 'The mentoring sessions with Dr. Sunita Rajan have been extremely valuable. Her domain expertise in defence AI helped us refine our prototype significantly. We would appreciate more frequent check-ins.',
-    actionTaken: 'Increased mentoring frequency to bi-weekly.',
-    reviewer: 'Dr. R. Sharma',
-  },
-  {
-    id: 2,
-    startup: 'DroneShield Systems',
-    program: 'DRDO UAV Program',
-    date: '28 Mar 2025',
-    rating: 2,
-    category: 'Process & Documentation',
-    sentiment: 'negative',
-    status: 'Pending Action',
-    text: 'The hardware procurement approval process has been extremely slow. We have been waiting for 3 weeks on an approval that should take 3 days. This is significantly delaying our project timeline.',
-    actionTaken: null,
-    reviewer: null,
-  },
-  {
-    id: 3,
-    startup: 'QuantumDefense',
-    program: 'DRDO Quantum Initiative',
-    date: '15 Mar 2025',
-    rating: 5,
-    category: 'Infrastructure Access',
-    sentiment: 'positive',
-    status: 'Reviewed',
-    text: 'Access to DRDO\'s quantum lab facilities has been world-class. The equipment and support staff are excellent. This collaboration has accelerated our R&D by at least 6 months.',
-    actionTaken: 'Feedback noted. Lab access extended for Phase 2.',
-    reviewer: 'Dr. A. Kapoor',
-  },
-  {
-    id: 4,
-    startup: 'CyberSentinel',
-    program: 'DRDO Cyber Security Program',
-    date: '10 Apr 2025',
-    rating: 3,
-    category: 'Communication & Responsiveness',
-    sentiment: 'neutral',
-    status: 'Under Review',
-    text: 'We appreciate the opportunity to work with DRDO, but communication delays have been an issue. Emails often go unanswered for 5-7 days. A dedicated point-of-contact would greatly help.',
-    actionTaken: null,
-    reviewer: null,
-  },
-  {
-    id: 5,
-    startup: 'BioScan Technologies',
-    program: 'DRDO Bio-Defence Program',
-    date: '05 Apr 2025',
-    rating: 4,
-    category: 'Technical Guidance',
-    sentiment: 'positive',
-    status: 'Reviewed',
-    text: 'Dr. Priya Nambiar\'s expertise in biosensor design has been invaluable. The technical workshops organised by DRDO were very relevant to our use case.',
-    actionTaken: 'Planned follow-up technical workshop for Q2.',
-    reviewer: 'Dr. P. Nair',
-  },
-];
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const normalizeStatus = (s) => {
+  if (!s) return 'Under Review';
+  const map = { open: 'Under Review', acknowledged: 'Under Review', resolved: 'Reviewed' };
+  return map[s.toLowerCase()] || s;
+};
 
 const STATUS_STYLE = {
   Reviewed:       { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', icon: CheckCircle2 },
@@ -126,8 +66,10 @@ function StarRating({ value, onChange, readOnly = false }) {
 }
 
 export default function StartupFeedback() {
-  const [view, setView]       = useState('list');   // 'list' | 'submit' | 'analytics'
-  const [feedbacks, setFeedbacks] = useState(FEEDBACK_DATA);
+  const [view, setView]       = useState('list');
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
   const [search, setSearch]   = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -137,36 +79,92 @@ export default function StartupFeedback() {
   const [form, setForm] = useState({ startup: '', program: '', category: CATEGORIES[0], rating: 0, text: '' });
   const [submitted, setSubmitted] = useState(false);
 
+  useEffect(() => {
+    Promise.all([
+      feedbackAPI.list(),
+      feedbackAPI.analytics().catch(() => null),
+    ]).then(([fbData, analyticsData]) => {
+      const raw = fbData.feedback || fbData || [];
+      setFeedbacks(raw.map(f => ({
+        ...f,
+        startup: f.startup_name || f.startup || '—',
+        program: f.title || f.program || '—',
+        date: fmtDate(f.created_at),
+        rating: Number(f.rating) || 3,
+        category: f.category || 'Overall Experience',
+        sentiment: f.sentiment || 'neutral',
+        status: normalizeStatus(f.status),
+        text: f.content || f.text || '',
+        actionTaken: f.response || null,
+        reviewer: f.responded_at ? 'DRDO Team' : null,
+      })));
+      if (analyticsData) setAnalytics(analyticsData);
+    })
+    .catch(() => {})
+    .finally(() => setLoading(false));
+  }, []);
+
   const filtered = feedbacks.filter(f => {
-    const matchSearch = f.startup.toLowerCase().includes(search.toLowerCase()) || f.text.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (f.startup || '').toLowerCase().includes(search.toLowerCase()) || (f.text || '').toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'All' || f.status === statusFilter;
     const matchSentiment = sentimentFilter === 'All' || f.sentiment === sentimentFilter;
     return matchSearch && matchStatus && matchSentiment;
   });
 
-  const avgRating = (feedbacks.reduce((s, f) => s + f.rating, 0) / feedbacks.length).toFixed(1);
+  const avgRating = feedbacks.length > 0 ? (feedbacks.reduce((s, f) => s + f.rating, 0) / feedbacks.length).toFixed(1) : '0.0';
   const positiveCount = feedbacks.filter(f => f.sentiment === 'positive').length;
-  const pendingCount = feedbacks.filter(f => f.status === 'Pending Action').length;
+  const pendingCount = feedbacks.filter(f => f.status === 'Pending Action' || f.status === 'Under Review').length;
 
   const submitFeedback = () => {
-    if (!form.startup || !form.program || form.rating === 0 || !form.text.trim()) return;
-    const sentiment = form.rating >= 4 ? 'positive' : form.rating === 3 ? 'neutral' : 'negative';
-    const newFb = {
-      id: Date.now(),
-      startup: form.startup,
-      program: form.program,
-      date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      rating: form.rating,
+    if (!form.text.trim()) return;
+    feedbackAPI.create({
+      startup_id: null,
       category: form.category,
-      sentiment,
-      status: 'Under Review',
-      text: form.text,
-      actionTaken: null,
-      reviewer: null,
-    };
-    setFeedbacks(prev => [newFb, ...prev]);
-    setSubmitted(true);
+      rating: form.rating || 3,
+      title: form.program || 'General Feedback',
+      content: form.text.trim(),
+    })
+      .then(data => {
+        const newFb = {
+          id: data.id || Date.now(),
+          startup: form.startup || '—',
+          program: form.program || '—',
+          date: fmtDate(new Date()),
+          rating: form.rating,
+          category: form.category,
+          sentiment: form.rating >= 4 ? 'positive' : form.rating <= 2 ? 'negative' : 'neutral',
+          status: 'Under Review',
+          text: form.text,
+          actionTaken: null,
+          reviewer: null,
+        };
+        setFeedbacks(prev => [newFb, ...prev]);
+        setSubmitted(true);
+      })
+      .catch(() => {
+        // Optimistic: still add locally
+        setFeedbacks(prev => [{
+          id: Date.now(),
+          startup: form.startup || '—',
+          program: form.program || '—',
+          date: fmtDate(new Date()),
+          rating: form.rating,
+          category: form.category,
+          sentiment: form.rating >= 4 ? 'positive' : form.rating <= 2 ? 'negative' : 'neutral',
+          status: 'Under Review',
+          text: form.text,
+          actionTaken: null,
+          reviewer: null,
+        }, ...prev]);
+        setSubmitted(true);
+      });
   };
+
+  if (loading) return (
+    <div style={{ padding: 28, maxWidth: 1100, background: '#f5f5f5', minHeight: '100%' }}>
+      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading feedback…</div>
+    </div>
+  );
 
   return (
     <div style={{ padding: 28, maxWidth: 1100, background: '#f5f5f5', minHeight: '100%' }}>

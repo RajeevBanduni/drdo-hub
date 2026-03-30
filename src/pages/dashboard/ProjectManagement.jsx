@@ -17,100 +17,31 @@ const card = {
   boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
 };
 
-const PROJECTS = [
-  {
-    id: 1,
-    name: 'ArmorTech AI – Phase 1',
-    startup: 'ArmorTech AI',
-    sector: 'AI / ML',
-    status: 'Active',
-    priority: 'High',
-    progress: 68,
-    budget: '₹2.4 Cr',
-    spent: '₹1.6 Cr',
-    start: '01 Jan 2025',
-    end: '30 Jun 2025',
-    pm: 'Dr. R. Sharma',
-    team: 4,
-    tasks: { total: 24, done: 16, pending: 5, blocked: 3 },
-    milestones: [
-      { name: 'Prototype Delivery',   date: '15 Feb 2025', done: true },
-      { name: 'Lab Evaluation',       date: '31 Mar 2025', done: true },
-      { name: 'Field Trial – Phase A', date: '30 Apr 2025', done: false },
-      { name: 'Final Report',         date: '30 Jun 2025', done: false },
-    ],
-  },
-  {
-    id: 2,
-    name: 'DroneShield – UAV Detection',
-    startup: 'DroneShield Systems',
-    sector: 'UAV',
-    status: 'On Hold',
-    priority: 'Medium',
-    progress: 35,
-    budget: '₹1.8 Cr',
-    spent: '₹0.63 Cr',
-    start: '15 Feb 2025',
-    end: '15 Aug 2025',
-    pm: 'Dr. P. Nair',
-    team: 3,
-    tasks: { total: 18, done: 6, pending: 10, blocked: 2 },
-    milestones: [
-      { name: 'Design Freeze',        date: '28 Feb 2025', done: true },
-      { name: 'Hardware Procurement', date: '30 Mar 2025', done: false },
-      { name: 'Integration Test',     date: '30 Jun 2025', done: false },
-    ],
-  },
-  {
-    id: 3,
-    name: 'QuantumDefense – QKD Pilot',
-    startup: 'QuantumDefense',
-    sector: 'Quantum Tech',
-    status: 'Active',
-    priority: 'Critical',
-    progress: 82,
-    budget: '₹5.2 Cr',
-    spent: '₹4.26 Cr',
-    start: '01 Oct 2024',
-    end: '30 Sep 2025',
-    pm: 'Dr. A. Kapoor',
-    team: 6,
-    tasks: { total: 36, done: 30, pending: 4, blocked: 2 },
-    milestones: [
-      { name: 'Lab Setup',            date: '01 Dec 2024', done: true },
-      { name: 'Protocol Validation',  date: '28 Feb 2025', done: true },
-      { name: 'Pilot Deployment',     date: '30 Jun 2025', done: false },
-      { name: 'Security Audit',       date: '31 Aug 2025', done: false },
-      { name: 'Final Handover',       date: '30 Sep 2025', done: false },
-    ],
-  },
-  {
-    id: 4,
-    name: 'CyberSentinel – SOC Platform',
-    startup: 'CyberSentinel',
-    sector: 'Cybersecurity',
-    status: 'Planning',
-    priority: 'High',
-    progress: 12,
-    budget: '₹3.1 Cr',
-    spent: '₹0.37 Cr',
-    start: '01 Apr 2025',
-    end: '31 Mar 2026',
-    pm: 'Dr. S. Mehta',
-    team: 5,
-    tasks: { total: 28, done: 3, pending: 22, blocked: 3 },
-    milestones: [
-      { name: 'Requirement Sign-off', date: '15 Apr 2025', done: false },
-      { name: 'Architecture Review',  date: '30 Apr 2025', done: false },
-    ],
-  },
-];
+/* Map backend status values to display labels */
+const normalizeStatus = (s) => {
+  if (!s) return 'Planning';
+  const map = { active: 'Active', completed: 'Completed', on_hold: 'On Hold', cancelled: 'Cancelled' };
+  return map[s.toLowerCase()] || s.charAt(0).toUpperCase() + s.slice(1);
+};
+const normalizePriority = (p) => {
+  if (!p) return 'Medium';
+  const map = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
+  return map[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1);
+};
+const normalizeTaskStatus = (s) => {
+  if (!s) return 'Todo';
+  const map = { todo: 'Todo', in_progress: 'In Progress', review: 'In Progress', done: 'Done' };
+  return map[s.toLowerCase()] || s;
+};
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const fmtBudget = (n) => n != null ? `₹${Number(n).toFixed(2)} Cr` : '—';
 
 const STATUS_STYLE = {
   Active:   { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
   'On Hold':{ bg: '#fff7ed', color: '#ea580c', border: '#fed7aa' },
   Planning: { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' },
   Completed:{ bg: '#f8fafc', color: '#475569', border: '#e2e8f0' },
+  Cancelled:{ bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
 };
 
 const PRIORITY_STYLE = {
@@ -119,15 +50,6 @@ const PRIORITY_STYLE = {
   Medium:   { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' },
   Low:      { bg: '#f8fafc', color: '#64748b', border: '#e2e8f0' },
 };
-
-const TASKS_MOCK = [
-  { id: 1, title: 'Prototype delivery documentation', project: 'ArmorTech AI – Phase 1', assignee: 'Dr. R. Sharma', due: '20 Apr 2025', status: 'Done',        priority: 'High' },
-  { id: 2, title: 'Field trial site preparation',     project: 'ArmorTech AI – Phase 1', assignee: 'Lt. V. Singh',  due: '25 Apr 2025', status: 'In Progress', priority: 'High' },
-  { id: 3, title: 'Hardware procurement approval',    project: 'DroneShield – UAV',      assignee: 'Dr. P. Nair',   due: '30 Apr 2025', status: 'Blocked',     priority: 'Medium' },
-  { id: 4, title: 'QKD protocol test report',         project: 'QuantumDefense – QKD',   assignee: 'Dr. A. Kapoor', due: '15 May 2025', status: 'In Progress', priority: 'Critical' },
-  { id: 5, title: 'Requirement sign-off meeting',     project: 'CyberSentinel – SOC',    assignee: 'Dr. S. Mehta',  due: '15 Apr 2025', status: 'Todo',        priority: 'High' },
-  { id: 6, title: 'Architecture review document',     project: 'CyberSentinel – SOC',    assignee: 'Dr. S. Mehta',  due: '30 Apr 2025', status: 'Todo',        priority: 'Medium' },
-];
 
 const TASK_STATUS = {
   'Done':        { icon: CheckCircle2, color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
@@ -147,14 +69,48 @@ export default function ProjectManagement() {
 
   useEffect(() => {
     projectAPI.list()
-      .then(data => {
-        const list = data.projects || data || [];
+      .then(async (data) => {
+        const raw = data.projects || data || [];
+        // Normalise backend fields to what the UI expects
+        const list = raw.map(p => ({
+          ...p,
+          name: p.title || p.name,
+          startup: p.startup_name || p.startup || '—',
+          status: normalizeStatus(p.status),
+          priority: normalizePriority(p.priority),
+          progress: p.progress ?? (p.total_tasks > 0 ? Math.round((p.done_tasks / p.total_tasks) * 100) : 0),
+          budget: p.budget != null ? fmtBudget(p.budget) : '—',
+          spent: p.spent != null ? fmtBudget(p.spent) : '—',
+          start_date: fmtDate(p.start_date),
+          end_date: fmtDate(p.end_date),
+          pm: p.lead_name || p.pm || '—',
+          team: p.team || 1,
+          tasks: {
+            total: Number(p.total_tasks) || 0,
+            done: Number(p.done_tasks) || 0,
+            pending: Math.max(0, (Number(p.total_tasks) || 0) - (Number(p.done_tasks) || 0)),
+            blocked: 0,
+          },
+          milestones: p.milestones || [],
+        }));
         setProjects(list);
-        // Flatten tasks from all projects
-        const tasks = list.flatMap(p =>
-          (p.tasks || []).map(t => ({ ...t, project: p.name, startup: p.startup_name || p.startup }))
+
+        // Fetch tasks per project (detail endpoint returns tasks array)
+        const taskPromises = list.map(p =>
+          projectAPI.get(p.id)
+            .then(detail => (detail.tasks || []).map(t => ({
+              ...t,
+              project: p.name,
+              startup: p.startup,
+              status: normalizeTaskStatus(t.status),
+              priority: normalizePriority(t.priority),
+              assignee: t.assignee_name || t.assignee || '—',
+              due: fmtDate(t.due_date),
+            })))
+            .catch(() => [])
         );
-        setAllTasks(tasks);
+        const allTaskArrays = await Promise.all(taskPromises);
+        setAllTasks(allTaskArrays.flat());
       })
       .catch(() => {})
       .finally(() => setLoading(false));
