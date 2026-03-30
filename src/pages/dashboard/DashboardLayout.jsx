@@ -56,10 +56,22 @@ const NAV = [
   { to: "/dashboard/govt-apis",      label: "Govt. APIs",       Icon: Link2,           roles: ["admin"] },
 ];
 
+const MOCK_NOTIFS = [
+  { id:1, title:"New evaluation submitted for ArmorTech AI",    time:"2 min ago",   read:false, color:"#D5AA5B" },
+  { id:2, title:"DroneShield procurement approved",             time:"1 hour ago",  read:false, color:"#16a34a" },
+  { id:3, title:"Quarterly review scheduled for 15 May",        time:"3 hours ago", read:false, color:"#3b82f6" },
+  { id:4, title:"New startup BioDefend registered",             time:"Yesterday",   read:true,  color:"#7c3aed" },
+  { id:5, title:"QKD pilot reached 82% completion",             time:"Yesterday",   read:true,  color:"#d97706" },
+  { id:6, title:"Mentor assignment updated for CyberVault",     time:"2 days ago",  read:true,  color:"#ef4444" },
+];
+
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState(MOCK_NOTIFS);
+  const unreadCount = notifications.filter(n => !n.read).length;
   const filteredNav = NAV.filter(item => !item.roles || item.roles.includes(user?.role));
 
   const handleLogout = () => {
@@ -255,17 +267,117 @@ export default function DashboardLayout() {
 
           {/* Right side */}
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <button style={{
-              position:"relative", padding:8, color: C.textMuted,
-              background:"transparent", border:"none", cursor:"pointer", borderRadius:8,
-            }}>
-              <Bell size={16} />
-              <span style={{
-                position:"absolute", top:6, right:6,
-                width:6, height:6, borderRadius:"50%",
-                background: C.gold,
-              }} />
-            </button>
+            {/* Notification bell */}
+            <div style={{ position:"relative" }}>
+              <button
+                onClick={() => setNotifOpen(o => !o)}
+                style={{
+                  position:"relative", padding:8, color: C.textMuted,
+                  background: notifOpen ? C.goldLight : "transparent",
+                  border:"none", cursor:"pointer", borderRadius:8,
+                  transition:"background 0.15s",
+                }}
+              >
+                <Bell size={16} />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position:"absolute", top:4, right:4,
+                    minWidth:16, height:16, borderRadius:8,
+                    background: C.gold, color:"#fff",
+                    fontSize:9, fontWeight:700,
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    padding:"0 4px", lineHeight:1,
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification dropdown */}
+              {notifOpen && (
+                <>
+                  {/* Backdrop to close on outside click */}
+                  <div
+                    onClick={() => setNotifOpen(false)}
+                    style={{ position:"fixed", inset:0, zIndex:40 }}
+                  />
+                  <div style={{
+                    position:"absolute", top:"calc(100% + 8px)", right:0, zIndex:50,
+                    width:340, maxHeight:400, overflowY:"auto",
+                    background:"#fff", borderRadius:12,
+                    border:"1px solid #e8e8e8",
+                    boxShadow:"0 8px 30px rgba(0,0,0,0.12)",
+                  }}>
+                    <div style={{
+                      padding:"14px 16px", borderBottom:"1px solid #eee",
+                      display:"flex", alignItems:"center", justifyContent:"space-between",
+                    }}>
+                      <span style={{ fontSize:14, fontWeight:700, color:"#1a1a1a" }}>Notifications</span>
+                      {unreadCount > 0 && (
+                        <span style={{
+                          fontSize:10, fontWeight:600, padding:"2px 8px",
+                          background:C.goldLight, color:C.gold, borderRadius:20,
+                        }}>
+                          {unreadCount} new
+                        </span>
+                      )}
+                    </div>
+                    {notifications.map(n => (
+                      <div
+                        key={n.id}
+                        style={{
+                          padding:"12px 16px",
+                          display:"flex", alignItems:"flex-start", gap:10,
+                          borderBottom:"1px solid #f5f5f5",
+                          background: n.read ? "transparent" : "#fffdf7",
+                          cursor:"pointer", transition:"background 0.15s",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background="#fafafa"}
+                        onMouseLeave={e => e.currentTarget.style.background = n.read ? "transparent" : "#fffdf7"}
+                        onClick={() => {
+                          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
+                        }}
+                      >
+                        <span style={{
+                          width:8, height:8, borderRadius:"50%", marginTop:5,
+                          background: n.color, flexShrink:0,
+                        }} />
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:12, color:"#1a1a1a", fontWeight: n.read ? 400 : 600, lineHeight:1.4 }}>
+                            {n.title}
+                          </div>
+                          <div style={{ fontSize:11, color:"#888", marginTop:3 }}>{n.time}</div>
+                        </div>
+                        {!n.read && (
+                          <span style={{
+                            width:7, height:7, borderRadius:"50%",
+                            background:C.gold, flexShrink:0, marginTop:5,
+                          }} />
+                        )}
+                      </div>
+                    ))}
+                    <div style={{ padding:"10px 16px", borderTop:"1px solid #eee" }}>
+                      <button
+                        onClick={() => {
+                          setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                        }}
+                        style={{
+                          width:"100%", padding:"8px",
+                          background:"transparent", border:"none",
+                          color:C.gold, fontSize:12, fontWeight:600,
+                          cursor:"pointer", borderRadius:6,
+                          transition:"background 0.15s",
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background=C.goldLight}
+                        onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                      >
+                        Mark all as read
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             {user && (
               <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                 <div style={{

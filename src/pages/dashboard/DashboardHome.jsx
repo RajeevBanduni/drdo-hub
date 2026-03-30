@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { dashboardAPI, evaluationAPI } from "../../services/api";
@@ -6,6 +6,7 @@ import {
   Rocket, ClipboardCheck, DollarSign, Zap,
   ArrowRight, Star, TrendingUp, Activity,
   Users, BarChart2, CheckCircle, Clock,
+  Search, BookOpen, Building2,
 } from "lucide-react";
 
 // OpenI light-theme tokens
@@ -15,6 +16,29 @@ const GH = "#C9983F";  // gold hover
 const VECTORS = [
   "People", "Strategic Direction", "Revenue Management", "Technology",
   "Financials", "Info Visibility", "GRC", "Step Change",
+];
+
+const SCORE_DIST = [
+  { range: "80-100", label: "Excellent", pct: 24, color: "#16a34a" },
+  { range: "60-79",  label: "Good",      pct: 41, color: "#D5AA5B" },
+  { range: "40-59",  label: "Average",   pct: 27, color: "#d97706" },
+  { range: "0-39",   label: "Poor",      pct: 8,  color: "#ef4444" },
+];
+
+const SECTORS = [
+  { label: "Defence AI",    pct: 35, color: "#D5AA5B" },
+  { label: "Cybersecurity", pct: 22, color: "#C9983F" },
+  { label: "Quantum Tech",  pct: 15, color: "#16a34a" },
+  { label: "UAV Systems",   pct: 12, color: "#7c3aed" },
+  { label: "Space Tech",    pct: 8,  color: "#3b82f6" },
+  { label: "Other",         pct: 8,  color: "#94a3b8" },
+];
+
+const QUICK_ACTIONS = [
+  { label: "Startup Discovery", desc: "Browse & filter startups", to: "/dashboard/startups",        Icon: Search,         bg: "#fff8ec", fg: "#D5AA5B", border: "rgba(213,170,91,0.2)" },
+  { label: "New Evaluation",    desc: "Run 8-vector assessment",  to: "/dashboard/evaluate",        Icon: ClipboardCheck, bg: "#f0fdf4", fg: "#16a34a", border: "rgba(22,163,74,0.2)" },
+  { label: "Knowledge Hub",     desc: "Articles & resources",     to: "/dashboard/knowledge",       Icon: BookOpen,       bg: "#f5f3ff", fg: "#7c3aed", border: "rgba(124,58,237,0.2)" },
+  { label: "Infrastructure",    desc: "Labs & facility bookings", to: "/dashboard/infrastructure",  Icon: Building2,      bg: "#fef3c7", fg: "#d97706", border: "rgba(217,119,6,0.2)" },
 ];
 
 const STATUS_STYLE = {
@@ -261,96 +285,179 @@ export default function DashboardHome() {
             <h3 style={{ margin:"0 0 14px", color:"#1a1a1a", fontSize:14, fontWeight:600 }}>
               Score Distribution
             </h3>
-            {[
-              { range:"80–100", label:"Excellent", pct:24 },
-              { range:"60–79",  label:"Good",      pct:41 },
-              { range:"40–59",  label:"Average",   pct:27 },
-              { range:"0–39",   label:"Poor",      pct:8  },
-            ].map((b) => (
-              <div key={b.range} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                <span style={{ fontSize:11, color:"#888", width:44 }}>{b.range}</span>
-                <div style={{ flex:1, height:5, background:"#f0f0f0", borderRadius:3, overflow:"hidden" }}>
-                  <div style={{ width:`${b.pct}%`, height:"100%", background: G, borderRadius:3 }} />
+            {/* Donut chart using conic-gradient */}
+            <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:14 }}>
+              <div style={{
+                width: 90, height: 90, borderRadius: "50%", flexShrink: 0,
+                background: `conic-gradient(
+                  ${SCORE_DIST[0].color} 0% ${SCORE_DIST[0].pct}%,
+                  ${SCORE_DIST[1].color} ${SCORE_DIST[0].pct}% ${SCORE_DIST[0].pct + SCORE_DIST[1].pct}%,
+                  ${SCORE_DIST[2].color} ${SCORE_DIST[0].pct + SCORE_DIST[1].pct}% ${SCORE_DIST[0].pct + SCORE_DIST[1].pct + SCORE_DIST[2].pct}%,
+                  ${SCORE_DIST[3].color} ${SCORE_DIST[0].pct + SCORE_DIST[1].pct + SCORE_DIST[2].pct}% 100%
+                )`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <div style={{
+                  width: 54, height: 54, borderRadius: "50%",
+                  background: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                  flexDirection: "column",
+                }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#1a1a1a", lineHeight: 1 }}>100</span>
+                  <span style={{ fontSize: 9, color: "#888" }}>total</span>
                 </div>
-                <span style={{ fontSize:11, color:"#888", width:26, textAlign:"right" }}>{b.pct}%</span>
               </div>
-            ))}
+              <div style={{ flex: 1 }}>
+                {SCORE_DIST.map(s => (
+                  <div key={s.range} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: s.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 11, color: "#555", flex: 1 }}>{s.label}</span>
+                    <span style={{ fontSize: 11, color: "#888", fontWeight: 600 }}>{s.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Recent Evaluations ─────────────────────────────────── */}
-      <div style={{ ...card, overflow:"hidden" }}>
-        <div style={{
-          padding:"16px 24px",
-          borderBottom:"1px solid #eeeeee",
-          display:"flex", alignItems:"center", justifyContent:"space-between",
-        }}>
-          <h3 style={{ margin:0, color:"#1a1a1a", fontSize:14, fontWeight:600 }}>Recent Evaluations</h3>
-          <button
-            onClick={() => navigate("/dashboard/evaluate")}
-            style={{
-              display:"flex", alignItems:"center", gap:4,
-              fontSize:12, color: G,
-              background:"transparent", border:"none",
-              cursor:"pointer", fontWeight:600,
-            }}
-          >
-            New evaluation <ArrowRight size={12} />
-          </button>
-        </div>
-        {recentEvals.length === 0 && (
-          <div style={{ padding:"24px", textAlign:"center", color:"#aaa", fontSize:13 }}>
-            No evaluations yet.
-          </div>
-        )}
-        {recentEvals.map((ev) => {
-          const statusKey = ev.status || "Pending";
-          const s = STATUS_STYLE[statusKey] || STATUS_STYLE["Pending"];
-          const displayName = ev.startup_name || ev.name || "Unnamed";
-          const displaySector = ev.sector || ev.startup_sector || "";
-          return (
-            <div
-              key={ev.id || ev.name}
+      {/* ── Recent Evaluations + Sector Chart Grid ─────────────── */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 300px", gap:20, marginBottom:24 }}
+        className="grid-cols-1 lg:grid-cols-[1fr_300px]">
+
+        {/* Recent Evaluations */}
+        <div style={{ ...card, overflow:"hidden" }}>
+          <div style={{
+            padding:"16px 24px",
+            borderBottom:"1px solid #eeeeee",
+            display:"flex", alignItems:"center", justifyContent:"space-between",
+          }}>
+            <h3 style={{ margin:0, color:"#1a1a1a", fontSize:14, fontWeight:600 }}>Recent Evaluations</h3>
+            <button
               onClick={() => navigate("/dashboard/evaluate")}
               style={{
-                padding:"13px 24px",
-                display:"flex", alignItems:"center", gap:14,
-                borderBottom:"1px solid #f5f5f5",
-                cursor:"pointer", transition:"background 0.15s",
+                display:"flex", alignItems:"center", gap:4,
+                fontSize:12, color: G,
+                background:"transparent", border:"none",
+                cursor:"pointer", fontWeight:600,
               }}
-              onMouseEnter={e => e.currentTarget.style.background="#fafafa"}
-              onMouseLeave={e => e.currentTarget.style.background="transparent"}
             >
-              <div style={{
-                width:36, height:36, borderRadius:9,
-                background:"rgba(213,170,91,0.12)",
-                color: G, fontWeight:700, fontSize:14,
-                display:"flex", alignItems:"center", justifyContent:"center",
-                flexShrink:0, border:"1px solid rgba(213,170,91,0.2)",
-              }}>
-                {displayName[0]}
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ color:"#1a1a1a", fontSize:13, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{displayName}</div>
-                <div style={{ color:"#888", fontSize:11 }}>{displaySector}</div>
-              </div>
-              <span style={{
-                padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:600,
-                background: s.bg, color: s.color, border:`1px solid ${s.border}`,
-                whiteSpace:"nowrap",
-              }}>
-                {statusKey}
-              </span>
-              {ev.score != null ? (
-                <div style={{ display:"flex", alignItems:"center", gap:4, color: G, fontSize:13, fontWeight:700, width:36, justifyContent:"flex-end", flexShrink:0 }}>
-                  <Star size={11} style={{ fill: G, color: G }} />
-                  {ev.score}
-                </div>
-              ) : <div style={{ width:36 }} />}
+              New evaluation <ArrowRight size={12} />
+            </button>
+          </div>
+          {recentEvals.length === 0 && (
+            <div style={{ padding:"24px", textAlign:"center", color:"#aaa", fontSize:13 }}>
+              No evaluations yet.
             </div>
-          );
-        })}
+          )}
+          {recentEvals.map((ev) => {
+            const statusKey = ev.status || "Pending";
+            const s = STATUS_STYLE[statusKey] || STATUS_STYLE["Pending"];
+            const displayName = ev.startup_name || ev.name || "Unnamed";
+            const displaySector = ev.sector || ev.startup_sector || "";
+            return (
+              <div
+                key={ev.id || ev.name}
+                onClick={() => navigate("/dashboard/evaluate")}
+                style={{
+                  padding:"13px 24px",
+                  display:"flex", alignItems:"center", gap:14,
+                  borderBottom:"1px solid #f5f5f5",
+                  cursor:"pointer", transition:"background 0.15s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background="#fafafa"}
+                onMouseLeave={e => e.currentTarget.style.background="transparent"}
+              >
+                <div style={{
+                  width:36, height:36, borderRadius:9,
+                  background:"rgba(213,170,91,0.12)",
+                  color: G, fontWeight:700, fontSize:14,
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  flexShrink:0, border:"1px solid rgba(213,170,91,0.2)",
+                }}>
+                  {displayName[0]}
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ color:"#1a1a1a", fontSize:13, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{displayName}</div>
+                  <div style={{ color:"#888", fontSize:11 }}>{displaySector}</div>
+                </div>
+                <span style={{
+                  padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:600,
+                  background: s.bg, color: s.color, border:`1px solid ${s.border}`,
+                  whiteSpace:"nowrap",
+                }}>
+                  {statusKey}
+                </span>
+                {ev.score != null ? (
+                  <div style={{ display:"flex", alignItems:"center", gap:4, color: G, fontSize:13, fontWeight:700, width:36, justifyContent:"flex-end", flexShrink:0 }}>
+                    <Star size={11} style={{ fill: G, color: G }} />
+                    {ev.score}
+                  </div>
+                ) : <div style={{ width:36 }} />}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Startups by Sector – Horizontal Bar Chart ─────────── */}
+        <div style={{ ...card, padding: 22 }}>
+          <h3 style={{ margin:"0 0 18px", color:"#1a1a1a", fontSize:14, fontWeight:600 }}>
+            Startups by Sector
+          </h3>
+          {SECTORS.map(({ label, pct, color }) => (
+            <div key={label} style={{ marginBottom: 12 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: "#555" }}>{label}</span>
+                <span style={{ fontSize: 12, color: "#888", fontWeight: 600 }}>{pct}%</span>
+              </div>
+              <div style={{ height: 8, background: "#f0f0f0", borderRadius: 4, overflow: "hidden" }}>
+                <div style={{
+                  width: `${pct}%`, height: "100%",
+                  background: color, borderRadius: 4,
+                  transition: "width 0.6s ease",
+                }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Quick Actions ─────────────────────────────────────────── */}
+      <div style={{ marginBottom: 24 }}>
+        <h3 style={{ margin:"0 0 14px", color:"#1a1a1a", fontSize:15, fontWeight:600 }}>
+          Quick Actions
+        </h3>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:14 }}>
+          {QUICK_ACTIONS.map(({ label, desc, to, Icon, bg, fg, border }) => (
+            <Link key={to} to={to} style={{ textDecoration:"none" }}>
+              <div
+                style={{
+                  ...card, padding: 20,
+                  cursor: "pointer", transition: "all 0.2s",
+                  border: "1px solid #eeeeee",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = "rgba(213,170,91,0.4)";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(213,170,91,0.15)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = "#eeeeee";
+                  e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)";
+                }}
+              >
+                <div style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  background: bg, border: `1px solid ${border}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  marginBottom: 12,
+                }}>
+                  <Icon size={18} color={fg} />
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a", marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 12, color: "#888" }}>{desc}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
     </div>

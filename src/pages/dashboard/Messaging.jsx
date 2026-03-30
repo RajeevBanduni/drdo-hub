@@ -87,6 +87,52 @@ export default function Messaging() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeMessages]);
 
+  // Poll for new messages every 5s when a conversation is active
+  useEffect(() => {
+    if (!active) return;
+    const interval = setInterval(() => {
+      messageAPI.getMessages(active.id)
+        .then(data => {
+          const msgs = (data.messages || data || []).map(m => ({
+            id: m.id,
+            from: m.sender_name || 'Unknown',
+            self: m.sender_id === user?.id,
+            text: m.content,
+            time: fmtTime(m.created_at),
+            read: m.is_read,
+          }));
+          setActiveMessages(prev => {
+            if (msgs.length !== prev.length) return msgs;
+            return prev;
+          });
+        })
+        .catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [active?.id, user?.id]);
+
+  // Poll conversation list every 15s for unread counts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      messageAPI.listConversations()
+        .then(data => {
+          const list = (data.conversations || data || []).map(c => ({
+            ...c,
+            name: c.name || `Conversation #${c.id}`,
+            avatar: (c.name || 'C')[0],
+            lastMsg: c.last_message || '',
+            time: fmtTime(c.last_message_at || c.created_at),
+            unread: Number(c.unread_count) || 0,
+            online: false,
+            role: c.type === 'group' ? 'Group' : 'Direct',
+          }));
+          setConversations(list);
+        })
+        .catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const filteredConvs = conversations.filter(c => {
     const matchSearch = (c.name || '').toLowerCase().includes(search.toLowerCase()) ||
                         (c.lastMsg || '').toLowerCase().includes(search.toLowerCase());

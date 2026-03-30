@@ -24,3 +24,9 @@ body {
   -webkit-text-fill-color: #ffffff !important;
   caret-color: #ffffff;
 }
+
+/* Dashboard responsive fixes */
+@media (max-width: 768px) {
+  main > div { padding: 16px !important; }
+  main > div > div[style*="grid"] { gap: 10px !important; }
+}
