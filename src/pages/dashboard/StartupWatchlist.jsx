@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { watchlistAPI, startupAPI } from '../../services/api';
 import {
   Star, Plus, Trash2, Download, Share2, Search, Filter,
   ChevronRight, Rocket, Users, FolderPlus, X, Check,
@@ -15,61 +16,7 @@ const card = {
   boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
 };
 
-const ALL_STARTUPS = [
-  { id: 1,  name: 'ArmorTech AI',          sector: 'AI / ML',        score: 4.2, stage: 'Incubation',  status: 'Active',    deeptech: true  },
-  { id: 2,  name: 'DroneShield Systems',   sector: 'UAV',            score: 3.8, stage: 'Incubation',  status: 'On Hold',   deeptech: false },
-  { id: 3,  name: 'QuantumDefense',        sector: 'Quantum Tech',   score: 4.6, stage: 'Incubation',  status: 'Active',    deeptech: true  },
-  { id: 4,  name: 'CyberSentinel',         sector: 'Cybersecurity',  score: null,stage: 'Evaluation',  status: 'Pending',   deeptech: false },
-  { id: 5,  name: 'BioScan Technologies',  sector: 'BioTech',        score: 3.5, stage: 'Screening',   status: 'In Review', deeptech: true  },
-  { id: 6,  name: 'AeroVision Systems',    sector: 'Aerospace',      score: 4.0, stage: 'Selection',   status: 'Active',    deeptech: true  },
-  { id: 7,  name: 'NanoShield Materials',  sector: 'Nanotechnology', score: 3.9, stage: 'Onboarding',  status: 'Active',    deeptech: true  },
-  { id: 8,  name: 'RadarTech Solutions',   sector: 'Electronics',    score: 3.6, stage: 'Application', status: 'In Review', deeptech: false },
-  { id: 9,  name: 'CryptoSecure Labs',     sector: 'Cybersecurity',  score: 4.1, stage: 'Evaluation',  status: 'Active',    deeptech: true  },
-  { id: 10, name: 'SatComm Innovations',   sector: 'Space Tech',     score: 3.7, stage: 'Screening',   status: 'In Review', deeptech: false },
-];
-
-const INITIAL_LISTS = [
-  {
-    id: 1,
-    name: 'AI/ML Priority Watch',
-    description: 'Top AI startups for DRDO AI Challenge 2025',
-    visibility: 'internal',
-    createdBy: 'Dr. R. Sharma',
-    createdOn: '01 Mar 2025',
-    tags: ['AI', 'priority', 'Q2-2025'],
-    startupIds: [1, 9],
-  },
-  {
-    id: 2,
-    name: 'DeepTech Shortlist – Quantum',
-    description: 'Shortlisted quantum tech startups for QKD program',
-    visibility: 'restricted',
-    createdBy: 'Dr. A. Kapoor',
-    createdOn: '15 Feb 2025',
-    tags: ['quantum', 'deeptech', 'shortlist'],
-    startupIds: [3, 7],
-  },
-  {
-    id: 3,
-    name: 'Cybersecurity Watchlist',
-    description: 'Startups relevant to DRDO cyber defence initiatives',
-    visibility: 'internal',
-    createdBy: 'Dr. S. Mehta',
-    createdOn: '01 Apr 2025',
-    tags: ['cyber', 'security'],
-    startupIds: [4, 9],
-  },
-  {
-    id: 4,
-    name: 'Emerging Tech – Monitoring',
-    description: 'General monitoring list across all sectors',
-    visibility: 'public',
-    createdBy: 'Admin',
-    createdOn: '10 Jan 2025',
-    tags: ['general', 'monitoring'],
-    startupIds: [2, 5, 6, 8, 10],
-  },
-];
+// Mock data removed — data is fetched from API
 
 const VIS_STYLE = {
   public:     { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0',              icon: Globe, label: 'Public' },
@@ -85,41 +32,94 @@ const STATUS_STYLE = {
 };
 
 export default function StartupWatchlist() {
-  const [lists, setLists]           = useState(INITIAL_LISTS);
+  const [lists, setLists]           = useState([]);
+  const [allStartups, setAllStartups] = useState([]);
   const [selected, setSelected]     = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showAdd, setShowAdd]       = useState(false);
   const [search, setSearch]         = useState('');
+  const [loading, setLoading]       = useState(true);
   const [newList, setNewList]       = useState({ name: '', description: '', visibility: 'internal', tags: '' });
+
+  useEffect(() => {
+    Promise.all([watchlistAPI.list(), startupAPI.list()])
+      .then(([wData, sData]) => {
+        const watchlists = wData.watchlists || wData || [];
+        const normalizedLists = watchlists.map(w => ({
+          id: w.id,
+          name: w.name || '',
+          description: w.description || '',
+          visibility: w.visibility || 'internal',
+          createdBy: w.created_by_name || w.created_by || 'Admin',
+          createdOn: w.created_at ? new Date(w.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+          tags: w.tags || [],
+          startupIds: (w.startups || []).map(s => s.id || s.startup_id || s),
+        }));
+        setLists(normalizedLists);
+
+        const startups = sData.startups || sData || [];
+        const normalizedStartups = startups.map(s => ({
+          id: s.id,
+          name: s.name || '',
+          sector: s.sector || '',
+          score: s.score ? (s.score / 20) : null,
+          stage: s.stage || s.pipeline_stage || 'Application',
+          status: s.status || 'Pending',
+          deeptech: s.deeptech || false,
+        }));
+        setAllStartups(normalizedStartups);
+      })
+      .catch(() => { setLists([]); setAllStartups([]); })
+      .finally(() => setLoading(false));
+  }, []);
 
   const selectedList = lists.find(l => l.id === selected);
   const listStartups = selectedList
-    ? ALL_STARTUPS.filter(s => selectedList.startupIds.includes(s.id))
+    ? allStartups.filter(s => selectedList.startupIds.includes(s.id))
     : [];
 
   const availableToAdd = selectedList
-    ? ALL_STARTUPS.filter(s => !selectedList.startupIds.includes(s.id))
+    ? allStartups.filter(s => !selectedList.startupIds.includes(s.id))
     : [];
 
   const createList = () => {
     if (!newList.name.trim()) return;
-    const created = {
-      id: Date.now(),
+    const payload = {
       name: newList.name.trim(),
       description: newList.description.trim(),
       visibility: newList.visibility,
-      createdBy: 'You',
-      createdOn: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       tags: newList.tags.split(',').map(t => t.trim()).filter(Boolean),
-      startupIds: [],
     };
-    setLists(prev => [...prev, created]);
+    watchlistAPI.create(payload)
+      .then(data => {
+        const w = data.watchlist || data;
+        const created = {
+          id: w.id || Date.now(),
+          name: w.name || payload.name,
+          description: w.description || payload.description,
+          visibility: w.visibility || payload.visibility,
+          createdBy: 'You',
+          createdOn: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+          tags: w.tags || payload.tags,
+          startupIds: [],
+        };
+        setLists(prev => [...prev, created]);
+        setSelected(created.id);
+      })
+      .catch(() => {
+        // Fallback local add
+        const created = { id: Date.now(), ...payload, createdBy: 'You', createdOn: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), startupIds: [] };
+        setLists(prev => [...prev, created]);
+        setSelected(created.id);
+      });
     setNewList({ name: '', description: '', visibility: 'internal', tags: '' });
     setShowCreate(false);
-    setSelected(created.id);
   };
 
   const removeStartup = (startupId) => {
+    if (selectedList) {
+      watchlistAPI.removeStartup(selectedList.id, startupId).catch(() => {});
+    }
     setLists(prev => prev.map(l => l.id === selected
       ? { ...l, startupIds: l.startupIds.filter(id => id !== startupId) }
       : l
@@ -127,6 +127,9 @@ export default function StartupWatchlist() {
   };
 
   const addStartup = (startupId) => {
+    if (selectedList) {
+      watchlistAPI.addStartup(selectedList.id, startupId).catch(() => {});
+    }
     setLists(prev => prev.map(l => l.id === selected
       ? { ...l, startupIds: [...l.startupIds, startupId] }
       : l
@@ -134,9 +137,16 @@ export default function StartupWatchlist() {
   };
 
   const deleteList = (id) => {
+    watchlistAPI.remove(id).catch(() => {});
     setLists(prev => prev.filter(l => l.id !== id));
     if (selected === id) setSelected(null);
   };
+
+  if (loading) return (
+    <div style={{ padding: 28, background: '#f5f5f5', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: '#888', fontSize: 14 }}>Loading watchlists...</p>
+    </div>
+  );
 
   const filteredLists = lists.filter(l =>
     l.name.toLowerCase().includes(search.toLowerCase()) ||

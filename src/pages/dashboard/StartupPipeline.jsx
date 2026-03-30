@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { startupAPI } from '../../services/api';
 import {
   ArrowRight, CheckCircle2, Clock, Circle, XCircle,
   ChevronRight, Rocket, Calendar, Star, Filter,
@@ -27,131 +28,27 @@ const STAGES = [
   { id: 'graduation',   label: 'Graduation',    icon: Award },
 ];
 
-const STARTUPS = [
-  {
-    id: 1,
-    name: 'ArmorTech AI',
-    sector: 'AI / ML',
-    score: 4.2,
-    stage: 'incubation',
-    stageDate: '01 Jan 2025',
-    status: 'Active',
-    program: 'DRDO AI Challenge 2025',
-    pm: 'Dr. R. Sharma',
-    journey: [
-      { stage: 'application',  date: '01 Sep 2024', note: 'Application submitted via portal', done: true },
-      { stage: 'screening',    date: '15 Sep 2024', note: 'Cleared initial screening – strong AI/ML capability', done: true },
-      { stage: 'evaluation',   date: '01 Oct 2024', note: 'OpenI 8-Vector score: 4.2/5 (Recommended)', done: true },
-      { stage: 'selection',    date: '15 Oct 2024', note: 'Selected for Phase 1 incubation', done: true },
-      { stage: 'onboarding',   date: '01 Nov 2024', note: 'NDA signed, lab access granted, mentor assigned', done: true },
-      { stage: 'incubation',   date: '01 Jan 2025', note: 'Phase 1 active – prototype delivery in progress', done: true },
-      { stage: 'graduation',   date: 'Jun 2025',    note: 'Expected graduation after field trial success', done: false },
-    ],
-    milestones: [
-      { name: 'Prototype Delivery',   date: '15 Feb 2025', done: true,  note: 'Delivered on time' },
-      { name: 'Lab Evaluation',       date: '31 Mar 2025', done: true,  note: 'Passed with 94% score' },
-      { name: 'Field Trial Phase A',  date: '30 Apr 2025', done: false, note: 'Scheduled' },
-      { name: 'Final Report',         date: '30 Jun 2025', done: false, note: 'Pending' },
-    ],
-  },
-  {
-    id: 2,
-    name: 'DroneShield Systems',
-    sector: 'UAV',
-    score: 3.8,
-    stage: 'incubation',
-    stageDate: '15 Feb 2025',
-    status: 'On Hold',
-    program: 'DRDO UAV Program',
-    pm: 'Dr. P. Nair',
-    journey: [
-      { stage: 'application',  date: '10 Oct 2024', note: 'Application submitted', done: true },
-      { stage: 'screening',    date: '25 Oct 2024', note: 'Passed screening', done: true },
-      { stage: 'evaluation',   date: '10 Nov 2024', note: 'Score: 3.8/5 – Under Review', done: true },
-      { stage: 'selection',    date: '01 Dec 2024', note: 'Selected with conditions', done: true },
-      { stage: 'onboarding',   date: '15 Jan 2025', note: 'Onboarding completed', done: true },
-      { stage: 'incubation',   date: '15 Feb 2025', note: 'On hold pending hardware procurement approval', done: true },
-      { stage: 'graduation',   date: 'Aug 2025',    note: 'Expected', done: false },
-    ],
-    milestones: [
-      { name: 'Design Freeze',        date: '28 Feb 2025', done: true,  note: 'Completed' },
-      { name: 'Hardware Procurement', date: '30 Mar 2025', done: false, note: 'Blocked – approval pending' },
-      { name: 'Integration Test',     date: '30 Jun 2025', done: false, note: 'Pending' },
-    ],
-  },
-  {
-    id: 3,
-    name: 'QuantumDefense',
-    sector: 'Quantum Tech',
-    score: 4.6,
-    stage: 'incubation',
-    stageDate: '01 Oct 2024',
-    status: 'Active',
-    program: 'DRDO Quantum Initiative',
-    pm: 'Dr. A. Kapoor',
-    journey: [
-      { stage: 'application',  date: '01 Jun 2024', note: 'Application received', done: true },
-      { stage: 'screening',    date: '15 Jun 2024', note: 'Fast-tracked – exceptional DeepTech score', done: true },
-      { stage: 'evaluation',   date: '01 Jul 2024', note: 'Score: 4.6/5 – Highly Recommended', done: true },
-      { stage: 'selection',    date: '15 Jul 2024', note: 'Selected for flagship QKD project', done: true },
-      { stage: 'onboarding',   date: '01 Aug 2024', note: 'Top-secret clearance initiated, lab access granted', done: true },
-      { stage: 'incubation',   date: '01 Oct 2024', note: '82% progress – QKD pilot deployment phase', done: true },
-      { stage: 'graduation',   date: 'Sep 2025',    note: 'On track for graduation', done: false },
-    ],
-    milestones: [
-      { name: 'Lab Setup',            date: '01 Dec 2024', done: true,  note: 'Completed ahead of schedule' },
-      { name: 'Protocol Validation',  date: '28 Feb 2025', done: true,  note: 'All protocols validated' },
-      { name: 'Pilot Deployment',     date: '30 Jun 2025', done: false, note: 'Scheduled' },
-      { name: 'Security Audit',       date: '31 Aug 2025', done: false, note: 'Pending' },
-      { name: 'Final Handover',       date: '30 Sep 2025', done: false, note: 'Pending' },
-    ],
-  },
-  {
-    id: 4,
-    name: 'CyberSentinel',
-    sector: 'Cybersecurity',
-    score: null,
-    stage: 'evaluation',
-    stageDate: '01 Apr 2025',
-    status: 'Pending',
-    program: 'DRDO Cyber Security Program',
-    pm: 'Dr. S. Mehta',
-    journey: [
-      { stage: 'application',  date: '01 Mar 2025', note: 'Application submitted', done: true },
-      { stage: 'screening',    date: '15 Mar 2025', note: 'Passed initial screening', done: true },
-      { stage: 'evaluation',   date: '01 Apr 2025', note: 'Evaluation in progress – awaiting OpenI score', done: true },
-      { stage: 'selection',    date: 'Apr 2025',    note: 'Pending evaluation outcome', done: false },
-      { stage: 'onboarding',   date: 'May 2025',    note: 'Pending', done: false },
-      { stage: 'incubation',   date: 'Jun 2025',    note: 'Pending', done: false },
-      { stage: 'graduation',   date: 'Mar 2026',    note: 'Expected', done: false },
-    ],
-    milestones: [
-      { name: 'Evaluation Complete',  date: '15 Apr 2025', done: false, note: 'In progress' },
-      { name: 'Requirement Sign-off', date: '30 Apr 2025', done: false, note: 'Pending selection' },
-    ],
-  },
-  {
-    id: 5,
-    name: 'BioScan Technologies',
-    sector: 'BioTech',
-    score: 3.5,
-    stage: 'screening',
-    stageDate: '10 Apr 2025',
-    status: 'In Review',
-    program: 'DRDO Bio-Defence Program',
-    pm: 'Unassigned',
-    journey: [
-      { stage: 'application',  date: '01 Apr 2025', note: 'Application received', done: true },
-      { stage: 'screening',    date: '10 Apr 2025', note: 'Under screening', done: true },
-      { stage: 'evaluation',   date: 'Apr 2025',    note: 'Pending', done: false },
-      { stage: 'selection',    date: 'May 2025',    note: 'Pending', done: false },
-      { stage: 'onboarding',   date: 'Jun 2025',    note: 'Pending', done: false },
-      { stage: 'incubation',   date: 'Aug 2025',    note: 'Pending', done: false },
-      { stage: 'graduation',   date: 'Feb 2026',    note: 'Expected', done: false },
-    ],
-    milestones: [],
-  },
-];
+// Pipeline stage mapping from backend pipeline_stage values to stage IDs
+const PIPELINE_STAGE_MAP = {
+  application: 'application',
+  screening: 'screening',
+  evaluation: 'evaluation',
+  selection: 'selection',
+  onboarding: 'onboarding',
+  incubation: 'incubation',
+  graduation: 'graduation',
+  // Also handle capitalised or alternate forms from backend
+  Application: 'application',
+  Screening: 'screening',
+  Evaluation: 'evaluation',
+  Selection: 'selection',
+  Onboarding: 'onboarding',
+  Incubation: 'incubation',
+  Graduation: 'graduation',
+  Applied: 'application',
+  Active: 'incubation',
+  Incubated: 'incubation',
+};
 
 const STATUS_STYLE = {
   Active:     { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
@@ -167,8 +64,44 @@ export default function StartupPipeline() {
   const [selected, setSelected] = useState(null);
   const [search, setSearch]     = useState('');
   const [stageFilter, setStageFilter] = useState('All');
+  const [startups, setStartups] = useState([]);
+  const [loading, setLoading]   = useState(true);
 
-  const filtered = STARTUPS.filter(s => {
+  useEffect(() => {
+    startupAPI.list()
+      .then(data => {
+        const rows = data.startups || data || [];
+        const normalized = rows.map(s => ({
+          id: s.id,
+          name: s.name || '',
+          sector: s.sector || '',
+          score: s.score ? (s.score / 20) : null, // convert 0-100 to 0-5 for display
+          stage: PIPELINE_STAGE_MAP[s.pipeline_stage] || PIPELINE_STAGE_MAP[s.status] || 'application',
+          stageDate: s.updated_at ? new Date(s.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+          status: s.status || 'Pending',
+          program: s.drdo_cluster || 'DRDO Program',
+          pm: 'Assigned',
+          journey: STAGES.map(st => ({
+            stage: st.id,
+            date: '',
+            note: '',
+            done: STAGES.findIndex(x => x.id === st.id) <= STAGES.findIndex(x => x.id === (PIPELINE_STAGE_MAP[s.pipeline_stage] || PIPELINE_STAGE_MAP[s.status] || 'application')),
+          })),
+          milestones: [],
+        }));
+        setStartups(normalized);
+      })
+      .catch(() => setStartups([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div style={{ padding: 28, background: '#f5f5f5', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: '#888', fontSize: 14 }}>Loading pipeline...</p>
+    </div>
+  );
+
+  const filtered = startups.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
                         s.sector.toLowerCase().includes(search.toLowerCase());
     const matchStage = stageFilter === 'All' || s.stage === stageFilter;
@@ -219,9 +152,9 @@ export default function StartupPipeline() {
         <button onClick={() => setStageFilter('All')} style={{
           padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, border: '1.5px solid', cursor: 'pointer',
           background: stageFilter === 'All' ? G : '#fff', color: stageFilter === 'All' ? '#fff' : '#555', borderColor: stageFilter === 'All' ? G : '#eee',
-        }}>All ({STARTUPS.length})</button>
+        }}>All ({startups.length})</button>
         {STAGES.map(s => {
-          const count = STARTUPS.filter(st => st.stage === s.id).length;
+          const count = startups.filter(st => st.stage === s.id).length;
           return count > 0 ? (
             <button key={s.id} onClick={() => setStageFilter(s.id === stageFilter ? 'All' : s.id)} style={{
               padding: '5px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, border: '1.5px solid', cursor: 'pointer',

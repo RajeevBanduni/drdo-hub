@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { govtIntegrationAPI } from '../../services/api';
 import {
   Globe, Link2, CheckCircle2, AlertCircle, Clock, RefreshCw,
   Shield, Database, Zap, ArrowRight, ExternalLink, Settings,
@@ -15,128 +16,7 @@ const card = {
   boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
 };
 
-const INTEGRATIONS = [
-  {
-    id: 1,
-    name: 'Startup India (DPIIT)',
-    description: 'Verify startup registration, DPIIT recognition status, and fetch startup profile data from the official Startup India portal.',
-    status: 'Connected',
-    category: 'Startup Verification',
-    endpoint: 'https://api.startupindia.gov.in/v1',
-    auth: 'OAuth 2.0',
-    lastSync: '10 min ago',
-    callsToday: 142,
-    logo: 'SI',
-    color: '#ea580c',
-    bg: '#fff7ed',
-    dataPoints: ['Registration Status', 'DPIIT Number', 'Sector', 'Stage', 'Recognition Date'],
-  },
-  {
-    id: 2,
-    name: 'MCA – Ministry of Corporate Affairs',
-    description: 'Validate CIN/LLPIN, director details, shareholding patterns, and financial filings via MCA21 API.',
-    status: 'Connected',
-    category: 'Corporate Verification',
-    endpoint: 'https://api.mca.gov.in/v2',
-    auth: 'API Key',
-    lastSync: '25 min ago',
-    callsToday: 87,
-    logo: 'MC',
-    color: '#0284c7',
-    bg: '#f0f9ff',
-    dataPoints: ['CIN/LLPIN', 'Director Details', 'Shareholding', 'Balance Sheet', 'Filing Status'],
-  },
-  {
-    id: 3,
-    name: 'GSTN – GST Network',
-    description: 'Validate GSTIN, fetch return filing history, and verify business turnover data for financial due diligence.',
-    status: 'Connected',
-    category: 'Tax Verification',
-    endpoint: 'https://api.gst.gov.in/v1',
-    auth: 'API Key + OTP',
-    lastSync: '1 hr ago',
-    callsToday: 53,
-    logo: 'GS',
-    color: '#16a34a',
-    bg: '#f0fdf4',
-    dataPoints: ['GSTIN Status', 'Filing History', 'Annual Turnover', 'Business Type', 'Registration Date'],
-  },
-  {
-    id: 4,
-    name: 'UDYAM – MSME Registration',
-    description: 'Verify MSME/UDYAM registration for SME startups and fetch enterprise classification details.',
-    status: 'Pending Setup',
-    category: 'MSME Verification',
-    endpoint: 'https://udyamregistration.gov.in/api/v1',
-    auth: 'API Key',
-    lastSync: 'Never',
-    callsToday: 0,
-    logo: 'UD',
-    color: '#9333ea',
-    bg: '#fdf4ff',
-    dataPoints: ['UDYAM Number', 'Enterprise Category', 'Investment', 'Turnover', 'NIC Code'],
-  },
-  {
-    id: 5,
-    name: 'MeitY – Startup Hub',
-    description: 'Access MeitY startup programs, track participation in government tech challenges, and sync startup data.',
-    status: 'Pending Setup',
-    category: 'Government Portal',
-    endpoint: 'https://startuphub.meity.gov.in/api/v1',
-    auth: 'OAuth 2.0',
-    lastSync: 'Never',
-    callsToday: 0,
-    logo: 'Me',
-    color: '#dc2626',
-    bg: '#fef2f2',
-    dataPoints: ['Program Participation', 'Challenge Results', 'Funding Received', 'Startup Profile'],
-  },
-  {
-    id: 6,
-    name: 'DigiLocker API',
-    description: 'Allow startups to share verified documents directly from DigiLocker — certificates, registrations, patents.',
-    status: 'Connected',
-    category: 'Document Verification',
-    endpoint: 'https://api.digitallocker.gov.in/public/oauth2/1/token',
-    auth: 'OAuth 2.0',
-    lastSync: '3 hrs ago',
-    callsToday: 29,
-    logo: 'DL',
-    color: '#0284c7',
-    bg: '#f0f9ff',
-    dataPoints: ['Aadhaar-linked Documents', 'Certificates', 'Registrations', 'Patents'],
-  },
-  {
-    id: 7,
-    name: 'ISRO Tech Transfer',
-    description: 'Share spacetech startup intelligence with ISRO for collaborative innovation and national coordination.',
-    status: 'Inactive',
-    category: 'Inter-agency',
-    endpoint: 'Classified',
-    auth: 'Mutual TLS',
-    lastSync: '7 days ago',
-    callsToday: 0,
-    logo: 'IS',
-    color: '#64748b',
-    bg: '#f8fafc',
-    dataPoints: ['SpaceTech Startups', 'Technology Profiles', 'Collaboration Flags'],
-  },
-  {
-    id: 8,
-    name: 'DAE – Dept. of Atomic Energy',
-    description: 'Coordinate dual-use technology startups relevant to atomic energy and nuclear materials research.',
-    status: 'Inactive',
-    category: 'Inter-agency',
-    endpoint: 'Classified',
-    auth: 'Mutual TLS',
-    lastSync: 'Never',
-    callsToday: 0,
-    logo: 'DA',
-    color: '#64748b',
-    bg: '#f8fafc',
-    dataPoints: ['Nuclear Material Startups', 'Dual-use Technologies'],
-  },
-];
+// INTEGRATIONS are loaded from API
 
 const STATUS_STYLE = {
   Connected:       { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0',              icon: CheckCircle2 },
@@ -148,14 +28,53 @@ const STATUS_STYLE = {
 export default function GovtAPIIntegrations() {
   const [selected, setSelected] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [integrations, setIntegrations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = ['All', ...new Set(INTEGRATIONS.map(i => i.category))];
-  const filtered = INTEGRATIONS.filter(i => categoryFilter === 'All' || i.category === categoryFilter);
+  // Default color palette for integrations
+  const DEFAULT_COLORS = ['#ea580c', '#0284c7', '#16a34a', '#9333ea', '#dc2626', '#0284c7', '#64748b', '#64748b'];
+  const DEFAULT_BGS = ['#fff7ed', '#f0f9ff', '#f0fdf4', '#fdf4ff', '#fef2f2', '#f0f9ff', '#f8fafc', '#f8fafc'];
 
-  const connected   = INTEGRATIONS.filter(i => i.status === 'Connected').length;
-  const totalCalls  = INTEGRATIONS.reduce((s, i) => s + i.callsToday, 0);
+  useEffect(() => {
+    govtIntegrationAPI.list()
+      .then(data => {
+        const items = data.integrations || data || [];
+        const normalized = items.map((integ, idx) => ({
+          id: integ.id,
+          name: integ.name || '',
+          description: integ.description || '',
+          status: integ.status || 'Inactive',
+          category: integ.category || 'Government Portal',
+          endpoint: integ.endpoint || integ.api_endpoint || '',
+          auth: integ.auth || integ.auth_method || 'API Key',
+          lastSync: integ.last_sync || integ.last_synced_at || 'Never',
+          callsToday: integ.calls_today || integ.api_calls_today || 0,
+          logo: integ.logo || (integ.name ? integ.name.split(' ').map(w => w[0]).join('').slice(0, 2) : '??'),
+          color: integ.color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
+          bg: integ.bg || DEFAULT_BGS[idx % DEFAULT_BGS.length],
+          dataPoints: integ.data_points || integ.dataPoints || [],
+        }));
+        setIntegrations(normalized);
+      })
+      .catch(() => setIntegrations([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-  if (selected) return <IntegrationDetail integration={selected} onBack={() => setSelected(null)} />;
+  if (loading) return (
+    <div style={{ padding: 28, background: '#f5f5f5', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: '#888', fontSize: 14 }}>Loading integrations...</p>
+    </div>
+  );
+
+  const categories = ['All', ...new Set(integrations.map(i => i.category))];
+  const filtered = integrations.filter(i => categoryFilter === 'All' || i.category === categoryFilter);
+
+  const connected   = integrations.filter(i => i.status === 'Connected').length;
+  const totalCalls  = integrations.reduce((s, i) => s + (i.callsToday || 0), 0);
+
+  if (selected) return <IntegrationDetail integration={selected} onBack={() => setSelected(null)} onSync={(id) => {
+    govtIntegrationAPI.sync(id).catch(() => {});
+  }} />;
 
   return (
     <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
@@ -178,9 +97,9 @@ export default function GovtAPIIntegrations() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 22 }}>
         {[
-          { label: 'Total APIs',    value: INTEGRATIONS.length, icon: Globe,         bg: '#fff8ec', fg: G },
+          { label: 'Total APIs',    value: integrations.length, icon: Globe,         bg: '#fff8ec', fg: G },
           { label: 'Connected',     value: connected,           icon: CheckCircle2,  bg: '#f0fdf4', fg: '#16a34a' },
-          { label: 'Pending Setup', value: INTEGRATIONS.filter(i => i.status === 'Pending Setup').length, icon: Clock, bg: '#fff8ec', fg: '#ea580c' },
+          { label: 'Pending Setup', value: integrations.filter(i => i.status === 'Pending Setup').length, icon: Clock, bg: '#fff8ec', fg: '#ea580c' },
           { label: "Today's Calls", value: totalCalls,          icon: Activity,      bg: '#f0f9ff', fg: '#0284c7' },
         ].map(({ label, value, icon: Icon, bg, fg }) => (
           <div key={label} style={{ ...card, padding: 16 }}>
@@ -262,7 +181,7 @@ export default function GovtAPIIntegrations() {
   );
 }
 
-function IntegrationDetail({ integration: integ, onBack }) {
+function IntegrationDetail({ integration: integ, onBack, onSync }) {
   const ss = STATUS_STYLE[integ.status] || STATUS_STYLE['Inactive'];
   const SIcon = ss.icon;
 
@@ -290,7 +209,7 @@ function IntegrationDetail({ integration: integ, onBack }) {
             )}
             {integ.status === 'Connected' && (
               <>
-                <button style={{ padding: '8px 14px', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <button onClick={() => onSync && onSync(integ.id)} style={{ padding: '8px 14px', background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <RefreshCw size={11} /> Sync Now
                 </button>
                 <button style={{ padding: '8px 14px', background: '#f5f5f5', color: '#555', border: '1px solid #eee', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>

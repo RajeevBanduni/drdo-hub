@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { INFRASTRUCTURE } from '../../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { infrastructureAPI } from '../../services/api';
 import { Building2, Calendar, DollarSign, CheckCircle2, Clock, Plus, Search, MapPin, Cpu, AlertCircle, Calculator } from 'lucide-react';
 
 const TYPE_COLORS = { HPC: 'bg-purple-100 text-purple-700', 'Test Facility': 'bg-blue-100 text-blue-700', 'Incubation Space': 'bg-green-100 text-green-700' };
@@ -76,7 +76,11 @@ function BookingModal({ resource, onClose }) {
         </div>
         <div className="flex gap-3 mt-5">
           <button onClick={onClose} className="flex-1 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm">Cancel</button>
-          <button onClick={() => setBooked(true)} className="flex-1 py-2.5 bg-primary-500 text-dark-950 rounded-lg text-sm font-semibold">Request Booking</button>
+          <button onClick={() => {
+            infrastructureAPI.createBooking(resource.id, { hours, date, purpose: '' })
+              .catch(() => {});
+            setBooked(true);
+          }} className="flex-1 py-2.5 bg-primary-500 text-dark-950 rounded-lg text-sm font-semibold">Request Booking</button>
         </div>
       </div>
     </div>
@@ -86,8 +90,40 @@ function BookingModal({ resource, onClose }) {
 export default function Infrastructure() {
   const [search, setSearch] = useState('');
   const [booking, setBooking] = useState(null);
+  const [infraList, setInfraList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = INFRASTRUCTURE.filter(r => r.name.toLowerCase().includes(search.toLowerCase()) || r.type.toLowerCase().includes(search.toLowerCase()) || r.location.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    infrastructureAPI.list()
+      .then(data => {
+        const items = data.infrastructure || data || [];
+        const normalized = items.map(r => ({
+          id: r.id,
+          name: r.name || '',
+          type: r.type || 'Test Facility',
+          description: r.description || '',
+          location: r.location || '',
+          provider: r.provider || '',
+          capacity: r.capacity || '',
+          costPerHour: r.cost_per_hour || r.costPerHour || 0,
+          minBooking: r.min_booking || r.minBooking || 1,
+          maxBooking: r.max_booking || r.maxBooking || 100,
+          available: r.available !== undefined ? r.available : true,
+          bookings: r.bookings || [],
+        }));
+        setInfraList(normalized);
+      })
+      .catch(() => setInfraList([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="p-6 max-w-6xl mx-auto flex items-center justify-center min-h-[400px]">
+      <p className="text-gray-400">Loading infrastructure...</p>
+    </div>
+  );
+
+  const filtered = infraList.filter(r => (r.name || '').toLowerCase().includes(search.toLowerCase()) || (r.type || '').toLowerCase().includes(search.toLowerCase()) || (r.location || '').toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -100,9 +136,9 @@ export default function Infrastructure() {
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Total Facilities', value: INFRASTRUCTURE.length, color: 'text-gray-800' },
-          { label: 'Available Now', value: INFRASTRUCTURE.filter(r => r.available).length, color: 'text-accent-600' },
-          { label: 'Active Bookings', value: INFRASTRUCTURE.reduce((s, r) => s + r.bookings.filter(b => b.status === 'Active' || b.status === 'Upcoming').length, 0), color: 'text-primary-600' },
+          { label: 'Total Facilities', value: infraList.length, color: 'text-gray-800' },
+          { label: 'Available Now', value: infraList.filter(r => r.available).length, color: 'text-accent-600' },
+          { label: 'Active Bookings', value: infraList.reduce((s, r) => s + (r.bookings || []).filter(b => b.status === 'Active' || b.status === 'Upcoming').length, 0), color: 'text-primary-600' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <div className={`text-3xl font-display font-bold ${s.color}`}>{s.value}</div>

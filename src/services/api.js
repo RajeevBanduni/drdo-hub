@@ -122,6 +122,63 @@ export const smeAPI = {
   update: (id, data)    => put(`/sme/${id}`, data),
 };
 
+// ── IPR Records ───────────────────────────────────────────────
+export const iprAPI = {
+  list:   (params = {}) => get(`/ipr?${new URLSearchParams(params)}`),
+  get:    (id)          => get(`/ipr/${id}`),
+  create: (data)        => post('/ipr', data),
+  update: (id, data)    => put(`/ipr/${id}`, data),
+};
+
+// ── Infrastructure ────────────────────────────────────────────
+export const infrastructureAPI = {
+  list:          (params = {}) => get(`/infrastructure?${new URLSearchParams(params)}`),
+  get:           (id)          => get(`/infrastructure/${id}`),
+  create:        (data)        => post('/infrastructure', data),
+  createBooking: (id, data)    => post(`/infrastructure/${id}/bookings`, data),
+};
+
+// ── Knowledge Base ────────────────────────────────────────────
+export const knowledgeAPI = {
+  list:   (params = {}) => get(`/knowledge?${new URLSearchParams(params)}`),
+  get:    (id)          => get(`/knowledge/${id}`),
+  create: (data)        => post('/knowledge', data),
+  update: (id, data)    => put(`/knowledge/${id}`, data),
+};
+
+// ── Documents ─────────────────────────────────────────────────
+export const documentAPI = {
+  list:   (params = {}) => get(`/documents?${new URLSearchParams(params)}`),
+  get:    (id)          => get(`/documents/${id}`),
+  create: (data)        => post('/documents', data),
+  update: (id, data)    => put(`/documents/${id}`, data),
+  remove: (id)          => del(`/documents/${id}`),
+};
+
+// ── Watchlists ────────────────────────────────────────────────
+export const watchlistAPI = {
+  list:           ()           => get('/watchlists'),
+  get:            (id)         => get(`/watchlists/${id}`),
+  create:         (data)       => post('/watchlists', data),
+  remove:         (id)         => del(`/watchlists/${id}`),
+  addStartup:     (id, sid)    => post(`/watchlists/${id}/startups`, { startup_id: sid }),
+  removeStartup:  (id, sid)    => del(`/watchlists/${id}/startups/${sid}`),
+};
+
+// ── DeepTech Assessments ──────────────────────────────────────
+export const deeptechAPI = {
+  list:   (params = {}) => get(`/deeptech?${new URLSearchParams(params)}`),
+  get:    (id)          => get(`/deeptech/${id}`),
+  create: (data)        => post('/deeptech', data),
+};
+
+// ── Govt API Integrations ─────────────────────────────────────
+export const govtIntegrationAPI = {
+  list: ()    => get('/integrations'),
+  sync: (id)  => post(`/integrations/${id}/sync`),
+  logs: ()    => get('/integrations/logs'),
+};
+
 // ── Crawling ────────────────────────────────────────────────
 export const crawlAPI = {
   stats:           ()                => get('/crawl/stats'),

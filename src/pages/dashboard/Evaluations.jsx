@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { PROGRAMS, STARTUPS } from '../../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { evaluationAPI, startupAPI } from '../../services/api';
 import { Target, ChevronRight, Plus, Filter, Search, Star, Users, Calendar, CheckCircle2, Clock, AlertCircle, BarChart3, Lock, Eye, Award } from 'lucide-react';
 
 const STATUS_CONFIG = {
@@ -61,13 +61,13 @@ function ProgramCard({ program, onClick }) {
   );
 }
 
-function EvaluationDetail({ program, onClose }) {
+function EvaluationDetail({ program, onClose, allStartups = [] }) {
   const [activeStage, setActiveStage] = useState('applications');
   const [scores, setScores] = useState({});
   const [revealed, setRevealed] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
 
-  const applicants = STARTUPS.slice(0, program.applications > STARTUPS.length ? STARTUPS.length : 5);
+  const applicants = allStartups.slice(0, Math.min(program.applications || 5, allStartups.length || 5));
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -169,7 +169,7 @@ function EvaluationDetail({ program, onClose }) {
               </button>
             </div>
             <div className="grid grid-cols-1 gap-4">
-              {STARTUPS.slice(0, 3).map(startup => (
+              {allStartups.slice(0, 3).map(startup => (
                 <div key={startup.id} className="bg-white rounded-2xl border border-gray-200 p-5">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-dark-950 font-bold">{startup.logo}</div>
@@ -229,7 +229,7 @@ function EvaluationDetail({ program, onClose }) {
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3">
-              {STARTUPS.slice(0, program.shortlisted).map((startup, i) => (
+              {allStartups.slice(0, program.shortlisted || 3).map((startup, i) => (
                 <div key={startup.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
                   <div className="text-sm font-bold text-gray-400 w-5">#{i + 1}</div>
                   <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center text-dark-950 font-bold flex-shrink-0">{startup.logo}</div>
@@ -259,7 +259,7 @@ function EvaluationDetail({ program, onClose }) {
             <h2 className="font-display font-bold text-gray-900 mb-4">L3 Committee Review Panel</h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 space-y-4">
-                {STARTUPS.slice(0, 3).map(startup => (
+                {allStartups.slice(0, 3).map(startup => (
                   <div key={startup.id} className="bg-white rounded-xl border border-gray-200 p-5">
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center text-dark-950 font-bold">{startup.logo}</div>
@@ -351,10 +351,87 @@ export default function Evaluations() {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [search, setSearch] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [programs, setPrograms] = useState([]);
+  const [allStartups, setAllStartups] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  if (selectedProgram) return <EvaluationDetail program={selectedProgram} onClose={() => setSelectedProgram(null)} />;
+  useEffect(() => {
+    Promise.all([evaluationAPI.list(), startupAPI.list()])
+      .then(([evalData, startData]) => {
+        const evals = evalData.evaluations || evalData || [];
+        // Group evaluations by startup or treat as program-like entries
+        // Since backend stores evaluations per startup, we build program cards from them
+        const programMap = {};
+        evals.forEach(ev => {
+          const key = ev.program_name || ev.cohort_name || 'General Evaluation';
+          if (!programMap[key]) {
+            programMap[key] = {
+              id: ev.id,
+              name: key,
+              description: ev.notes || ev.description || 'DRDO evaluation program',
+              status: ev.status === 'completed' ? 'Completed' : 'Open',
+              type: ev.type || 'Challenge',
+              lab: ev.lab || 'DRDO HQ',
+              applications: 0,
+              shortlisted: 0,
+              selected: 0,
+              closes: ev.created_at ? new Date(ev.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD',
+              criteria: [
+                { name: 'Technical Innovation', weight: 25 },
+                { name: 'Defence Relevance', weight: 20 },
+                { name: 'Team Capability', weight: 20 },
+                { name: 'Market Potential', weight: 15 },
+                { name: 'TRL & Readiness', weight: 20 },
+              ],
+            };
+          }
+          programMap[key].applications += 1;
+          if (ev.status === 'shortlisted' || ev.status === 'selected') programMap[key].shortlisted += 1;
+          if (ev.status === 'selected') programMap[key].selected += 1;
+        });
+        let programList = Object.values(programMap);
+        // If no evaluations, create a placeholder
+        if (programList.length === 0) {
+          programList = [{
+            id: 1, name: 'DRDO Startup Evaluation', description: 'General startup evaluation program',
+            status: 'Open', type: 'Challenge', lab: 'DRDO HQ', applications: evals.length,
+            shortlisted: 0, selected: 0, closes: 'Ongoing',
+            criteria: [
+              { name: 'Technical Innovation', weight: 25 }, { name: 'Defence Relevance', weight: 20 },
+              { name: 'Team Capability', weight: 20 }, { name: 'Market Potential', weight: 15 },
+              { name: 'TRL & Readiness', weight: 20 },
+            ],
+          }];
+        }
+        setPrograms(programList);
 
-  const filtered = PROGRAMS.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.lab.toLowerCase().includes(search.toLowerCase()));
+        const startups = startData.startups || startData || [];
+        setAllStartups(startups.map(s => ({
+          id: s.id,
+          name: s.name || '',
+          logo: s.logo || (s.name ? s.name.split(' ').map(w => w[0]).join('').slice(0, 2) : '??'),
+          sector: s.sector || '',
+          trl: s.trl || 0,
+          score: s.score || 0,
+          location: s.location || '',
+          description: s.description || '',
+          deeptech: s.deeptech || false,
+          patents: s.patents || 0,
+        })));
+      })
+      .catch(() => { setPrograms([]); setAllStartups([]); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="p-6 max-w-6xl mx-auto flex items-center justify-center min-h-[400px]">
+      <p className="text-gray-400">Loading evaluations...</p>
+    </div>
+  );
+
+  if (selectedProgram) return <EvaluationDetail program={selectedProgram} onClose={() => setSelectedProgram(null)} allStartups={allStartups} />;
+
+  const filtered = programs.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || (p.lab || '').toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -371,9 +448,9 @@ export default function Evaluations() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Active Programs', value: PROGRAMS.filter(p => p.status === 'Open').length, color: 'text-accent-600' },
-          { label: 'Total Applications', value: PROGRAMS.reduce((s, p) => s + p.applications, 0), color: 'text-primary-600' },
-          { label: 'Startups Selected', value: PROGRAMS.reduce((s, p) => s + p.selected, 0), color: 'text-blue-600' },
+          { label: 'Active Programs', value: programs.filter(p => p.status === 'Open').length, color: 'text-accent-600' },
+          { label: 'Total Applications', value: programs.reduce((s, p) => s + (p.applications || 0), 0), color: 'text-primary-600' },
+          { label: 'Startups Selected', value: programs.reduce((s, p) => s + (p.selected || 0), 0), color: 'text-blue-600' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <div className={`text-3xl font-display font-bold ${s.color}`}>{s.value}</div>

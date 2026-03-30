@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { deeptechAPI } from '../../services/api';
 import {
   Zap, CheckCircle2, Circle, ChevronRight, ChevronDown,
   Award, AlertTriangle, Info, BarChart3, ArrowRight,
@@ -106,13 +107,7 @@ function getVerdict(score) {
   return               { label: 'Does Not Qualify',           color: '#dc2626', bg: '#fef2f2', border: '#fecaca',              icon: AlertTriangle };
 }
 
-const RECENT = [
-  { name: 'ArmorTech AI',        score: 82, verdict: 'Qualified as DeepTech',   date: '10 Mar 2025' },
-  { name: 'QuantumDefense',      score: 91, verdict: 'Qualified as DeepTech',   date: '05 Feb 2025' },
-  { name: 'NanoShield Materials',score: 74, verdict: 'Qualified as DeepTech',   date: '20 Jan 2025' },
-  { name: 'DroneShield Systems', score: 55, verdict: 'Conditionally Qualified', date: '01 Mar 2025' },
-  { name: 'BioScan Technologies',score: 67, verdict: 'Qualified as DeepTech',   date: '15 Apr 2025' },
-];
+// RECENT assessments are loaded from API
 
 export default function DeepTechQualification() {
   const [mode, setMode]       = useState('list'); // 'list' | 'assess'
@@ -120,6 +115,24 @@ export default function DeepTechQualification() {
   const [startupName, setStartupName] = useState('');
   const [expanded, setExpanded] = useState({ technology: true });
   const [submitted, setSubmitted] = useState(false);
+  const [recentAssessments, setRecentAssessments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    deeptechAPI.list()
+      .then(data => {
+        const items = data.assessments || data.deeptech_assessments || data || [];
+        const normalized = items.map(a => ({
+          name: a.startup_name || a.name || '',
+          score: a.score || 0,
+          verdict: a.verdict || a.result || (a.score >= 70 ? 'Qualified as DeepTech' : a.score >= 50 ? 'Conditionally Qualified' : 'Does Not Qualify'),
+          date: a.created_at ? new Date(a.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : a.date || '',
+        }));
+        setRecentAssessments(normalized);
+      })
+      .catch(() => setRecentAssessments([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const score   = calcScore(answers);
   const verdict = getVerdict(score);
@@ -156,15 +169,19 @@ export default function DeepTechQualification() {
       </div>
 
       {/* List view */}
-      {mode === 'list' && (
+      {mode === 'list' && loading && (
+        <div style={{ padding: 40, textAlign: 'center', color: '#888', fontSize: 14 }}>Loading assessments...</div>
+      )}
+
+      {mode === 'list' && !loading && (
         <>
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 22 }}>
             {[
-              { label: 'Assessments Done', value: RECENT.length, icon: BarChart3, bg: '#fff8ec', fg: G },
-              { label: 'Qualified',        value: RECENT.filter(r => r.verdict === 'Qualified as DeepTech').length, icon: Award, bg: '#f0fdf4', fg: '#16a34a' },
-              { label: 'Conditional',      value: RECENT.filter(r => r.verdict === 'Conditionally Qualified').length, icon: AlertTriangle, bg: '#fff8ec', fg: '#ea580c' },
-              { label: 'Avg Score',        value: Math.round(RECENT.reduce((s, r) => s + r.score, 0) / RECENT.length) + '%', icon: Zap, bg: '#f0f9ff', fg: '#0284c7' },
+              { label: 'Assessments Done', value: recentAssessments.length, icon: BarChart3, bg: '#fff8ec', fg: G },
+              { label: 'Qualified',        value: recentAssessments.filter(r => r.verdict === 'Qualified as DeepTech').length, icon: Award, bg: '#f0fdf4', fg: '#16a34a' },
+              { label: 'Conditional',      value: recentAssessments.filter(r => r.verdict === 'Conditionally Qualified').length, icon: AlertTriangle, bg: '#fff8ec', fg: '#ea580c' },
+              { label: 'Avg Score',        value: recentAssessments.length > 0 ? Math.round(recentAssessments.reduce((s, r) => s + r.score, 0) / recentAssessments.length) + '%' : '0%', icon: Zap, bg: '#f0f9ff', fg: '#0284c7' },
             ].map(({ label, value, icon: Icon, bg, fg }) => (
               <div key={label} style={{ ...card, padding: 16 }}>
                 <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
@@ -184,11 +201,11 @@ export default function DeepTechQualification() {
                 New <ArrowRight size={12} />
               </button>
             </div>
-            {RECENT.map((r, i) => {
+            {recentAssessments.map((r, i) => {
               const v = getVerdict(r.score);
               const VI = v.icon;
               return (
-                <div key={r.name} style={{ padding: '13px 22px', borderBottom: i < RECENT.length - 1 ? '1px solid #f5f5f5' : 'none', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                <div key={r.name + i} style={{ padding: '13px 22px', borderBottom: i < recentAssessments.length - 1 ? '1px solid #f5f5f5' : 'none', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
                   <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(213,170,91,0.12)', color: G, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, border: '1px solid rgba(213,170,91,0.2)', flexShrink: 0 }}>{r.name[0]}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: '#1a1a1a', fontSize: 13, fontWeight: 600 }}>{r.name}</div>
@@ -294,7 +311,14 @@ export default function DeepTechQualification() {
 
             <button
               disabled={answeredCount < totalQ * 0.8 || !startupName.trim()}
-              onClick={() => setSubmitted(true)}
+              onClick={() => {
+                deeptechAPI.create({ startup_name: startupName.trim(), score, verdict: verdict.label, answers })
+                  .then(() => {
+                    setRecentAssessments(prev => [{ name: startupName.trim(), score, verdict: verdict.label, date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }, ...prev]);
+                  })
+                  .catch(() => {});
+                setSubmitted(true);
+              }}
               style={{
                 width: '100%', padding: '13px 0', background: (answeredCount >= totalQ * 0.8 && startupName.trim()) ? G : '#e0e0e0',
                 color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700,

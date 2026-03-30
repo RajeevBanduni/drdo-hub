@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { startupAPI } from '../../services/api';
-import { STARTUPS } from '../../data/mockData';
 import {
   Star, MapPin, Users, TrendingUp, Award, Shield, FileText, ChevronRight,
   ExternalLink, Bookmark, BookmarkCheck, Share2, Globe, Cpu, Target,
@@ -41,16 +40,42 @@ export default function StartupProfile() {
     startupAPI.get(id)
       .then(data => {
         const s = data.startup || data;
-        setStartup(s);
-        setWatchlisted(s.watchlisted || false);
+        // Normalize backend fields to what UI expects
+        const normalized = {
+          ...s,
+          name: s.name || '',
+          logo: s.logo || (s.name ? s.name.split(' ').map(w => w[0]).join('').slice(0, 2) : '??'),
+          sector: s.sector || '',
+          technology: s.technology || '',
+          location: s.location || '',
+          status: s.status || 'Active',
+          stage: s.stage || '',
+          drdo_cluster: s.drdo_cluster || '',
+          trl: s.trl || 0,
+          score: s.score || 0,
+          deeptech: s.deeptech || false,
+          founded: s.founded || '',
+          employees: s.employees || 0,
+          revenue: s.revenue || 0,
+          funding: s.funding || 0,
+          patents: s.patents || 0,
+          description: s.description || '',
+          solutions: s.solutions || [],
+          clients: s.clients || [],
+          awards: s.awards || [],
+          founders: s.founders || [],
+          investors: s.investors || [],
+          milestones: s.milestones || [],
+          financials: s.financials || [],
+          shareholding: s.shareholding || [],
+          board: s.board || [],
+        };
+        setStartup(normalized);
+        setWatchlisted(normalized.watchlisted || false);
       })
       .catch(() => {
-        // Fall back to mock data while backend routes are being built
-        const fallback = STARTUPS.find(s => s.id === id) || STARTUPS.find(s => String(s.id) === String(id)) || STARTUPS[0];
-        if (fallback) {
-          setStartup(fallback);
-          setWatchlisted(fallback.watchlisted || false);
-        }
+        // API call failed — show not-found state
+        setStartup(null);
       })
       .finally(() => setLoading(false));
   }, [id]);

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { documentAPI } from '../../services/api';
 import {
   FolderOpen, Folder, FileText, File, FileImage, FileCode,
   Upload, Download, Search, Filter, Plus, Trash2, Eye,
@@ -60,18 +61,7 @@ const FOLDERS = [
   },
 ];
 
-const FILES = [
-  { id: 1, name: 'ArmorTech_AI_Evaluation_Report_Q1_2025.pdf', folder: 'Evaluation Reports', size: '2.4 MB', type: 'pdf', uploaded: '15 Mar 2025', by: 'Dr. R. Sharma',    access: 'restricted', starred: true,  tags: ['evaluation', 'Q1-2025', 'AI'] },
-  { id: 2, name: 'QuantumDefense_NDA_Signed.pdf',               folder: 'Contracts & Legal', size: '0.8 MB', type: 'pdf', uploaded: '01 Aug 2024', by: 'Dr. A. Kapoor',    access: 'restricted', starred: false, tags: ['legal', 'NDA'] },
-  { id: 3, name: 'DroneShield_Technical_Architecture.docx',     folder: 'Technical Specs',   size: '1.2 MB', type: 'docx',uploaded: '28 Feb 2025', by: 'DroneShield Systems', access: 'internal', starred: false, tags: ['technical', 'UAV'] },
-  { id: 4, name: 'DRDO_AI_Challenge_RFP_2025.pdf',              folder: 'Program Documents', size: '3.1 MB', type: 'pdf', uploaded: '01 Jan 2025', by: 'Dr. S. Mehta',     access: 'public',    starred: true,  tags: ['RFP', 'program', 'AI'] },
-  { id: 5, name: 'CyberSentinel_Requirement_Doc_v1.docx',       folder: 'Technical Specs',   size: '0.9 MB', type: 'docx',uploaded: '10 Apr 2025', by: 'CyberSentinel',    access: 'internal',  starred: false, tags: ['requirements', 'cybersecurity'] },
-  { id: 6, name: 'Q1_2025_Financial_Summary.xlsx',              folder: 'Financial Records', size: '0.4 MB', type: 'xlsx',uploaded: '05 Apr 2025', by: 'Finance Team',     access: 'restricted', starred: false, tags: ['financial', 'Q1-2025'] },
-  { id: 7, name: 'QuantumDefense_QKD_Protocol_Spec_v2.pdf',     folder: 'Technical Specs',   size: '5.2 MB', type: 'pdf', uploaded: '01 Mar 2025', by: 'QuantumDefense',   access: 'restricted', starred: true,  tags: ['quantum', 'technical'] },
-  { id: 8, name: 'DRDO_Patent_Filing_2025_001.pdf',             folder: 'IPR Documents',     size: '1.7 MB', type: 'pdf', uploaded: '20 Feb 2025', by: 'IPR Cell',         access: 'restricted', starred: false, tags: ['IPR', 'patent'] },
-  { id: 9, name: 'ArmorTech_AI_Prototype_Test_Results.pptx',    folder: 'Program Documents', size: '8.3 MB', type: 'pptx',uploaded: '01 Apr 2025', by: 'ArmorTech AI',     access: 'internal',  starred: true,  tags: ['test', 'AI', 'prototype'] },
-  { id: 10,name: 'BioScan_Application_Form.pdf',                folder: 'Program Documents', size: '0.6 MB', type: 'pdf', uploaded: '01 Apr 2025', by: 'BioScan Technologies', access: 'internal', starred: false, tags: ['application', 'biotech'] },
-];
+// FILES are loaded from API
 
 const ACCESS_STYLE = {
   public:     { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', icon: Globe,   label: 'Public' },
@@ -87,20 +77,50 @@ export default function DocumentRepository() {
   const [showStarred, setShowStarred] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState({});
   const [previewFile, setPreviewFile] = useState(null);
+  const [files, setFiles]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+
+  useEffect(() => {
+    documentAPI.list()
+      .then(data => {
+        const docs = data.documents || data || [];
+        const normalized = docs.map(d => ({
+          id: d.id,
+          name: d.name || d.title || '',
+          folder: d.folder || d.category || 'Program Documents',
+          size: d.size || d.file_size || '—',
+          type: d.type || d.file_type || (d.name ? d.name.split('.').pop() : 'pdf'),
+          uploaded: d.uploaded_at || d.created_at ? new Date(d.uploaded_at || d.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+          by: d.uploaded_by || d.author || '',
+          access: d.access || 'internal',
+          starred: d.starred || false,
+          tags: d.tags || [],
+        }));
+        setFiles(normalized);
+      })
+      .catch(() => setFiles([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const toggleFolder = (id) => setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const filteredFiles = FILES.filter(f => {
+  if (loading) return (
+    <div style={{ padding: 28, background: '#f5f5f5', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: '#888', fontSize: 14 }}>Loading documents...</p>
+    </div>
+  );
+
+  const filteredFiles = files.filter(f => {
     const matchFolder = !selectedFolder || f.folder === selectedFolder;
-    const matchSearch = f.name.toLowerCase().includes(search.toLowerCase()) ||
-                        f.tags.some(t => t.toLowerCase().includes(search.toLowerCase()));
+    const matchSearch = (f.name || '').toLowerCase().includes(search.toLowerCase()) ||
+                        (f.tags || []).some(t => t.toLowerCase().includes(search.toLowerCase()));
     const matchAccess = accessFilter === 'All' || f.access === accessFilter;
     const matchStar = !showStarred || f.starred;
     return matchFolder && matchSearch && matchAccess && matchStar;
   });
 
-  const totalSize = '48.3 MB';
-  const totalFiles = FILES.length;
+  const totalSize = files.reduce((s, f) => s + (parseFloat(f.size) || 0), 0).toFixed(1) + ' MB';
+  const totalFiles = files.length;
 
   return (
     <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
@@ -128,8 +148,8 @@ export default function DocumentRepository() {
         {[
           { label: 'Total Documents',  value: totalFiles, icon: FileText,    bg: '#fff8ec', fg: G },
           { label: 'Total Size',       value: totalSize,  icon: FolderOpen,  bg: '#f0fdf4', fg: '#16a34a' },
-          { label: 'Restricted Files', value: FILES.filter(f => f.access === 'restricted').length, icon: Lock, bg: '#fef2f2', fg: '#dc2626' },
-          { label: 'Starred',          value: FILES.filter(f => f.starred).length, icon: Star, bg: '#fdf4ff', fg: '#9333ea' },
+          { label: 'Restricted Files', value: files.filter(f => f.access === 'restricted').length, icon: Lock, bg: '#fef2f2', fg: '#dc2626' },
+          { label: 'Starred',          value: files.filter(f => f.starred).length, icon: Star, bg: '#fdf4ff', fg: '#9333ea' },
         ].map(({ label, value, icon: Icon, bg, fg }) => (
           <div key={label} style={{ ...card, padding: 16 }}>
             <div style={{ width: 34, height: 34, borderRadius: 8, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
@@ -158,7 +178,7 @@ export default function DocumentRepository() {
           >
             <FolderOpen size={14} color={G} />
             <span style={{ fontSize: 12, fontWeight: !selectedFolder ? 700 : 500, color: !selectedFolder ? G : '#555', flex: 1 }}>All Documents</span>
-            <span style={{ fontSize: 10, color: '#aaa' }}>{FILES.length}</span>
+            <span style={{ fontSize: 10, color: '#aaa' }}>{files.length}</span>
           </div>
           {/* Folder tree */}
           {FOLDERS.map(folder => (
@@ -375,7 +395,7 @@ export default function DocumentRepository() {
 
           {filteredFiles.length > 0 && (
             <div style={{ marginTop: 10, fontSize: 12, color: '#aaa', textAlign: 'right' }}>
-              Showing {filteredFiles.length} of {FILES.length} documents
+              Showing {filteredFiles.length} of {files.length} documents
             </div>
           )}
         </div>

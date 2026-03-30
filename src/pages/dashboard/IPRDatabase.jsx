@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { IPR_RECORDS } from '../../data/mockData';
+import React, { useState, useEffect } from 'react';
+import { iprAPI } from '../../services/api';
 import { Shield, Plus, Search, Filter, CheckCircle2, Clock, AlertCircle, Globe, FileText, Calendar, ChevronRight, Award } from 'lucide-react';
 
 const TYPE_ICONS = { Patent: Shield, Trademark: Award, Copyright: FileText, Design: FileText };
@@ -15,9 +15,43 @@ export default function IPRDatabase() {
   const [type, setType] = useState('All');
   const [selected, setSelected] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [iprRecords, setIprRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = IPR_RECORDS.filter(r => {
-    const matchSearch = r.title.toLowerCase().includes(search.toLowerCase()) || r.startup.toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    iprAPI.list()
+      .then(data => {
+        const records = data.records || data.ipr_records || data || [];
+        const normalized = records.map(r => ({
+          id: r.id,
+          title: r.title || '',
+          applicationNo: r.application_no || r.applicationNo || '',
+          startup: r.startup_name || r.startup || '',
+          type: r.type || 'Patent',
+          status: r.status || 'Filed',
+          jurisdiction: r.jurisdiction || (r.jurisdictions ? r.jurisdictions : ['IN']),
+          drdo_share: r.drdo_share || 0,
+          startup_share: r.startup_share || 100,
+          filingDate: r.filing_date ? new Date(r.filing_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : r.filingDate || '',
+          grantDate: r.grant_date ? new Date(r.grant_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : r.grantDate || null,
+          expiryDate: r.expiry_date ? new Date(r.expiry_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : r.expiryDate || '',
+          licensing: r.licensing || 'None',
+          inventors: r.inventors || [],
+        }));
+        setIprRecords(normalized);
+      })
+      .catch(() => setIprRecords([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <div className="p-6 max-w-6xl mx-auto flex items-center justify-center min-h-[400px]">
+      <p className="text-gray-400">Loading IPR records...</p>
+    </div>
+  );
+
+  const filtered = iprRecords.filter(r => {
+    const matchSearch = (r.title || '').toLowerCase().includes(search.toLowerCase()) || (r.startup || '').toLowerCase().includes(search.toLowerCase());
     const matchType = type === 'All' || r.type === type;
     return matchSearch && matchType;
   });
@@ -37,10 +71,10 @@ export default function IPRDatabase() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total IPR Records', value: IPR_RECORDS.length, color: 'text-gray-800' },
-          { label: 'Patents Granted', value: IPR_RECORDS.filter(r => r.type === 'Patent' && r.status === 'Granted').length, color: 'text-accent-600' },
-          { label: 'Under Review', value: IPR_RECORDS.filter(r => ['Filed', 'Published'].includes(r.status)).length, color: 'text-yellow-600' },
-          { label: 'DRDO Co-owned', value: IPR_RECORDS.filter(r => r.drdo_share > 0).length, color: 'text-primary-600' },
+          { label: 'Total IPR Records', value: iprRecords.length, color: 'text-gray-800' },
+          { label: 'Patents Granted', value: iprRecords.filter(r => r.type === 'Patent' && r.status === 'Granted').length, color: 'text-accent-600' },
+          { label: 'Under Review', value: iprRecords.filter(r => ['Filed', 'Published'].includes(r.status)).length, color: 'text-yellow-600' },
+          { label: 'DRDO Co-owned', value: iprRecords.filter(r => r.drdo_share > 0).length, color: 'text-primary-600' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <div className={`text-3xl font-display font-bold ${s.color}`}>{s.value}</div>
