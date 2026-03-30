@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { projectAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import {
   FolderKanban, Plus, ChevronRight, CheckCircle2, Clock, AlertTriangle,
   Users, Calendar, DollarSign, TrendingUp, BarChart3, Target,
@@ -112,7 +114,7 @@ export default function ProjectManagement() {
         const allTaskArrays = await Promise.all(taskPromises);
         setAllTasks(allTaskArrays.flat());
       })
-      .catch(() => {})
+      .catch(err => toast.error(err.message || 'Failed to load projects'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -123,11 +125,7 @@ export default function ProjectManagement() {
     return matchFilter && matchSearch;
   });
 
-  if (loading) return (
-    <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
-      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading projects…</div>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   if (view === 'detail' && selected) {
     return <ProjectDetail project={selected} onBack={() => setView('projects')} tasks={allTasks} />;

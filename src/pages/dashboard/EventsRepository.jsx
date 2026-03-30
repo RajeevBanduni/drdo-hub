@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   Calendar, MapPin, Users, Plus, Search, Filter,
   ChevronRight, Clock, Tag, ExternalLink, Download,
@@ -6,6 +7,7 @@ import {
   CheckCircle2, AlertCircle, ArrowRight, X,
 } from 'lucide-react';
 import { eventAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 
 const G = '#D5AA5B';
 const GH = '#C9983F';
@@ -84,19 +86,20 @@ export default function EventsRepository() {
           speakers: e.speakers || [],
         })));
       })
-      .catch(() => {})
+      .catch(err => toast.error(err.message || 'Failed to load events'))
       .finally(() => setLoading(false));
   }, []);
 
   const handleRegister = (evId) => {
     eventAPI.register(evId)
       .then(() => {
+        toast.success('Registered for event successfully');
         setEvents(prev => prev.map(e => e.id === evId ? { ...e, registrations: e.registrations + 1 } : e));
         if (selected && selected.id === evId) {
           setSelected(prev => ({ ...prev, registrations: prev.registrations + 1 }));
         }
       })
-      .catch(() => {});
+      .catch(err => toast.error(err.message || 'Failed to register'));
   };
 
   const filtered = events.filter(e => {
@@ -107,11 +110,7 @@ export default function EventsRepository() {
     return matchType && matchStatus && matchSearch;
   });
 
-  if (loading) return (
-    <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
-      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading events…</div>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   if (selected) {
     return <EventDetail event={selected} onBack={() => setSelected(null)} onRegister={handleRegister} />;

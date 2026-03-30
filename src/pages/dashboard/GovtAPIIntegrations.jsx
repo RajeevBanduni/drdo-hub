@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { govtIntegrationAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import {
   Globe, Link2, CheckCircle2, AlertCircle, Clock, RefreshCw,
   Shield, Database, Zap, ArrowRight, ExternalLink, Settings,
@@ -56,15 +58,11 @@ export default function GovtAPIIntegrations() {
         }));
         setIntegrations(normalized);
       })
-      .catch(() => setIntegrations([]))
+      .catch(err => { toast.error(err.message || 'Failed to load integrations'); setIntegrations([]); })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div style={{ padding: 28, background: '#f5f5f5', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#888', fontSize: 14 }}>Loading integrations...</p>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   const categories = ['All', ...new Set(integrations.map(i => i.category))];
   const filtered = integrations.filter(i => categoryFilter === 'All' || i.category === categoryFilter);
@@ -73,7 +71,9 @@ export default function GovtAPIIntegrations() {
   const totalCalls  = integrations.reduce((s, i) => s + (i.callsToday || 0), 0);
 
   if (selected) return <IntegrationDetail integration={selected} onBack={() => setSelected(null)} onSync={(id) => {
-    govtIntegrationAPI.sync(id).catch(() => {});
+    govtIntegrationAPI.sync(id)
+      .then(() => toast.success('Sync initiated'))
+      .catch(err => toast.error(err.message || 'Sync failed'));
   }} />;
 
   return (

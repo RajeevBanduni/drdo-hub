@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate, useParams } from 'react-router-dom';
 import { startupAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import {
   Star, MapPin, Users, TrendingUp, Award, Shield, FileText, ChevronRight,
   ExternalLink, Bookmark, BookmarkCheck, Share2, Globe, Cpu, Target,
@@ -73,8 +75,8 @@ export default function StartupProfile() {
         setStartup(normalized);
         setWatchlisted(normalized.watchlisted || false);
       })
-      .catch(() => {
-        // API call failed — show not-found state
+      .catch(err => {
+        toast.error(err.message || 'Failed to load startup profile');
         setStartup(null);
       })
       .finally(() => setLoading(false));
@@ -85,11 +87,7 @@ export default function StartupProfile() {
     setTimeout(() => { setFeedbackOpen(false); setFeedbackSent(false); setFeedbackText(''); }, 1500);
   };
 
-  if (loading) return (
-    <div className="bg-gray-50 min-h-screen flex items-center justify-center">
-      <p className="text-gray-400">Loading startup profile…</p>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   if (!startup) return (
     <div className="bg-gray-50 min-h-screen flex items-center justify-center">

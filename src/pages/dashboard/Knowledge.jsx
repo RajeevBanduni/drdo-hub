@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { knowledgeAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { BookOpen, Search, Lock, Eye, FileText, PlayCircle, Bookmark, Plus, ExternalLink, Star, Download } from 'lucide-react';
 
 const TYPE_ICONS = { report: FileText, article: BookOpen, sop: Bookmark, training_module: PlayCircle };
@@ -29,15 +31,11 @@ export default function Knowledge() {
         }));
         setArticles(normalized);
       })
-      .catch(() => setArticles([]))
+      .catch(err => { toast.error(err.message || 'Failed to load articles'); setArticles([]); })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="p-6 max-w-6xl mx-auto flex items-center justify-center min-h-[400px]">
-      <p className="text-gray-400">Loading knowledge articles...</p>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   const filtered = articles.filter(a => {
     const matchSearch = (a.title || '').toLowerCase().includes(search.toLowerCase()) || (a.tags || []).some(t => t.toLowerCase().includes(search.toLowerCase()));

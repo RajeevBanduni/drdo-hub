@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { evaluationAPI, startupAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { Target, ChevronRight, Plus, Filter, Search, Star, Users, Calendar, CheckCircle2, Clock, AlertCircle, BarChart3, Lock, Eye, Award } from 'lucide-react';
 
 const STATUS_CONFIG = {
@@ -419,15 +421,11 @@ export default function Evaluations() {
           patents: s.patents || 0,
         })));
       })
-      .catch(() => { setPrograms([]); setAllStartups([]); })
+      .catch(err => { toast.error(err.message || 'Failed to load evaluations'); setPrograms([]); setAllStartups([]); })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="p-6 max-w-6xl mx-auto flex items-center justify-center min-h-[400px]">
-      <p className="text-gray-400">Loading evaluations...</p>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   if (selectedProgram) return <EvaluationDetail program={selectedProgram} onClose={() => setSelectedProgram(null)} allStartups={allStartups} />;
 

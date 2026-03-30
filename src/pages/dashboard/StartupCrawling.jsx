@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import {
   Globe, RefreshCw, Play, Pause, CheckCircle2, XCircle, Clock,
   AlertCircle, Search, Filter, ChevronDown, ExternalLink, Plus,
@@ -6,6 +7,7 @@ import {
   Activity, AlertTriangle, RotateCcw, Settings, Info, Loader2
 } from 'lucide-react';
 import { crawlAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 
 const STATUS_CONFIG = {
   pending_review: { label: 'Pending Review', color: 'bg-yellow-100 text-yellow-700', dot: 'bg-yellow-400' },
@@ -92,7 +94,7 @@ export default function StartupCrawling() {
       setJobs(jobRes);
       setStats(statsRes);
     } catch (err) {
-      console.error('Failed to load crawl data:', err);
+      toast.error(err.message || 'Failed to load crawl data');
     } finally {
       setLoading(false);
     }
@@ -122,7 +124,8 @@ export default function StartupCrawling() {
       setCrawledStartups(prev => prev.map(s => s.id === id ? updated : s));
       setStats(prev => ({ ...prev, pending_review: Math.max(0, prev.pending_review - 1), approved: prev.approved + 1 }));
       if (selectedStartup?.id === id) setSelectedStartup(updated);
-    } catch (err) { console.error('Approve failed:', err); }
+      toast.success('Startup approved');
+    } catch (err) { toast.error(err.message || 'Approve failed'); }
   };
 
   const handleReject = async (id) => {
@@ -131,14 +134,16 @@ export default function StartupCrawling() {
       setCrawledStartups(prev => prev.map(s => s.id === id ? updated : s));
       setStats(prev => ({ ...prev, pending_review: Math.max(0, prev.pending_review - 1) }));
       if (selectedStartup?.id === id) setSelectedStartup(updated);
-    } catch (err) { console.error('Reject failed:', err); }
+      toast.success('Startup rejected');
+    } catch (err) { toast.error(err.message || 'Reject failed'); }
   };
 
   const handleToggleSource = async (id) => {
     try {
       const updated = await crawlAPI.toggleSource(id);
       setSources(prev => prev.map(s => s.id === id ? updated : s));
-    } catch (err) { console.error('Toggle failed:', err); }
+      toast.success('Source toggled');
+    } catch (err) { toast.error(err.message || 'Toggle failed'); }
   };
 
   const handleCrawlNow = async (source) => {
@@ -161,7 +166,7 @@ export default function StartupCrawling() {
         setTriggerSource(null);
       }, 4000);
     } catch (err) {
-      console.error('Crawl trigger failed:', err);
+      toast.error(err.message || 'Crawl trigger failed');
       setTriggerSource(null);
     }
   };
@@ -172,13 +177,7 @@ export default function StartupCrawling() {
     { id: 'jobs', label: 'Crawl Jobs', count: jobs.length },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 size={32} className="animate-spin text-primary-500" />
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton type="card" />;
 
   return (
     <div className="flex flex-col h-full">

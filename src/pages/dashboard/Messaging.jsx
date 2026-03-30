@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   MessageSquare, Search, Send, Paperclip, MoreHorizontal,
   ChevronDown, Check, CheckCheck, Bell, BellOff, Archive,
@@ -6,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { messageAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 
 const G = '#D5AA5B';
 
@@ -59,7 +61,7 @@ export default function Messaging() {
           loadMessages(list[0].id);
         }
       })
-      .catch(() => {})
+      .catch(err => toast.error(err.message || 'Failed to load conversations'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -77,7 +79,7 @@ export default function Messaging() {
         }));
         setActiveMessages(msgs);
       })
-      .catch(() => setActiveMessages([]))
+      .catch(err => { toast.error(err.message || 'Failed to load messages'); setActiveMessages([]); })
       .finally(() => setMsgLoading(false));
   };
 
@@ -111,7 +113,7 @@ export default function Messaging() {
     setActiveMessages(prev => [...prev, newMsg]);
     setConversations(prev => prev.map(c => c.id === active.id ? { ...c, lastMsg: text, time: newMsg.time } : c));
 
-    messageAPI.sendMessage(active.id, text).catch(() => {});
+    messageAPI.sendMessage(active.id, text).catch(err => toast.error(err.message || 'Failed to send message'));
   };
 
   const handleKey = (e) => {
@@ -127,11 +129,7 @@ export default function Messaging() {
 
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread, 0);
 
-  if (loading) return (
-    <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
-      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading conversations…</div>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="list" />;
 
   return (
     <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>

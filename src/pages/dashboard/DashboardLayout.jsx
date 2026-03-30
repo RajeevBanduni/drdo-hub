@@ -31,34 +31,36 @@ const C = {
   hoverBg:     "#f7f3ec",   // nav hover
 };
 
+// roles: undefined = visible to all, array = only listed roles see it
 const NAV = [
   { to: "/dashboard",                label: "Overview",         Icon: LayoutDashboard, end: true },
-  { to: "/dashboard/evaluate",       label: "8-Vector Eval",    Icon: ClipboardCheck,  badge: "NEW" },
+  { to: "/dashboard/evaluate",       label: "8-Vector Eval",    Icon: ClipboardCheck,  badge: "NEW", roles: ["admin","evaluator"] },
   { to: "/dashboard/startups",       label: "Startups",         Icon: Rocket },
-  { to: "/dashboard/evaluations",    label: "Programs",         Icon: FileText },
-  { to: "/dashboard/cohorts",        label: "Cohorts",          Icon: GraduationCap },
-  { to: "/dashboard/mentors",        label: "Mentors",          Icon: Users },
-  { to: "/dashboard/ipr",            label: "IPR Database",     Icon: Shield },
-  { to: "/dashboard/infrastructure", label: "Infrastructure",   Icon: Building2 },
+  { to: "/dashboard/evaluations",    label: "Programs",         Icon: FileText,        roles: ["admin","evaluator"] },
+  { to: "/dashboard/cohorts",        label: "Cohorts",          Icon: GraduationCap,   roles: ["admin"] },
+  { to: "/dashboard/mentors",        label: "Mentors",          Icon: Users,           roles: ["admin","evaluator","mentor"] },
+  { to: "/dashboard/ipr",            label: "IPR Database",     Icon: Shield,          roles: ["admin","evaluator"] },
+  { to: "/dashboard/infrastructure", label: "Infrastructure",   Icon: Building2,       roles: ["admin"] },
   { to: "/dashboard/knowledge",      label: "Knowledge",        Icon: BookOpen },
-  { to: "/dashboard/crawling",       label: "Crawling",         Icon: Globe },
-  { to: "/dashboard/register",       label: "Register Startup", Icon: Database },
-  { to: "/dashboard/pipeline",       label: "Pipeline",         Icon: GitBranch },
-  { to: "/dashboard/projects",       label: "Projects",         Icon: FolderKanban },
-  { to: "/dashboard/messaging",      label: "Messaging",        Icon: MessageSquare, badge: "NEW" },
+  { to: "/dashboard/crawling",       label: "Crawling",         Icon: Globe,           roles: ["admin"] },
+  { to: "/dashboard/register",       label: "Register Startup", Icon: Database,        roles: ["admin"] },
+  { to: "/dashboard/pipeline",       label: "Pipeline",         Icon: GitBranch,       roles: ["admin","evaluator"] },
+  { to: "/dashboard/projects",       label: "Projects",         Icon: FolderKanban,    roles: ["admin","evaluator"] },
+  { to: "/dashboard/messaging",      label: "Messaging",        Icon: MessageSquare,   badge: "NEW" },
   { to: "/dashboard/documents",      label: "Documents",        Icon: FolderOpen },
-  { to: "/dashboard/watchlist",      label: "Watchlists",       Icon: Star },
-  { to: "/dashboard/deeptech",       label: "DeepTech Qual.",   Icon: Zap },
+  { to: "/dashboard/watchlist",      label: "Watchlists",       Icon: Star,            roles: ["admin","startup"] },
+  { to: "/dashboard/deeptech",       label: "DeepTech Qual.",   Icon: Zap,             roles: ["admin","evaluator"] },
   { to: "/dashboard/events",         label: "Events",           Icon: Calendar },
-  { to: "/dashboard/sme",            label: "SME Experts",      Icon: UserCheck },
-  { to: "/dashboard/feedback",       label: "Feedback",         Icon: ThumbsUp },
-  { to: "/dashboard/govt-apis",      label: "Govt. APIs",       Icon: Link2 },
+  { to: "/dashboard/sme",            label: "SME Experts",      Icon: UserCheck,       roles: ["admin","evaluator"] },
+  { to: "/dashboard/feedback",       label: "Feedback",         Icon: ThumbsUp,        roles: ["admin","evaluator"] },
+  { to: "/dashboard/govt-apis",      label: "Govt. APIs",       Icon: Link2,           roles: ["admin"] },
 ];
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const filteredNav = NAV.filter(item => !item.roles || item.roles.includes(user?.role));
 
   const handleLogout = () => {
     logout();
@@ -123,7 +125,7 @@ export default function DashboardLayout() {
 
         {/* Nav links */}
         <nav style={{ flex:1, padding:"12px 8px", overflowY:"auto" }}>
-          {NAV.map(({ to, label, Icon, end, badge }) => (
+          {filteredNav.map(({ to, label, Icon, end, badge }) => (
             <NavLink
               key={to}
               to={to}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { infrastructureAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { Building2, Calendar, DollarSign, CheckCircle2, Clock, Plus, Search, MapPin, Cpu, AlertCircle, Calculator } from 'lucide-react';
 
 const TYPE_COLORS = { HPC: 'bg-purple-100 text-purple-700', 'Test Facility': 'bg-blue-100 text-blue-700', 'Incubation Space': 'bg-green-100 text-green-700' };
@@ -78,7 +80,8 @@ function BookingModal({ resource, onClose }) {
           <button onClick={onClose} className="flex-1 py-2.5 border border-gray-300 text-gray-600 rounded-lg text-sm">Cancel</button>
           <button onClick={() => {
             infrastructureAPI.createBooking(resource.id, { hours, date, purpose: '' })
-              .catch(() => {});
+              .then(() => toast.success('Booking requested successfully'))
+              .catch(err => toast.error(err.message || 'Failed to create booking'));
             setBooked(true);
           }} className="flex-1 py-2.5 bg-primary-500 text-dark-950 rounded-lg text-sm font-semibold">Request Booking</button>
         </div>
@@ -113,15 +116,11 @@ export default function Infrastructure() {
         }));
         setInfraList(normalized);
       })
-      .catch(() => setInfraList([]))
+      .catch(err => { toast.error(err.message || 'Failed to load infrastructure'); setInfraList([]); })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div className="p-6 max-w-6xl mx-auto flex items-center justify-center min-h-[400px]">
-      <p className="text-gray-400">Loading infrastructure...</p>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   const filtered = infraList.filter(r => (r.name || '').toLowerCase().includes(search.toLowerCase()) || (r.type || '').toLowerCase().includes(search.toLowerCase()) || (r.location || '').toLowerCase().includes(search.toLowerCase()));
 

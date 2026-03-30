@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { startupAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import {
   ArrowRight, CheckCircle2, Clock, Circle, XCircle,
   ChevronRight, Rocket, Calendar, Star, Filter,
@@ -91,15 +93,11 @@ export default function StartupPipeline() {
         }));
         setStartups(normalized);
       })
-      .catch(() => setStartups([]))
+      .catch(err => { toast.error(err.message || 'Failed to load pipeline'); setStartups([]); })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return (
-    <div style={{ padding: 28, background: '#f5f5f5', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#888', fontSize: 14 }}>Loading pipeline...</p>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   const filtered = startups.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { deeptechAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import {
   Zap, CheckCircle2, Circle, ChevronRight, ChevronDown,
   Award, AlertTriangle, Info, BarChart3, ArrowRight,
@@ -130,7 +132,7 @@ export default function DeepTechQualification() {
         }));
         setRecentAssessments(normalized);
       })
-      .catch(() => setRecentAssessments([]))
+      .catch(err => { toast.error(err.message || 'Failed to load assessments'); setRecentAssessments([]); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -169,9 +171,7 @@ export default function DeepTechQualification() {
       </div>
 
       {/* List view */}
-      {mode === 'list' && loading && (
-        <div style={{ padding: 40, textAlign: 'center', color: '#888', fontSize: 14 }}>Loading assessments...</div>
-      )}
+      {mode === 'list' && loading && <LoadingSkeleton type="table" />}
 
       {mode === 'list' && !loading && (
         <>
@@ -314,9 +314,10 @@ export default function DeepTechQualification() {
               onClick={() => {
                 deeptechAPI.create({ startup_name: startupName.trim(), score, verdict: verdict.label, answers })
                   .then(() => {
+                    toast.success('Assessment submitted successfully');
                     setRecentAssessments(prev => [{ name: startupName.trim(), score, verdict: verdict.label, date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }, ...prev]);
                   })
-                  .catch(() => {});
+                  .catch(err => toast.error(err.message || 'Failed to submit assessment'));
                 setSubmitted(true);
               }}
               style={{

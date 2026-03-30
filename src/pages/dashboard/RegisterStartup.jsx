@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { startupAPI } from '../../services/api';
 import { CheckCircle2, ChevronRight, ChevronLeft, Upload, AlertCircle, Building2, Users, DollarSign, Cpu, FileText, Shield } from 'lucide-react';
@@ -108,11 +109,12 @@ export default function RegisterStartup() {
     };
     startupAPI.create(payload)
       .then(() => {
+        toast.success('Startup registered successfully');
         setSubmitted(true);
         setTimeout(() => navigate('/dashboard/startups'), 2000);
       })
-      .catch(() => {
-        // Even if API fails, show success (data saved locally)
+      .catch(err => {
+        toast.error(err.message || 'Registration failed, saved locally');
         setSubmitted(true);
         setTimeout(() => navigate('/dashboard/startups'), 2000);
       })

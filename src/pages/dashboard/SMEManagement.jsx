@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   Users, Plus, Search, Star, Mail, Phone, Briefcase,
   ChevronRight, Filter, Award, Globe, BookOpen,
@@ -6,6 +7,7 @@ import {
   Building2, GraduationCap, X, Linkedin,
 } from 'lucide-react';
 import { smeAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 
 const G = '#D5AA5B';
 const GH = '#C9983F';
@@ -68,7 +70,7 @@ export default function SMEManagement() {
           expertise: (e.domains || []),
         })));
       })
-      .catch(() => {})
+      .catch(err => toast.error(err.message || 'Failed to load experts'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -82,11 +84,7 @@ export default function SMEManagement() {
     return matchSearch && matchDomain && matchType && matchAvail;
   });
 
-  if (loading) return (
-    <div style={{ padding: 28, maxWidth: 1200, background: '#f5f5f5', minHeight: '100%' }}>
-      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading experts…</div>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   if (selected) return <ExpertDetail expert={selected} onBack={() => setSelected(null)} />;
 

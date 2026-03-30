@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { watchlistAPI, startupAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import {
   Star, Plus, Trash2, Download, Share2, Search, Filter,
   ChevronRight, Rocket, Users, FolderPlus, X, Check,
@@ -69,7 +71,7 @@ export default function StartupWatchlist() {
         }));
         setAllStartups(normalizedStartups);
       })
-      .catch(() => { setLists([]); setAllStartups([]); })
+      .catch(err => { toast.error(err.message || 'Failed to load watchlists'); setLists([]); setAllStartups([]); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -92,6 +94,7 @@ export default function StartupWatchlist() {
     };
     watchlistAPI.create(payload)
       .then(data => {
+        toast.success('Watchlist created successfully');
         const w = data.watchlist || data;
         const created = {
           id: w.id || Date.now(),
@@ -106,7 +109,8 @@ export default function StartupWatchlist() {
         setLists(prev => [...prev, created]);
         setSelected(created.id);
       })
-      .catch(() => {
+      .catch(err => {
+        toast.error(err.message || 'Failed to create watchlist');
         // Fallback local add
         const created = { id: Date.now(), ...payload, createdBy: 'You', createdOn: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), startupIds: [] };
         setLists(prev => [...prev, created]);
@@ -118,7 +122,7 @@ export default function StartupWatchlist() {
 
   const removeStartup = (startupId) => {
     if (selectedList) {
-      watchlistAPI.removeStartup(selectedList.id, startupId).catch(() => {});
+      watchlistAPI.removeStartup(selectedList.id, startupId).catch(err => toast.error(err.message || 'Failed to remove startup'));
     }
     setLists(prev => prev.map(l => l.id === selected
       ? { ...l, startupIds: l.startupIds.filter(id => id !== startupId) }
@@ -128,7 +132,7 @@ export default function StartupWatchlist() {
 
   const addStartup = (startupId) => {
     if (selectedList) {
-      watchlistAPI.addStartup(selectedList.id, startupId).catch(() => {});
+      watchlistAPI.addStartup(selectedList.id, startupId).catch(err => toast.error(err.message || 'Failed to add startup'));
     }
     setLists(prev => prev.map(l => l.id === selected
       ? { ...l, startupIds: [...l.startupIds, startupId] }
@@ -137,16 +141,12 @@ export default function StartupWatchlist() {
   };
 
   const deleteList = (id) => {
-    watchlistAPI.remove(id).catch(() => {});
+    watchlistAPI.remove(id).catch(err => toast.error(err.message || 'Failed to delete watchlist'));
     setLists(prev => prev.filter(l => l.id !== id));
     if (selected === id) setSelected(null);
   };
 
-  if (loading) return (
-    <div style={{ padding: 28, background: '#f5f5f5', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#888', fontSize: 14 }}>Loading watchlists...</p>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   const filteredLists = lists.filter(l =>
     l.name.toLowerCase().includes(search.toLowerCase()) ||

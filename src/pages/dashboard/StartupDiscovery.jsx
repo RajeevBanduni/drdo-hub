@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { startupAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { Search, Filter, Star, Cpu, MapPin, Users, DollarSign, Shield, Bookmark, BookmarkCheck, SlidersHorizontal, ChevronDown, BarChart3, Target, Award } from 'lucide-react';
 
 const SECTORS = ['All', 'Defence Electronics', 'Aerospace & Defence', 'Cybersecurity', 'Robotics & Autonomous Systems', 'Life Sciences & CBRN', 'Semiconductors'];
@@ -86,7 +88,7 @@ export default function StartupDiscovery() {
         setStartups(list);
         setWatchlist(list.filter(s => s.watchlisted).map(s => s.id));
       })
-      .catch(() => {})
+      .catch(err => toast.error(err.message || 'Failed to load startups'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -111,11 +113,7 @@ export default function StartupDiscovery() {
       return a.name.localeCompare(b.name);
     });
 
-  if (loading) return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="text-center py-16 text-gray-400">Loading startups…</div>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

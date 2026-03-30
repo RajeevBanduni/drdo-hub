@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { cohortAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { GraduationCap, Users, Calendar, Building2, Plus, ChevronRight, CheckCircle2, Clock, Award, Target, BarChart3 } from 'lucide-react';
 
 const STATUS_COLORS = {
@@ -179,17 +181,13 @@ export default function Cohorts() {
   useEffect(() => {
     cohortAPI.list()
       .then(data => setCohorts(data.cohorts || data || []))
-      .catch(() => {})
+      .catch(err => toast.error(err.message || 'Failed to load cohorts'))
       .finally(() => setLoading(false));
   }, []);
 
   if (selected) return <CohortDetail cohort={selected} onClose={() => setSelected(null)} />;
 
-  if (loading) return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="text-center py-16 text-gray-400">Loading cohorts…</div>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   return (
     <div className="p-6 max-w-6xl mx-auto">

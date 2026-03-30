@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { mentorAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { UserCheck, Star, Calendar, Users, MessageSquare, Plus, Search, Filter, CheckCircle2, BookOpen, Award } from 'lucide-react';
 
 const BG_COLORS = ['bg-dark-700', 'bg-primary-600', 'bg-accent-700', 'bg-blue-700'];
@@ -155,7 +157,7 @@ export default function Mentors() {
   useEffect(() => {
     mentorAPI.list()
       .then(data => setMentors(data.mentors || data || []))
-      .catch(() => {})
+      .catch(err => toast.error(err.message || 'Failed to load mentors'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -174,11 +176,7 @@ export default function Mentors() {
     ? (mentors.reduce((s, m) => s + (m.rating || 0), 0) / mentors.length).toFixed(1)
     : '—';
 
-  if (loading) return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="text-center py-16 text-gray-400">Loading mentors…</div>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   return (
     <div className="p-6 max-w-6xl mx-auto">

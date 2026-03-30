@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { documentAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 import {
   FolderOpen, Folder, FileText, File, FileImage, FileCode,
   Upload, Download, Search, Filter, Plus, Trash2, Eye,
@@ -98,17 +100,13 @@ export default function DocumentRepository() {
         }));
         setFiles(normalized);
       })
-      .catch(() => setFiles([]))
+      .catch(err => { toast.error(err.message || 'Failed to load documents'); setFiles([]); })
       .finally(() => setLoading(false));
   }, []);
 
   const toggleFolder = (id) => setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
 
-  if (loading) return (
-    <div style={{ padding: 28, background: '#f5f5f5', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: '#888', fontSize: 14 }}>Loading documents...</p>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="table" />;
 
   const filteredFiles = files.filter(f => {
     const matchFolder = !selectedFolder || f.folder === selectedFolder;

@@ -41,6 +41,7 @@ export const authAPI = {
   login:          (email, password) => post('/auth/login', { email, password }),
   me:             ()                => get('/auth/me'),
   changePassword: (currentPassword, newPassword) => put('/auth/change-password', { currentPassword, newPassword }),
+  updateProfile:  (data)            => put('/auth/profile', data),
 };
 
 // ── Dashboard ───────────────────────────────────────────────

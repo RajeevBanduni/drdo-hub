@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
   MessageSquare, Star, Send, ThumbsUp, ThumbsDown,
   Plus, Search, Filter, CheckCircle2, Clock, AlertCircle,
   BarChart3, TrendingUp, ChevronRight, X, Users,
 } from 'lucide-react';
 import { feedbackAPI } from '../../services/api';
+import LoadingSkeleton from '../../components/LoadingSkeleton';
 
 const G = '#D5AA5B';
 const GH = '#C9983F';
@@ -100,7 +102,7 @@ export default function StartupFeedback() {
       })));
       if (analyticsData) setAnalytics(analyticsData);
     })
-    .catch(() => {})
+    .catch(err => toast.error(err.message || 'Failed to load feedback'))
     .finally(() => setLoading(false));
   }, []);
 
@@ -125,6 +127,7 @@ export default function StartupFeedback() {
       content: form.text.trim(),
     })
       .then(data => {
+        toast.success('Feedback submitted successfully');
         const newFb = {
           id: data.id || Date.now(),
           startup: form.startup || '—',
@@ -141,7 +144,8 @@ export default function StartupFeedback() {
         setFeedbacks(prev => [newFb, ...prev]);
         setSubmitted(true);
       })
-      .catch(() => {
+      .catch(err => {
+        toast.error(err.message || 'Failed to submit feedback');
         // Optimistic: still add locally
         setFeedbacks(prev => [{
           id: Date.now(),
@@ -160,11 +164,7 @@ export default function StartupFeedback() {
       });
   };
 
-  if (loading) return (
-    <div style={{ padding: 28, maxWidth: 1100, background: '#f5f5f5', minHeight: '100%' }}>
-      <div style={{ textAlign: 'center', padding: '64px 0', color: '#aaa', fontSize: 14 }}>Loading feedback…</div>
-    </div>
-  );
+  if (loading) return <LoadingSkeleton type="card" />;
 
   return (
     <div style={{ padding: 28, maxWidth: 1100, background: '#f5f5f5', minHeight: '100%' }}>
