@@ -77,7 +77,7 @@ export default function EventsRepository() {
           endDate: fmtDate(e.end_date),
           location: e.location || '—',
           mode: e.is_virtual ? 'Online' : 'In-Person',
-          organiser: e.organiser || 'DRDO Innovation Hub',
+          organiser: e.organiser || 'OpenI Hub',
           registrations: Number(e.registered) || 0,
           capacity: Number(e.capacity) || 100,
           description: e.description || '',
@@ -122,7 +122,7 @@ export default function EventsRepository() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, color: '#1a1a1a', fontSize: 22, fontWeight: 700 }}>Events Repository</h1>
-          <p style={{ margin: '4px 0 0', color: '#888', fontSize: 13 }}>Hackathons, workshops, demo days and conferences for the DRDO startup ecosystem</p>
+          <p style={{ margin: '4px 0 0', color: '#888', fontSize: 13 }}>Hackathons, workshops, demo days and conferences for the OpenI startup ecosystem</p>
         </div>
         <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: G, color: '#fff', border: 'none', borderRadius: 9, cursor: 'pointer', fontSize: 13, fontWeight: 700, boxShadow: '0 2px 10px rgba(213,170,91,0.3)' }}
           onMouseEnter={e => e.currentTarget.style.background = GH}

@@ -57,7 +57,7 @@ function BookingModal({ resource, onClose }) {
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1.5">Purpose / Project Code</label>
-            <input className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400" placeholder="e.g., DRDO/2023/CAIR/AI-001" />
+            <input className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400" placeholder="e.g., OI/2023/CAIR/AI-001" />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-700 block mb-1.5">Description of Work</label>
@@ -129,7 +129,7 @@ export default function Infrastructure() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-gray-900">Infrastructure & Test Facilities</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Explore and book DRDO labs, test facilities, and incubation infrastructure</p>
+          <p className="text-gray-500 text-sm mt-0.5">Explore and book OpenI labs, test facilities, and incubation infrastructure</p>
         </div>
       </div>
 

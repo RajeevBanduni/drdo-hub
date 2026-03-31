@@ -32,7 +32,7 @@ export default function IPRDatabase() {
           type: r.type || 'Patent',
           status: r.status || 'Filed',
           jurisdiction: r.jurisdiction || (r.jurisdictions ? r.jurisdictions : ['IN']),
-          drdo_share: r.drdo_share || 0,
+          openi_share: r.openi_share || 0,
           startup_share: r.startup_share || 100,
           filingDate: r.filing_date ? new Date(r.filing_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : r.filingDate || '',
           grantDate: r.grant_date ? new Date(r.grant_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : r.grantDate || null,
@@ -59,7 +59,7 @@ export default function IPRDatabase() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-gray-900">IPR Database</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Track patents, trademarks, and intellectual property across the DRDO ecosystem</p>
+          <p className="text-gray-500 text-sm mt-0.5">Track patents, trademarks, and intellectual property across the OpenI ecosystem</p>
         </div>
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-dark-950 rounded-lg font-semibold text-sm hover:bg-primary-400">
           <Plus size={16} /> Add IPR Record
@@ -72,7 +72,7 @@ export default function IPRDatabase() {
           { label: 'Total IPR Records', value: iprRecords.length, color: 'text-gray-800' },
           { label: 'Patents Granted', value: iprRecords.filter(r => r.type === 'Patent' && r.status === 'Granted').length, color: 'text-accent-600' },
           { label: 'Under Review', value: iprRecords.filter(r => ['Filed', 'Published'].includes(r.status)).length, color: 'text-yellow-600' },
-          { label: 'DRDO Co-owned', value: iprRecords.filter(r => r.drdo_share > 0).length, color: 'text-primary-600' },
+          { label: 'OpenI Co-owned', value: iprRecords.filter(r => r.openi_share > 0).length, color: 'text-primary-600' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
             <div className={`text-3xl font-display font-bold ${s.color}`}>{s.value}</div>
@@ -102,7 +102,7 @@ export default function IPRDatabase() {
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500">Type</th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500">Status</th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500">Jurisdiction</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500">DRDO Share</th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500">OpenI Share</th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500">Filed</th>
             </tr>
           </thead>
@@ -133,9 +133,9 @@ export default function IPRDatabase() {
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    {record.drdo_share > 0 ? (
+                    {record.openi_share > 0 ? (
                       <div className="flex items-center gap-1 text-primary-700 text-sm font-semibold">
-                        <Shield size={12} /> {record.drdo_share}%
+                        <Shield size={12} /> {record.openi_share}%
                       </div>
                     ) : (
                       <span className="text-gray-400 text-xs">—</span>
@@ -165,7 +165,7 @@ export default function IPRDatabase() {
               {[
                 ['Type', selected.type], ['Startup', selected.startup], ['Filing Date', selected.filingDate],
                 ['Grant Date', selected.grantDate || 'Pending'], ['Expiry Date', selected.expiryDate],
-                ['DRDO Share', selected.drdo_share > 0 ? `${selected.drdo_share}%` : '—'],
+                ['OpenI Share', selected.openi_share > 0 ? `${selected.openi_share}%` : '—'],
                 ['Startup Share', `${selected.startup_share}%`], ['Licensing', selected.licensing],
               ].map(([k, v]) => (
                 <div key={k} className="bg-gray-50 rounded-lg p-3">
@@ -223,7 +223,7 @@ export default function IPRDatabase() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">DRDO Ownership %</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">OpenI Ownership %</label>
                   <input type="number" min="0" max="100" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400" placeholder="0" />
                 </div>
               </div>

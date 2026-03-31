@@ -48,7 +48,7 @@ export default function Knowledge() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-gray-900">Knowledge Hub</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Industry reports, SOPs, and curated research for DRDO's innovation ecosystem</p>
+          <p className="text-gray-500 text-sm mt-0.5">Industry reports, SOPs, and curated research for OpenI's innovation ecosystem</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-dark-950 rounded-lg font-semibold text-sm hover:bg-primary-400">
           <Plus size={16} /> Add Article
@@ -114,7 +114,7 @@ export default function Knowledge() {
             {selected.access === 'classified' ? (
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
                 <Lock size={18} className="text-red-500" />
-                <p className="text-sm text-red-700">This document is classified. Request access through DRDO secure portal.</p>
+                <p className="text-sm text-red-700">This document is classified. Request access through OpenI secure portal.</p>
               </div>
             ) : (
               <div className="flex gap-3">

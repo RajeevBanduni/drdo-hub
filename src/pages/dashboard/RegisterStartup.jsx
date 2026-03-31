@@ -13,7 +13,7 @@ const STEPS = [
   { id: 6, title: 'Review & Submit', icon: Shield },
 ];
 
-const DRDO_CLUSTERS = [
+const OPENI_CLUSTERS = [
   'Aeronautics & Unmanned Systems', 'Armaments & Combat Engineering',
   'Combat Vehicles & Engineering', 'Electronics & Communication Systems',
   'Life Sciences & CBRN', 'Materials & Stealth', 'Missiles & Strategic Systems',
@@ -52,7 +52,7 @@ export default function RegisterStartup() {
     coFounders: [], teamSize: '', iitNitGrad: false, exDefense: false, academia: false,
     boardMembers: [], shareholding: [],
     // Step 3
-    sector: '', technology: '', drdoCluster: '', trl: '1',
+    sector: '', technology: '', openiCluster: '', trl: '1',
     productDescription: '', solutions: '', useCases: '',
     isDeeptech: false, deepTechDomain: '',
     patents: '0', patentDetails: '',
@@ -92,7 +92,7 @@ export default function RegisterStartup() {
       state: form.state,
       sector: form.sector,
       technology: form.technology,
-      drdo_cluster: form.drdoCluster,
+      openi_cluster: form.openiCluster,
       trl: Number(form.trl) || 1,
       description: form.productDescription,
       solutions: form.solutions ? form.solutions.split('\n').filter(Boolean) : [],
@@ -131,7 +131,7 @@ export default function RegisterStartup() {
           <h2 className="text-2xl font-display font-bold text-gray-900 mb-2">Registration Submitted!</h2>
           <p className="text-gray-600 mb-4">Your startup profile has been submitted for verification. You will receive an email within 2-3 working days.</p>
           <div className="bg-white rounded-xl border border-gray-200 p-4 text-left text-sm mb-6">
-            <div className="flex justify-between py-1.5 border-b border-gray-100"><span className="text-gray-500">Application ID</span><span className="font-mono font-semibold text-primary-600">DRDO-2024-REG-00892</span></div>
+            <div className="flex justify-between py-1.5 border-b border-gray-100"><span className="text-gray-500">Application ID</span><span className="font-mono font-semibold text-primary-600">OI-2024-REG-00892</span></div>
             <div className="flex justify-between py-1.5 border-b border-gray-100"><span className="text-gray-500">Company</span><span className="font-semibold">{form.companyName || 'Your Company'}</span></div>
             <div className="flex justify-between py-1.5"><span className="text-gray-500">Status</span><span className="text-accent-600 font-semibold">Under Review</span></div>
           </div>
@@ -147,7 +147,7 @@ export default function RegisterStartup() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-display font-bold text-gray-900">Startup Registration</h1>
-          <p className="text-gray-500 text-sm mt-1">Create your DRDO Innovation Hub profile · All fields marked * are mandatory</p>
+          <p className="text-gray-500 text-sm mt-1">Create your OpenI Hub profile · All fields marked * are mandatory</p>
         </div>
 
         {/* Step Indicator */}
@@ -269,10 +269,10 @@ export default function RegisterStartup() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">DRDO Thrust Area Cluster *</label>
-                  <select value={form.drdoCluster} onChange={e => update('drdoCluster', e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400">
-                    <option value="">Select DRDO cluster</option>
-                    {DRDO_CLUSTERS.map(c => <option key={c}>{c}</option>)}
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">OpenI Thrust Area Cluster *</label>
+                  <select value={form.openiCluster} onChange={e => update('openiCluster', e.target.value)} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400">
+                    <option value="">Select OpenI cluster</option>
+                    {OPENI_CLUSTERS.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
@@ -297,7 +297,7 @@ export default function RegisterStartup() {
                     <input type="checkbox" checked={form.isDeeptech} onChange={e => update('isDeeptech', e.target.checked)} className="w-5 h-5 rounded text-primary-500" />
                     <div>
                       <div className="text-sm font-semibold text-primary-800">Apply for DeepTech Qualification</div>
-                      <div className="text-xs text-primary-600 mt-0.5">Your startup will undergo a special assessment to be listed as a DeepTech startup in DRDO's registry, unlocking priority evaluation and additional funding opportunities.</div>
+                      <div className="text-xs text-primary-600 mt-0.5">Your startup will undergo a special assessment to be listed as a DeepTech startup in OpenI's registry, unlocking priority evaluation and additional funding opportunities.</div>
                     </div>
                   </label>
                 </div>
@@ -330,7 +330,7 @@ export default function RegisterStartup() {
                 <div className="md:col-span-2">
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
                     <AlertCircle size={16} className="text-yellow-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-yellow-700">Financial information is confidential and will only be shared with authorised DRDO personnel involved in evaluation. Audited financial statements (last 2 years) will be required post-shortlisting.</p>
+                    <p className="text-xs text-yellow-700">Financial information is confidential and will only be shared with authorised OpenI personnel involved in evaluation. Audited financial statements (last 2 years) will be required post-shortlisting.</p>
                   </div>
                 </div>
               </div>
@@ -417,7 +417,7 @@ export default function RegisterStartup() {
                 {[
                   { title: 'Basic Information', fields: [['Company', form.companyName || '—'], ['Founded', form.founded || '—'], ['City', form.city || '—'], ['State', form.state || '—']] },
                   { title: 'Team', fields: [['Founder', form.founderName || '—'], ['Role', form.founderRole || '—'], ['Team Size', form.teamSize || '—']] },
-                  { title: 'Technology', fields: [['Sector', form.sector || '—'], ['Technology', form.technology || '—'], ['DRDO Cluster', form.drdoCluster || '—'], ['TRL', form.trl], ['DeepTech', form.isDeeptech ? 'Yes – Applying' : 'No']] },
+                  { title: 'Technology', fields: [['Sector', form.sector || '—'], ['Technology', form.technology || '—'], ['OpenI Cluster', form.openiCluster || '—'], ['TRL', form.trl], ['DeepTech', form.isDeeptech ? 'Yes – Applying' : 'No']] },
                   { title: 'Financial', fields: [['Stage', form.fundingStage || '—'], ['Funding', form.totalFunding ? `₹${Number(form.totalFunding).toLocaleString('en-IN')}` : '—'], ['Revenue', form.revenue ? `₹${Number(form.revenue).toLocaleString('en-IN')}` : '—']] },
                   { title: 'Legal', fields: [['GSTIN', `${form.gstin || '—'} ${verified.gstin ? '✓' : ''}`], ['CIN', `${form.cin || '—'} ${verified.cin ? '✓' : ''}`], ['DPIIT', `${form.dpiit || '—'} ${verified.dpiit ? '✓' : ''}`]] },
                 ].map(section => (
@@ -436,7 +436,7 @@ export default function RegisterStartup() {
                 <div className="bg-primary-50 border border-primary-200 rounded-xl p-4">
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" className="mt-0.5 rounded text-primary-500" required />
-                    <p className="text-sm text-primary-800">I certify that all information provided is accurate and complete. I understand that providing false information may result in disqualification and legal action. I agree to DRDO's data usage policy for startup evaluation and incubation purposes.</p>
+                    <p className="text-sm text-primary-800">I certify that all information provided is accurate and complete. I understand that providing false information may result in disqualification and legal action. I agree to OpenI's data usage policy for startup evaluation and incubation purposes.</p>
                   </label>
                 </div>
               </div>

@@ -98,7 +98,7 @@ export default function StartupFeedback() {
         status: normalizeStatus(f.status),
         text: f.content || f.text || '',
         actionTaken: f.response || null,
-        reviewer: f.responded_at ? 'DRDO Team' : null,
+        reviewer: f.responded_at ? 'OpenI Team' : null,
       })));
       if (analyticsData) setAnalytics(analyticsData);
     })
@@ -171,8 +171,8 @@ export default function StartupFeedback() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, color: '#1a1a1a', fontSize: 22, fontWeight: 700 }}>Startup Feedback on DRDO</h1>
-          <p style={{ margin: '4px 0 0', color: '#888', fontSize: 13 }}>Collect, track and act on startup feedback to improve DRDO programs</p>
+          <h1 style={{ margin: 0, color: '#1a1a1a', fontSize: 22, fontWeight: 700 }}>Startup Feedback on OpenI</h1>
+          <p style={{ margin: '4px 0 0', color: '#888', fontSize: 13 }}>Collect, track and act on startup feedback to improve OpenI programs</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {['list', 'analytics', 'submit'].map(v => (
@@ -350,13 +350,13 @@ export default function StartupFeedback() {
       {view === 'submit' && !submitted && (
         <div style={{ ...card, padding: 32, maxWidth: 640, margin: '0 auto' }}>
           <h2 style={{ margin: '0 0 6px', color: '#1a1a1a', fontSize: 18, fontWeight: 700 }}>Submit Feedback</h2>
-          <p style={{ margin: '0 0 24px', color: '#888', fontSize: 13 }}>Share your experience with DRDO programs, mentoring and support</p>
+          <p style={{ margin: '0 0 24px', color: '#888', fontSize: 13 }}>Share your experience with OpenI programs, mentoring and support</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <FormField label="Startup Name">
               <input value={form.startup} onChange={e => setForm(p => ({ ...p, startup: e.target.value }))} placeholder="Your startup name" />
             </FormField>
             <FormField label="Program Name">
-              <input value={form.program} onChange={e => setForm(p => ({ ...p, program: e.target.value }))} placeholder="e.g. DRDO AI Challenge 2025" />
+              <input value={form.program} onChange={e => setForm(p => ({ ...p, program: e.target.value }))} placeholder="e.g. OpenI AI Challenge 2025" />
             </FormField>
             <FormField label="Feedback Category">
               <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}>
@@ -392,7 +392,7 @@ export default function StartupFeedback() {
             <CheckCircle2 size={24} color="#16a34a" />
           </div>
           <h2 style={{ margin: '0 0 8px', color: '#1a1a1a', fontSize: 18, fontWeight: 700 }}>Feedback Submitted!</h2>
-          <p style={{ margin: '0 0 20px', color: '#888', fontSize: 13 }}>Thank you for your feedback. The DRDO team will review and respond within 3 working days.</p>
+          <p style={{ margin: '0 0 20px', color: '#888', fontSize: 13 }}>Thank you for your feedback. The OpenI team will review and respond within 3 working days.</p>
           <button onClick={() => { setView('list'); setSubmitted(false); setForm({ startup: '', program: '', category: CATEGORIES[0], rating: 0, text: '' }); }}
             style={{ padding: '9px 22px', background: G, color: '#fff', border: 'none', borderRadius: 9, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
             View All Feedback

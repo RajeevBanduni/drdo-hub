@@ -396,7 +396,7 @@ export default function StartupCrawling() {
                   </div>
 
                   <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">DRDO Thrust Area</p>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">OpenI Thrust Area</p>
                     <p className="text-sm text-primary-600 font-medium">{selectedStartup.matched_thrust}</p>
                     <ConfidenceBadge score={selectedStartup.confidence} />
                   </div>

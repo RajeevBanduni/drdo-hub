@@ -13,14 +13,14 @@ export function AuthProvider({ children }) {
   // Restore session from localStorage on page load
   useEffect(() => {
     try {
-      const storedToken = localStorage.getItem('drdo_token');
-      const storedUser  = localStorage.getItem('drdo_user');
+      const storedToken = localStorage.getItem('openi_token');
+      const storedUser  = localStorage.getItem('openi_user');
       if (storedToken && storedUser) {
         setUser(JSON.parse(storedUser));
       }
     } catch {
-      localStorage.removeItem('drdo_token');
-      localStorage.removeItem('drdo_user');
+      localStorage.removeItem('openi_token');
+      localStorage.removeItem('openi_user');
     } finally {
       setLoading(false);
     }
@@ -43,8 +43,8 @@ export function AuthProvider({ children }) {
   const verifyMFA = async (code) => {
     if (code === '123456') {
       setUser(pendingUser);
-      localStorage.setItem('drdo_token', pendingUser.token);
-      localStorage.setItem('drdo_user', JSON.stringify(pendingUser));
+      localStorage.setItem('openi_token', pendingUser.token);
+      localStorage.setItem('openi_user', JSON.stringify(pendingUser));
       setMfaStep(false);
       setPendingUser(null);
       return true;
@@ -56,8 +56,8 @@ export function AuthProvider({ children }) {
     setUser(null);
     setMfaStep(false);
     setPendingUser(null);
-    localStorage.removeItem('drdo_token');
-    localStorage.removeItem('drdo_user');
+    localStorage.removeItem('openi_token');
+    localStorage.removeItem('openi_user');
   };
 
   if (loading) return null;

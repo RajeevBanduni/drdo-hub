@@ -48,7 +48,7 @@ export default function Dashboard() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold text-gray-900">{greeting()}, {user?.name?.split(' ')[0]} 👋</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Here's the latest from DRDO Innovation Hub · {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="text-gray-500 text-sm mt-0.5">Here's the latest from OpenI Hub · {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
         <div className="hidden md:flex items-center gap-2">
           <Link to="/dashboard/register-startup" className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-dark-950 rounded-lg text-sm font-semibold hover:bg-primary-400 transition-all">
@@ -77,7 +77,7 @@ export default function Dashboard() {
         <StatCard label="DeepTech Startups" value={s.deeptechStartups} sub="Qualified entities" icon={Cpu} color="bg-purple-500" to="/dashboard/startups" />
         <StatCard label="Startups Incubated" value={s.startupsCohorted} sub="Across 8 cohorts" icon={Building2} color="bg-orange-500" to="/dashboard/cohorts" />
         <StatCard label="IPR Filed" value={s.iprFiled} sub="Patents + Trademarks" icon={Shield} color="bg-indigo-500" to="/dashboard/ipr" />
-        <StatCard label="Expert Mentors" value={s.mentors} sub="Academia, Industry, DRDO" icon={Award} color="bg-yellow-500" to="/dashboard/mentors" />
+        <StatCard label="Expert Mentors" value={s.mentors} sub="Academia, Industry, OpenI" icon={Award} color="bg-yellow-500" to="/dashboard/mentors" />
         <StatCard label="Avg. TRL" value={s.avgTRL} sub="Across active projects" icon={Target} color="bg-teal-500" />
       </div>
 

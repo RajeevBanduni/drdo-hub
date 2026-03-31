@@ -9,8 +9,8 @@ export const STARTUPS = [
     description: 'AI-powered threat detection and autonomous defense systems for border surveillance.',
     score: 87, watchlisted: true, status: 'Active',
     solutions: ['Autonomous Surveillance Drones', 'AI Threat Detection', 'Edge AI for Battlefield'],
-    patents: 3, awards: ['iDEX Winner 2022', 'DRDO Innovation Award 2023'],
-    drdo_cluster: 'Aeronautics & Unmanned Systems',
+    patents: 3, awards: ['iDEX Winner 2022', 'OpenI Innovation Award 2023'],
+    openi_cluster: 'Aeronautics & Unmanned Systems',
     founders: [{ name: 'Arjun Mehta', role: 'CEO', iit: true, ex_defense: false }],
     investors: [{ name: 'Bharat Ventures', amount: 5000000, round: 'Series A' }],
     clients: ['Indian Army', 'BSF', 'DRDO CAIR'],
@@ -39,7 +39,7 @@ export const STARTUPS = [
     score: 91, watchlisted: false, status: 'Active',
     solutions: ['Post-Quantum Encryption', 'Quantum Key Distribution', 'Secure Comms Suite'],
     patents: 5, awards: ['DST Quantum Initiative 2023'],
-    drdo_cluster: 'Electronics & Communication Systems',
+    openi_cluster: 'Electronics & Communication Systems',
     founders: [{ name: 'Dr. Siddharth Nair', role: 'CEO', iit: true, ex_defense: false }],
     investors: [{ name: 'SIDBI VC', amount: 1500000, round: 'Seed' }],
     clients: ['MeitY', 'NIC'],
@@ -65,8 +65,8 @@ export const STARTUPS = [
     description: 'Multi-spectral sensor fusion systems for land, air, and sea defense platforms.',
     score: 94, watchlisted: true, status: 'Incubated',
     solutions: ['Multi-spectral ISR Sensors', 'Radar Signal Processing', 'EO/IR Systems'],
-    patents: 12, awards: ['Make in India Excellence 2022', 'DRDO Tech Transfer 2023'],
-    drdo_cluster: 'Armaments & Combat Engineering',
+    patents: 12, awards: ['Make in India Excellence 2022', 'OpenI Tech Transfer 2023'],
+    openi_cluster: 'Armaments & Combat Engineering',
     founders: [{ name: 'Wing Cdr (Ret.) Ramesh Bhat', role: 'CEO', iit: false, ex_defense: true }],
     investors: [{ name: 'Kalaari Capital', amount: 25000000, round: 'Series B' }],
     clients: ['HAL', 'BEL', 'DRDO IRDE'],
@@ -95,7 +95,7 @@ export const STARTUPS = [
     score: 76, watchlisted: false, status: 'Applied',
     solutions: ['Neuromorphic Processors', 'Low-power Edge AI', 'Battlefield IoT'],
     patents: 1, awards: [],
-    drdo_cluster: 'Microelectronics & Semiconductors',
+    openi_cluster: 'Microelectronics & Semiconductors',
     founders: [{ name: 'Dr. Kavya Rajan', role: 'CEO', iit: true, ex_defense: false }],
     investors: [],
     clients: [],
@@ -114,7 +114,7 @@ export const STARTUPS = [
     score: 88, watchlisted: true, status: 'Active',
     solutions: ['Unmanned Ground Vehicles', 'EOD Robots', 'Autonomous Logistics Bots'],
     patents: 7, awards: ['iDEX DIO Winner 2023'],
-    drdo_cluster: 'Unmanned Systems & Robotics',
+    openi_cluster: 'Unmanned Systems & Robotics',
     founders: [{ name: 'Vikram Rao', role: 'CEO', iit: false, ex_defense: false }],
     investors: [{ name: 'Iron Pillar', amount: 12000000, round: 'Series A' }],
     clients: ['Army EME Corps', 'DRDO R&DE(E)'],
@@ -142,7 +142,7 @@ export const STARTUPS = [
     score: 82, watchlisted: false, status: 'Active',
     solutions: ['Bio-threat Detection Kits', 'Chemical Agent Sensors', 'CBRN Protective Gear'],
     patents: 2, awards: ['DST Innovation Award 2023'],
-    drdo_cluster: 'Life Sciences & CBRN',
+    openi_cluster: 'Life Sciences & CBRN',
     founders: [{ name: 'Dr. Ananya Gupta', role: 'CEO', iit: false, ex_defense: false }],
     investors: [{ name: 'Ankur Capital', amount: 2500000, round: 'Seed' }],
     clients: ['DRDO DRDE', 'CBRN Defence Wing'],
@@ -163,7 +163,7 @@ export const STARTUPS = [
 // ─── Projects ─────────────────────────────────────────────────────────────────
 export const PROJECTS = [
   {
-    id: 'p1', code: 'DRDO/2023/CAIR/AI-001', title: 'AI-based Border Surveillance System',
+    id: 'p1', code: 'OI/2023/CAIR/AI-001', title: 'AI-based Border Surveillance System',
     startup: 'TechDefend AI', startupId: 's1', lab: 'DRDO CAIR', pm: 'Dr. Priya Sharma',
     grant: 15000000, disbursed: 9000000, status: 'Active', health: 'green',
     startDate: '2023-04-01', endDate: '2025-03-31',
@@ -185,7 +185,7 @@ export const PROJECTS = [
     ],
   },
   {
-    id: 'p2', code: 'DRDO/2023/DRDL/QC-002', title: 'Post-Quantum Cryptography for Missile Command',
+    id: 'p2', code: 'OI/2023/DRDL/QC-002', title: 'Post-Quantum Cryptography for Missile Command',
     startup: 'QuantumShield Labs', startupId: 's2', lab: 'DRDO DRDL', pm: 'Dr. Rajesh Kumar',
     grant: 8000000, disbursed: 3200000, status: 'Active', health: 'amber',
     startDate: '2023-07-01', endDate: '2025-06-30',
@@ -202,7 +202,7 @@ export const PROJECTS = [
     documents: [{ name: 'Project Proposal', type: 'pdf', date: '2023-06-20' }],
   },
   {
-    id: 'p3', code: 'DRDO/2022/IRDE/SEN-003', title: 'Multi-spectral Sensor Array for LCA Tejas',
+    id: 'p3', code: 'OI/2022/IRDE/SEN-003', title: 'Multi-spectral Sensor Array for LCA Tejas',
     startup: 'AeroSense Dynamics', startupId: 's3', lab: 'DRDO IRDE', pm: 'Dr. Priya Sharma',
     grant: 35000000, disbursed: 28000000, status: 'Near Completion', health: 'green',
     startDate: '2022-01-01', endDate: '2024-12-31',
@@ -222,7 +222,7 @@ export const PROJECTS = [
 export const PROGRAMS = [
   {
     id: 'prog1', name: 'iDEX DIO Challenge – AI for Defence Round 5',
-    lab: 'DRDO HQ / iDEX', type: 'Challenge', status: 'Open',
+    lab: 'OpenI HQ / iDEX', type: 'Challenge', status: 'Open',
     opens: '2024-02-01', closes: '2024-04-30',
     description: 'Seeking AI-based solutions for real-time threat detection in border surveillance.',
     applications: 42, shortlisted: 8, selected: 0,
@@ -235,7 +235,7 @@ export const PROGRAMS = [
     ],
   },
   {
-    id: 'prog2', name: 'DRDO DeepTech Incubation Cohort 4 – Cyber & Quantum',
+    id: 'prog2', name: 'OpenI DeepTech Incubation Cohort 4 – Cyber & Quantum',
     lab: 'DRDO CAIR', type: 'Incubation', status: 'Under Review',
     opens: '2023-11-01', closes: '2024-01-31',
     description: 'Incubation support for quantum computing and cybersecurity startups relevant to defense.',
@@ -248,7 +248,7 @@ export const PROGRAMS = [
     ],
   },
   {
-    id: 'prog3', name: 'DRDO Robotics & Autonomous Systems Challenge',
+    id: 'prog3', name: 'OpenI Robotics & Autonomous Systems Challenge',
     lab: 'DRDO R&DE(E)', type: 'Challenge', status: 'Completed',
     opens: '2023-06-01', closes: '2023-09-30',
     description: 'Ground autonomous vehicles and robotic systems for EOD and logistics.',
@@ -327,10 +327,10 @@ export const MENTORS = [
 export const IPR_RECORDS = [
   {
     id: 'ipr1', title: 'AI-based Multi-object Tracking System for Aerial Surveillance',
-    startup: 'TechDefend AI', startupId: 's1', project: 'DRDO/2023/CAIR/AI-001',
+    startup: 'TechDefend AI', startupId: 's1', project: 'OI/2023/CAIR/AI-001',
     type: 'Patent', applicationNo: 'IN202311045678', filingDate: '2023-06-15',
     grantDate: null, expiryDate: '2043-06-15', jurisdiction: ['IN', 'US', 'EP'],
-    status: 'Published', drdo_share: 20, startup_share: 80,
+    status: 'Published', openi_share: 20, startup_share: 80,
     licensing: 'Unlicensed', inventors: ['Arjun Mehta', 'Dr. Priya Sharma (DRDO)'],
   },
   {
@@ -338,7 +338,7 @@ export const IPR_RECORDS = [
     startup: 'QuantumShield Labs', startupId: 's2', project: null,
     type: 'Patent', applicationNo: 'IN202221089012', filingDate: '2022-08-20',
     grantDate: '2024-01-10', expiryDate: '2042-08-20', jurisdiction: ['IN', 'PCT'],
-    status: 'Granted', drdo_share: 0, startup_share: 100,
+    status: 'Granted', openi_share: 0, startup_share: 100,
     licensing: 'Licensed (Non-exclusive)', inventors: ['Dr. Siddharth Nair'],
   },
   {
@@ -346,15 +346,15 @@ export const IPR_RECORDS = [
     startup: 'QuantumShield Labs', startupId: 's2', project: null,
     type: 'Trademark', applicationNo: 'TM202312345', filingDate: '2023-01-10',
     grantDate: '2023-09-22', expiryDate: '2033-01-10', jurisdiction: ['IN'],
-    status: 'Granted', drdo_share: 0, startup_share: 100,
+    status: 'Granted', openi_share: 0, startup_share: 100,
     licensing: 'N/A', inventors: [],
   },
   {
     id: 'ipr4', title: 'Multi-spectral Sensor Fusion Algorithm for Airborne ISR Platforms',
-    startup: 'AeroSense Dynamics', startupId: 's3', project: 'DRDO/2022/IRDE/SEN-003',
+    startup: 'AeroSense Dynamics', startupId: 's3', project: 'OI/2022/IRDE/SEN-003',
     type: 'Patent', applicationNo: 'IN202111034567', filingDate: '2021-11-03',
     grantDate: '2023-05-18', expiryDate: '2041-11-03', jurisdiction: ['IN', 'US', 'EP', 'IL'],
-    status: 'Granted', drdo_share: 30, startup_share: 70,
+    status: 'Granted', openi_share: 30, startup_share: 70,
     licensing: 'Licensed (Exclusive – HAL)', inventors: ['Wing Cdr Ramesh Bhat', 'Dr. M. Krishnan (DRDO)'],
   },
 ];
@@ -438,7 +438,7 @@ export const KNOWLEDGE_ARTICLES = [
 
 // ─── Notifications ─────────────────────────────────────────────────────────────
 export const NOTIFICATIONS = [
-  { id: 'n1', type: 'milestone', title: 'Milestone Overdue', message: 'Project DRDO/2023/DRDL/QC-002 – Milestone 3 is overdue by 45 days.', time: '2 hours ago', read: false, urgent: true },
+  { id: 'n1', type: 'milestone', title: 'Milestone Overdue', message: 'Project OI/2023/DRDL/QC-002 – Milestone 3 is overdue by 45 days.', time: '2 hours ago', read: false, urgent: true },
   { id: 'n2', type: 'application', title: 'New Application Received', message: '3 new applications received for iDEX DIO Challenge – AI for Defence Round 5.', time: '5 hours ago', read: false, urgent: false },
   { id: 'n3', type: 'ipr', title: 'Patent Application Published', message: 'Patent IN202311045678 by TechDefend AI has been published by IPO.', time: '1 day ago', read: false, urgent: false },
   { id: 'n4', type: 'message', title: 'New Message', message: 'Prof. Sunita Rao sent you a message regarding mentoring session scheduling.', time: '2 days ago', read: true, urgent: false },

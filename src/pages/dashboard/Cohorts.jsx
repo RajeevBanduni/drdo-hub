@@ -258,7 +258,7 @@ export default function Cohorts() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
             <h3 className="font-display font-bold text-gray-900 text-lg mb-5">Create New Cohort</h3>
             <div className="space-y-4">
-              {[['Cohort Name', 'e.g., DIA-CoE Delhi Cohort 4 – AI & Robotics'], ['DRDO Lab', ''], ['Partner Incubator', ''], ['Start Date', ''], ['End Date', ''], ['Max Startups', '']].map(([label, placeholder]) => (
+              {[['Cohort Name', 'e.g., DIA-CoE Delhi Cohort 4 – AI & Robotics'], ['OpenI Lab', ''], ['Partner Incubator', ''], ['Start Date', ''], ['End Date', ''], ['Max Startups', '']].map(([label, placeholder]) => (
                 <div key={label}>
                   <label className="text-sm font-medium text-gray-700 block mb-1.5">{label}</label>
                   <input className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400" placeholder={placeholder} />

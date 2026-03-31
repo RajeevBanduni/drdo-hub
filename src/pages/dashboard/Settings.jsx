@@ -43,9 +43,9 @@ export default function Settings() {
     try {
       const res = await authAPI.updateProfile({ name: name.trim() });
       // Update localStorage
-      const stored = JSON.parse(localStorage.getItem('drdo_user') || '{}');
+      const stored = JSON.parse(localStorage.getItem('openi_user') || '{}');
       stored.name = res.user?.name || name.trim();
-      localStorage.setItem('drdo_user', JSON.stringify(stored));
+      localStorage.setItem('openi_user', JSON.stringify(stored));
       toast.success('Profile updated successfully');
     } catch (err) {
       toast.error(err.message || 'Failed to update profile');
@@ -298,7 +298,7 @@ export default function Settings() {
             { label: 'User ID', value: user?.id || '—' },
             { label: 'Role', value: user?.role || '—' },
             { label: 'Email', value: user?.email || '—' },
-            { label: 'Platform', value: 'DRDO Innovation Hub v1.0' },
+            { label: 'Platform', value: 'OpenI Hub v1.0' },
           ].map(({ label, value }) => (
             <div key={label} style={{ padding: '8px 0' }}>
               <div style={{ fontSize: 10, color: '#aaa', marginBottom: 2 }}>{label}</div>

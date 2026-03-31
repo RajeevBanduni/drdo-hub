@@ -370,10 +370,10 @@ export default function Evaluations() {
             programMap[key] = {
               id: ev.id,
               name: key,
-              description: ev.notes || ev.description || 'DRDO evaluation program',
+              description: ev.notes || ev.description || 'OpenI evaluation program',
               status: ev.status === 'completed' ? 'Completed' : 'Open',
               type: ev.type || 'Challenge',
-              lab: ev.lab || 'DRDO HQ',
+              lab: ev.lab || 'OpenI HQ',
               applications: 0,
               shortlisted: 0,
               selected: 0,
@@ -395,8 +395,8 @@ export default function Evaluations() {
         // If no evaluations, create a placeholder
         if (programList.length === 0) {
           programList = [{
-            id: 1, name: 'DRDO Startup Evaluation', description: 'General startup evaluation program',
-            status: 'Open', type: 'Challenge', lab: 'DRDO HQ', applications: evals.length,
+            id: 1, name: 'OpenI Startup Evaluation', description: 'General startup evaluation program',
+            status: 'Open', type: 'Challenge', lab: 'OpenI HQ', applications: evals.length,
             shortlisted: 0, selected: 0, closes: 'Ongoing',
             criteria: [
               { name: 'Technical Innovation', weight: 25 }, { name: 'Defence Relevance', weight: 20 },
@@ -475,7 +475,7 @@ export default function Evaluations() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Program Name *</label>
-                <input className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400" placeholder="e.g., DRDO AI Challenge Round 6" />
+                <input className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400" placeholder="e.g., OpenI AI Challenge Round 6" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -487,7 +487,7 @@ export default function Evaluations() {
                 <div>
                   <label className="text-sm font-medium text-gray-700 block mb-1.5">Owning Lab</label>
                   <select className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-primary-400">
-                    <option>DRDO HQ</option><option>DRDO CAIR</option><option>DRDO DRDL</option><option>DRDO IRDE</option>
+                    <option>OpenI HQ</option><option>DRDO CAIR</option><option>DRDO DRDL</option><option>DRDO IRDE</option>
                   </select>
                 </div>
                 <div>

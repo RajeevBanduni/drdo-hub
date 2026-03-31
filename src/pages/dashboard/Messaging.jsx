@@ -188,7 +188,7 @@ export default function Messaging() {
               <span style={{ marginLeft: 10, fontSize: 13, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: '#dc2626', color: '#fff' }}>{totalUnread}</span>
             )}
           </h1>
-          <p style={{ margin: '4px 0 0', color: '#888', fontSize: 13 }}>Internal comms between DRDO, startups & evaluators</p>
+          <p style={{ margin: '4px 0 0', color: '#888', fontSize: 13 }}>Internal comms between OpenI, startups & evaluators</p>
         </div>
         <button style={{
           display: 'flex', alignItems: 'center', gap: 6,

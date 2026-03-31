@@ -120,7 +120,7 @@ export default function DashboardHome() {
             Welcome back{firstName ? `, ${firstName}` : ""} 👋
           </h1>
           <p style={{ margin:"4px 0 0", color:"#888888", fontSize:13 }}>
-            DRDO Innovation Hub · OpenI Assessment Platform
+            OpenI Hub · Assessment Platform
           </p>
         </div>
         <button

@@ -81,7 +81,7 @@ export default function StartupPipeline() {
           stage: PIPELINE_STAGE_MAP[s.pipeline_stage] || PIPELINE_STAGE_MAP[s.status] || 'application',
           stageDate: s.updated_at ? new Date(s.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
           status: s.status || 'Pending',
-          program: s.drdo_cluster || 'DRDO Program',
+          program: s.openi_cluster || 'OpenI Program',
           pm: 'Assigned',
           journey: STAGES.map(st => ({
             stage: st.id,

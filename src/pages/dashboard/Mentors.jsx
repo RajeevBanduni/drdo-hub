@@ -5,7 +5,7 @@ import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { UserCheck, Star, Calendar, Users, MessageSquare, Plus, Search, Filter, CheckCircle2, BookOpen, Award } from 'lucide-react';
 
 const BG_COLORS = ['bg-dark-700', 'bg-primary-600', 'bg-accent-700', 'bg-blue-700'];
-const BACKGROUND_LABELS = { academia: 'Academia', retired_defense: 'Retired Defence', ex_drdo: 'Ex-DRDO', industry: 'Industry' };
+const BACKGROUND_LABELS = { academia: 'Academia', retired_defense: 'Retired Defence', ex_drdo: 'Ex-OpenI', industry: 'Industry' };
 const BACKGROUND_COLORS = { academia: 'bg-blue-100 text-blue-700', retired_defense: 'bg-green-100 text-green-700', ex_drdo: 'bg-orange-100 text-orange-700', industry: 'bg-purple-100 text-purple-700' };
 
 function MentorDetail({ mentor, onClose }) {

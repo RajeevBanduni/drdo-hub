@@ -94,7 +94,7 @@ export default function SMEManagement() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, color: '#1a1a1a', fontSize: 22, fontWeight: 700 }}>Subject Matter Experts</h1>
-          <p style={{ margin: '4px 0 0', color: '#888', fontSize: 13 }}>Ecosystem collaboration — academics, industry leaders and defence veterans mentoring DRDO startups</p>
+          <p style={{ margin: '4px 0 0', color: '#888', fontSize: 13 }}>Ecosystem collaboration — academics, industry leaders and defence veterans mentoring OpenI startups</p>
         </div>
         <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: G, color: '#fff', border: 'none', borderRadius: 9, cursor: 'pointer', fontSize: 13, fontWeight: 700, boxShadow: '0 2px 10px rgba(213,170,91,0.3)' }}
           onMouseEnter={e => e.currentTarget.style.background = GH}

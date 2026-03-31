@@ -56,7 +56,7 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-md" style={{ backgroundColor: '#D5AA5B' }}>
             <Shield size={26} style={{ color: '#ffffff' }} />
           </div>
-          <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a', fontFamily: 'Plus Jakarta Sans, Inter, sans-serif' }}>DRDO Innovation Hub</h1>
+          <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a', fontFamily: 'Plus Jakarta Sans, Inter, sans-serif' }}>OpenI Hub</h1>
           <p className="text-sm mt-1" style={{ color: '#6b7280' }}>Secure portal for startup ecosystem</p>
         </div>
 
@@ -82,7 +82,7 @@ export default function Login() {
                       type="email"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="you@drdo.gov.in"
+                      placeholder="you@openi.gov.in"
                       required
                       className="login-input w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none transition-all"
                       style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', color: '#1a1a1a' }}
@@ -198,7 +198,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs mt-6" style={{ color: '#9ca3af' }}>
-          © 2024 DRDO Innovation Hub. All rights reserved.
+          © 2024 OpenI Hub. All rights reserved.
         </p>
       </div>
     </div>

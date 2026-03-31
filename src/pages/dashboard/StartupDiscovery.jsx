@@ -50,7 +50,7 @@ function StartupCard({ startup, onWatchlist, watchlisted, onClick }) {
 
       <div className="space-y-1.5 mb-3">
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>DRDO Score</span>
+          <span>OpenI Score</span>
         </div>
         <ScoreBar score={startup.score} />
       </div>
@@ -120,7 +120,7 @@ export default function StartupDiscovery() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-gray-900">Startup Discovery</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{startups.length.toLocaleString()} startups · Filter by sector, technology, and DRDO relevance</p>
+          <p className="text-gray-500 text-sm mt-0.5">{startups.length.toLocaleString()} startups · Filter by sector, technology, and OpenI relevance</p>
         </div>
         <div className="flex gap-2">
           <button className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-2">
@@ -139,7 +139,7 @@ export default function StartupDiscovery() {
           <SlidersHorizontal size={15} /> Filters
         </button>
         <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="px-4 py-3 border border-gray-200 rounded-xl bg-white text-sm text-gray-700 focus:outline-none focus:border-primary-400">
-          <option value="score">Sort: DRDO Score</option>
+          <option value="score">Sort: OpenI Score</option>
           <option value="trl">Sort: TRL</option>
           <option value="funding">Sort: Funding</option>
           <option value="name">Sort: A-Z</option>

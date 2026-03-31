@@ -60,7 +60,7 @@ const SECTIONS = [
     icon: Shield,
     color: '#dc2626',
     questions: [
-      { id: 'q11', text: 'Is the technology directly applicable to one or more of DRDO\'s thrust areas (e.g., AI, cyber, quantum, materials, biodefence, space)?', weight: 3 },
+      { id: 'q11', text: 'Is the technology directly applicable to one or more of OpenI\'s thrust areas (e.g., AI, cyber, quantum, materials, biodefence, space)?', weight: 3 },
       { id: 'q12', text: 'Does the technology have dual-use potential (both civilian and defence applications)?', weight: 2 },
       { id: 'q13', text: 'Has the startup previously worked with government agencies, defence establishments, or strategic sector clients?', weight: 1 },
     ],

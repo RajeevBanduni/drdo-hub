@@ -1,5 +1,5 @@
 /**
- * DRDO Innovation Hub — API Service Layer
+ * OpenI Hub — API Service Layer
  * Central place for all backend calls.
  * Base URL is read from .env: VITE_API_URL
  */
@@ -7,9 +7,9 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ── Token helpers ───────────────────────────────────────────
-export function getToken()          { return localStorage.getItem('drdo_token'); }
-export function setToken(t)         { localStorage.setItem('drdo_token', t); }
-export function removeToken()       { localStorage.removeItem('drdo_token'); }
+export function getToken()          { return localStorage.getItem('openi_token'); }
+export function setToken(t)         { localStorage.setItem('openi_token', t); }
+export function removeToken()       { localStorage.removeItem('openi_token'); }
 
 // ── Core fetch wrapper ──────────────────────────────────────
 async function request(method, path, body = null, isFormData = false) {

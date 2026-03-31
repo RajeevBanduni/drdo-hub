@@ -52,7 +52,7 @@ export default function StartupProfile() {
           location: s.location || '',
           status: s.status || 'Active',
           stage: s.stage || '',
-          drdo_cluster: s.drdo_cluster || '',
+          openi_cluster: s.openi_cluster || '',
           trl: s.trl || 0,
           score: s.score || 0,
           deeptech: s.deeptech || false,
@@ -129,7 +129,7 @@ export default function StartupProfile() {
                 <div className="flex items-center gap-3 mt-2 flex-wrap">
                   <TRLBadge trl={startup.trl} />
                   <span className="px-2.5 py-1 bg-dark-800 text-dark-300 text-xs rounded-lg">{startup.stage}</span>
-                  <span className="px-2.5 py-1 bg-dark-800 text-primary-400 text-xs rounded-lg">{startup.drdo_cluster}</span>
+                  <span className="px-2.5 py-1 bg-dark-800 text-primary-400 text-xs rounded-lg">{startup.openi_cluster}</span>
                 </div>
               </div>
             </div>
@@ -178,7 +178,7 @@ export default function StartupProfile() {
                   <h3 className="font-display font-bold text-gray-900 mb-3">About the Startup</h3>
                   <p className="text-gray-700 text-sm leading-relaxed">{startup.description}</p>
                   <div className="mt-4 flex gap-2 flex-wrap">
-                    {[startup.sector, startup.technology, startup.drdo_cluster].map(tag => (
+                    {[startup.sector, startup.technology, startup.openi_cluster].map(tag => (
                       <span key={tag} className="px-3 py-1 bg-primary-50 text-primary-700 text-xs rounded-full border border-primary-200">{tag}</span>
                     ))}
                   </div>
@@ -291,7 +291,7 @@ export default function StartupProfile() {
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
                   <h3 className="font-display font-bold text-gray-900 mb-4">Technology Profile</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {[['Sector', startup.sector], ['Core Technology', startup.technology], ['DRDO Cluster', startup.drdo_cluster], ['TRL', `Level ${startup.trl}`]].map(([k, v]) => (
+                    {[['Sector', startup.sector], ['Core Technology', startup.technology], ['OpenI Cluster', startup.openi_cluster], ['TRL', `Level ${startup.trl}`]].map(([k, v]) => (
                       <div key={k} className="p-3 bg-gray-50 rounded-lg">
                         <div className="text-xs text-gray-500 mb-0.5">{k}</div>
                         <div className="text-sm font-semibold text-gray-800">{v}</div>
@@ -320,7 +320,7 @@ export default function StartupProfile() {
                       <h3 className="font-display font-bold text-white">DeepTech Qualification</h3>
                       <span className="px-2.5 py-0.5 bg-primary-500 text-dark-950 text-xs font-bold rounded-full">QUALIFIED</span>
                     </div>
-                    <p className="text-dark-300 text-sm">This startup has been assessed and qualified as a DeepTech company under DRDO's classification framework. Eligible for priority evaluation and dedicated DeepTech incubation cohorts.</p>
+                    <p className="text-dark-300 text-sm">This startup has been assessed and qualified as a DeepTech company under OpenI's classification framework. Eligible for priority evaluation and dedicated DeepTech incubation cohorts.</p>
                     <div className="mt-4 grid grid-cols-3 gap-3">
                       {[['Research Depth', '9.2/10'], ['IP Intensity', '8.7/10'], ['Talent Density', '8.4/10']].map(([k,v]) => (
                         <div key={k} className="bg-primary-900/50 rounded-lg p-3 text-center border border-primary-700">
@@ -540,7 +540,7 @@ export default function StartupProfile() {
               <h4 className="font-semibold text-gray-800 text-sm mb-4">Quick Stats</h4>
               <div className="space-y-3">
                 {[
-                  { label: 'DRDO Score', value: `${startup.score}/100`, icon: Star, color: 'text-primary-500' },
+                  { label: 'OpenI Score', value: `${startup.score}/100`, icon: Star, color: 'text-primary-500' },
                   { label: 'TRL', value: startup.trl, icon: Target, color: 'text-blue-500' },
                   { label: 'Employees', value: startup.employees, icon: Users, color: 'text-green-500' },
                   { label: 'Patents', value: startup.patents, icon: Shield, color: 'text-purple-500' },
@@ -558,13 +558,13 @@ export default function StartupProfile() {
               </div>
             </div>
 
-            {/* DRDO Engagement */}
+            {/* OpenI Engagement */}
             <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h4 className="font-semibold text-gray-800 text-sm mb-4">DRDO Engagement</h4>
+              <h4 className="font-semibold text-gray-800 text-sm mb-4">OpenI Engagement</h4>
               <div className="space-y-2 text-sm">
                 {[
                   { label: 'Status', value: startup.status, badge: true },
-                  { label: 'Active Project', value: 'DRDO/2023/CAIR/AI-001', badge: false },
+                  { label: 'Active Project', value: 'OI/2023/CAIR/AI-001', badge: false },
                   { label: 'Assigned Lab', value: 'DRDO CAIR', badge: false },
                   { label: 'Program Manager', value: 'Dr. Priya Sharma', badge: false },
                   { label: 'Mentor', value: 'Prof. Sunita Rao', badge: false },
@@ -599,7 +599,7 @@ export default function StartupProfile() {
 
             {/* Feedback button */}
             <button onClick={() => setFeedbackOpen(true)} className="w-full py-3 border border-primary-200 text-primary-700 rounded-xl text-sm font-semibold hover:bg-primary-50 transition-all">
-              Give Feedback to DRDO
+              Give Feedback to OpenI
             </button>
           </div>
         </div>
@@ -609,8 +609,8 @@ export default function StartupProfile() {
       {feedbackOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl">
-            <h3 className="font-display font-bold text-gray-900 text-lg mb-2">Feedback on DRDO Engagement</h3>
-            <p className="text-gray-500 text-sm mb-4">Share how DRDO's support has contributed to your startup's growth.</p>
+            <h3 className="font-display font-bold text-gray-900 text-lg mb-2">Feedback on OpenI Engagement</h3>
+            <p className="text-gray-500 text-sm mb-4">Share how OpenI's support has contributed to your startup's growth.</p>
             {feedbackSent ? (
               <div className="text-center py-6">
                 <CheckCircle2 size={40} className="text-accent-500 mx-auto mb-3" />

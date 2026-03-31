@@ -130,7 +130,7 @@ export default function DashboardLayout() {
             <Shield size={17} color="#fff" />
           </div>
           <div>
-            <div style={{ color: C.textPrimary, fontSize:12, fontWeight:700, lineHeight:"1.3" }}>DRDO Innovation Hub</div>
+            <div style={{ color: C.textPrimary, fontSize:12, fontWeight:700, lineHeight:"1.3" }}>OpenI Hub</div>
             <div style={{ color: C.gold, fontSize:10, marginTop:1, fontWeight:500 }}>OpenI Platform</div>
           </div>
         </div>
@@ -260,7 +260,7 @@ export default function DashboardLayout() {
 
           {/* Breadcrumb */}
           <div style={{ flex:1, fontSize:12, color: C.textMuted, display:"flex", alignItems:"center", gap:6 }}>
-            <span style={{ color: C.gold, fontWeight:700 }}>DRDO Innovation Hub</span>
+            <span style={{ color: C.gold, fontWeight:700 }}>OpenI Hub</span>
             <ChevronRight size={12} />
             <span style={{ color: C.textSecond }}>Dashboard</span>
           </div>

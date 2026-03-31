@@ -346,7 +346,7 @@ export default function StartupWatchlist() {
             <Field label="Visibility">
               <select value={newList.visibility} onChange={e => setNewList(p => ({ ...p, visibility: e.target.value }))}>
                 <option value="public">Public</option>
-                <option value="internal">Internal (DRDO only)</option>
+                <option value="internal">Internal (OpenI only)</option>
                 <option value="restricted">Restricted</option>
               </select>
             </Field>
