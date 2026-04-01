@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { corporateAPI } from '../../services/api';
-import { Handshake, Loader2, ChevronRight, Clock, Rocket, Plus, Edit3, X } from 'lucide-react';
+import { Link2, Loader2, ChevronRight, Clock, Rocket, Plus, Edit3, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const G = '#D5AA5B';
@@ -54,14 +54,14 @@ export default function CorporateCollaborations() {
     <div style={{ padding: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
-          <Handshake size={20} style={{ verticalAlign: -3, marginRight: 8, color: G }} />Collaborations
+          <Link2 size={20} style={{ verticalAlign: -3, marginRight: 8, color: G }} />Collaborations
         </h1>
         <span style={{ fontSize: 12, color: '#888' }}>{collabs.length} total</span>
       </div>
 
       {collabs.length === 0 ? (
         <div style={{ ...card, padding: 40, textAlign: 'center' }}>
-          <Handshake size={32} style={{ color: '#ddd', marginBottom: 10 }} />
+          <Link2 size={32} style={{ color: '#ddd', marginBottom: 10 }} />
           <p style={{ fontSize: 14, fontWeight: 600, color: '#888' }}>No collaborations yet</p>
           <p style={{ fontSize: 12, color: '#aaa' }}>Start a collaboration from the Startup Search page</p>
         </div>

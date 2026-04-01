@@ -73,7 +73,7 @@ export const PERSONA_NAV = {
     { to: '/dashboard/profile',              label: 'My Profile',      icon: 'User' },
     { to: '/dashboard/corporate/search',     label: 'Find Startups',   icon: 'Search' },
     { to: '/dashboard/corporate/challenges', label: 'Challenges',      icon: 'Target' },
-    { to: '/dashboard/corporate/collabs',    label: 'Collaborations',  icon: 'Handshake' },
+    { to: '/dashboard/corporate/collabs',    label: 'Collaborations',  icon: 'Link2' },
     { to: '/dashboard/watchlist',            label: 'Watchlist',       icon: 'Star' },
     { to: '/dashboard/projects',             label: 'Projects',        icon: 'FolderKanban' },
     { to: '/dashboard/messaging',            label: 'Messaging',       icon: 'MessageSquare' },

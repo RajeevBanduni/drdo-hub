@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { corporateAPI } from '../../services/api';
 import {
-  Building2, FolderKanban, Target, Handshake, Star, Users,
+  Building2, FolderKanban, Target, Link2, Star, Users,
   Search, Plus, ArrowRight, Loader2, TrendingUp, Clock,
   CheckCircle, AlertCircle,
 } from 'lucide-react';
@@ -46,7 +46,7 @@ export default function CorporateDashboard() {
   const stats = [
     { label: 'My Projects', value: data?.projects || 0, icon: FolderKanban, color: '#3b82f6', to: '/dashboard/projects' },
     { label: 'Active Challenges', value: data?.challenges?.active || 0, icon: Target, color: G, to: '/dashboard/corporate/challenges' },
-    { label: 'Collaborations', value: parseInt(collabs.total) || 0, icon: Handshake, color: '#16a34a', to: '/dashboard/corporate/collabs' },
+    { label: 'Collaborations', value: parseInt(collabs.total) || 0, icon: Link2, color: '#16a34a', to: '/dashboard/corporate/collabs' },
     { label: 'Watchlists', value: data?.watchlists || 0, icon: Star, color: '#f59e0b', to: '/dashboard/watchlist' },
     { label: 'Applications', value: data?.recent_applications?.length || 0, icon: Users, color: '#8b5cf6', to: '/dashboard/corporate/challenges' },
   ];
@@ -54,7 +54,7 @@ export default function CorporateDashboard() {
   const quickActions = [
     { label: 'Find Startups', desc: 'Search by sector, technology, use case', icon: Search, to: '/dashboard/corporate/search', color: G },
     { label: 'Launch Challenge', desc: 'Post innovation requirements', icon: Plus, to: '/dashboard/corporate/challenges', color: '#16a34a' },
-    { label: 'View Collaborations', desc: 'Track startup partnerships', icon: Handshake, to: '/dashboard/corporate/collabs', color: '#3b82f6' },
+    { label: 'View Collaborations', desc: 'Track startup partnerships', icon: Link2, to: '/dashboard/corporate/collabs', color: '#3b82f6' },
     { label: 'My Watchlist', desc: 'Curated startup lists', icon: Star, to: '/dashboard/watchlist', color: '#f59e0b' },
   ];
 

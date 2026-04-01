@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { corporateAPI, watchlistAPI } from '../../services/api';
 import {
-  Search, Filter, Rocket, Star, Handshake, MessageSquare,
+  Search, Filter, Rocket, Star, Link2, MessageSquare,
   ChevronDown, ChevronRight, X, Loader2, MapPin, Zap, TrendingUp, Cpu,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -246,7 +246,7 @@ export default function CorporateStartupSearch() {
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 6, marginTop: 10 }} onClick={e => e.stopPropagation()}>
                     <button onClick={() => startCollab(s)} style={{ flex: 1, padding: '6px', fontSize: 11, fontWeight: 600, borderRadius: 7, background: `${G}12`, color: G, border: `1px solid ${G}30`, cursor: 'pointer' }}>
-                      <Handshake size={12} style={{ verticalAlign: -2, marginRight: 3 }} /> Collaborate
+                      <Link2 size={12} style={{ verticalAlign: -2, marginRight: 3 }} /> Collaborate
                     </button>
                     <button onClick={() => navigate('/dashboard/messaging')} style={{ padding: '6px 10px', fontSize: 11, borderRadius: 7, background: '#f9fafb', color: '#666', border: '1px solid #e5e7eb', cursor: 'pointer' }}>
                       <MessageSquare size={12} style={{ verticalAlign: -2 }} />
