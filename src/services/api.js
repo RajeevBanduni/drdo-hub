@@ -187,6 +187,28 @@ export const profileAPI = {
   getPublic:      (userId)  => get(`/profile/${userId}`),
 };
 
+// ── Corporate Features ───────────────────────────────────────
+export const corporateAPI = {
+  dashboard:         ()              => get('/corporate/dashboard'),
+  getTaxonomy:       ()              => get('/corporate/taxonomy'),
+  searchStartups:    (params = {})   => get(`/corporate/startups?${new URLSearchParams(params)}`),
+  recommendations:   ()              => get('/corporate/recommendations'),
+  createChallenge:   (data)          => post('/corporate/challenges', data),
+  listChallenges:    (params = {})   => get(`/corporate/challenges?${new URLSearchParams(params)}`),
+  getChallenge:      (id)            => get(`/corporate/challenges/${id}`),
+  updateChallenge:   (id, data)      => put(`/corporate/challenges/${id}`, data),
+  updateApplication: (cid, aid, data) => put(`/corporate/challenges/${cid}/applications/${aid}`, data),
+  createCollab:      (data)          => post('/corporate/collaborations', data),
+  listCollabs:       (params = {})   => get(`/corporate/collaborations?${new URLSearchParams(params)}`),
+  updateCollab:      (id, data)      => put(`/corporate/collaborations/${id}`, data),
+};
+
+// ── Challenge Applications (for startups) ────────────────────
+export const challengeAPI = {
+  listOpen:  (params = {}) => get(`/challenges/open?${new URLSearchParams(params)}`),
+  apply:     (id, data)    => post(`/challenges/${id}/apply`, data),
+};
+
 // ── Crawling ────────────────────────────────────────────────
 export const crawlAPI = {
   stats:           ()                => get('/crawl/stats'),

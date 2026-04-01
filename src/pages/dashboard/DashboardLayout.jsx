@@ -9,7 +9,7 @@ import {
   FolderKanban, MessageSquare, GitBranch, FolderOpen,
   Star, Zap, Calendar, UserCheck, ThumbsUp, Link2,
   Search, User, CalendarCheck, TrendingUp, Landmark,
-  FlaskConical, Home,
+  FlaskConical, Home, Target, Handshake,
 } from "lucide-react";
 import { PERSONA_NAV, PERSONAS } from "../../config/personas";
 
@@ -40,7 +40,7 @@ const ICON_MAP = {
   GraduationCap, Database, Users, Building2, Globe, FileText,
   FolderKanban, MessageSquare, GitBranch, FolderOpen, Star, Zap,
   Calendar, UserCheck, ThumbsUp, Link2, Search, User, CalendarCheck,
-  TrendingUp, Landmark, FlaskConical, Home,
+  TrendingUp, Landmark, FlaskConical, Home, Target, Handshake,
 };
 
 // roles: undefined = visible to all, array = only listed roles see it

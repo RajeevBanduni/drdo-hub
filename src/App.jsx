@@ -11,6 +11,10 @@ import Login             from './pages/dashboard/Login';
 import DashboardLayout   from './pages/dashboard/DashboardLayout';
 import DashboardHome     from './pages/dashboard/DashboardHome';
 import MyProfile         from './pages/dashboard/MyProfile';
+import CorporateDashboard       from './pages/dashboard/CorporateDashboard';
+import CorporateStartupSearch   from './pages/dashboard/CorporateStartupSearch';
+import CorporateChallenges      from './pages/dashboard/CorporateChallenges';
+import CorporateCollaborations  from './pages/dashboard/CorporateCollaborations';
 import StartupEvaluation from './pages/dashboard/StartupEvaluation';
 import StartupDiscovery  from './pages/dashboard/StartupDiscovery';
 import StartupProfile    from './pages/dashboard/StartupProfile';
@@ -65,6 +69,10 @@ export default function App() {
           >
             <Route index                      element={<DashboardHome />} />
             <Route path="profile"             element={<MyProfile />} />
+            <Route path="corporate"          element={<CorporateDashboard />} />
+            <Route path="corporate/search"   element={<CorporateStartupSearch />} />
+            <Route path="corporate/challenges" element={<CorporateChallenges />} />
+            <Route path="corporate/collabs"  element={<CorporateCollaborations />} />
             <Route path="evaluate"            element={<StartupEvaluation />} />
             <Route path="startups"            element={<StartupDiscovery />} />
             <Route path="startup-profile"     element={<StartupProfile />} />

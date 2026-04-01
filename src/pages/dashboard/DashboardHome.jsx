@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { dashboardAPI, evaluationAPI } from "../../services/api";
@@ -65,6 +65,10 @@ const FALLBACK_STATS = [
 export default function DashboardHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect corporate users to their dedicated dashboard
+  if (user?.role === 'corporate') return <Navigate to="/dashboard/corporate" replace />;
+
   const firstName = user?.name?.split(" ")[0] || null;
 
   const [stats, setStats] = useState(FALLBACK_STATS);
