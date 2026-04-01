@@ -118,7 +118,7 @@ export default function DashboardLayout() {
           background: C.sidebarBg,
           borderRight: `1px solid ${C.sidebarBorder}`,
           display:"flex", flexDirection:"column", flexShrink:0,
-          position:"relative", zIndex:30,
+          position:"relative", zIndex:30, overflow:"hidden",
           boxShadow: "2px 0 8px rgba(0,0,0,0.06)",
         }}
         className={`
