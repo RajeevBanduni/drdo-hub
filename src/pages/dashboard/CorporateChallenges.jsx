@@ -3,6 +3,7 @@ import { corporateAPI } from '../../services/api';
 import {
   Target, Plus, ChevronLeft, Clock, CheckCircle, XCircle,
   Users, Loader2, Calendar, DollarSign, AlertCircle, Star,
+  MapPin, FileText, HelpCircle, Trash2, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -31,7 +32,7 @@ export default function CorporateChallenges() {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', budget_range: '', timeline: '', deadline: '', sectors: [], functions: [], technologies: [], usecases: [], requirements: '' });
+  const [form, setForm] = useState({ title: '', description: '', budget_range: '', timeline: '', deadline: '', sectors: [], functions: [], technologies: [], usecases: [], requirements: '', problem_statement: '', location: '', min_profile_pct: 25, data_room_required: false, rfi_questions: [], faqs: [], status: 'open' });
   const [saving, setSaving] = useState(false);
   const [taxonomy, setTaxonomy] = useState({ sectors: [], functions: [], technologies: [], usecases: [] });
 
@@ -59,7 +60,7 @@ export default function CorporateChallenges() {
       await corporateAPI.createChallenge(form);
       toast.success('Challenge created');
       setShowCreate(false);
-      setForm({ title: '', description: '', budget_range: '', timeline: '', deadline: '', sectors: [], functions: [], technologies: [], usecases: [], requirements: '' });
+      setForm({ title: '', description: '', budget_range: '', timeline: '', deadline: '', sectors: [], functions: [], technologies: [], usecases: [], requirements: '', problem_statement: '', location: '', min_profile_pct: 25, data_room_required: false, rfi_questions: [], faqs: [], status: 'open' });
       load();
     } catch (err) { toast.error(err.message); }
     finally { setSaving(false); }
@@ -174,20 +175,48 @@ export default function CorporateChallenges() {
         <div style={{ ...card, padding: 20, marginBottom: 20 }}>
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 14 }}>Create Innovation Challenge</h3>
           <div style={{ display: 'grid', gap: 12 }}>
+            {/* Basic info */}
             <input placeholder="Challenge title *" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
               style={{ padding: '10px 14px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#f9fafb' }} />
-            <textarea placeholder="Description" rows={3} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+            <textarea placeholder="Short description" rows={2} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
               style={{ padding: '10px 14px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#f9fafb', resize: 'vertical' }} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <textarea placeholder="Detailed problem statement — describe what you need solved, constraints, and expectations..." rows={4} value={form.problem_statement} onChange={e => setForm(p => ({ ...p, problem_statement: e.target.value }))}
+              style={{ padding: '10px 14px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#f9fafb', resize: 'vertical' }} />
+
+            {/* Timeline & logistics */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
               <input placeholder="Budget range" value={form.budget_range} onChange={e => setForm(p => ({ ...p, budget_range: e.target.value }))}
                 style={{ padding: '10px 14px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#f9fafb' }} />
               <input placeholder="Timeline" value={form.timeline} onChange={e => setForm(p => ({ ...p, timeline: e.target.value }))}
                 style={{ padding: '10px 14px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#f9fafb' }} />
               <input type="date" placeholder="Deadline" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))}
                 style={{ padding: '10px 14px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#f9fafb' }} />
+              <input placeholder="Location / region" value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
+                style={{ padding: '10px 14px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#f9fafb' }} />
             </div>
             <textarea placeholder="Detailed requirements" rows={2} value={form.requirements} onChange={e => setForm(p => ({ ...p, requirements: e.target.value }))}
               style={{ padding: '10px 14px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 10, outline: 'none', background: '#f9fafb', resize: 'vertical' }} />
+
+            {/* Settings row */}
+            <div style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
+                <span style={{ fontWeight: 600 }}>Min profile %:</span>
+                <input type="number" min={0} max={100} value={form.min_profile_pct} onChange={e => setForm(p => ({ ...p, min_profile_pct: parseInt(e.target.value) || 25 }))}
+                  style={{ width: 50, padding: '5px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb', textAlign: 'center' }} />
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555', cursor: 'pointer' }}>
+                <input type="checkbox" checked={form.data_room_required} onChange={e => setForm(p => ({ ...p, data_room_required: e.target.checked }))} />
+                <span style={{ fontWeight: 600 }}>Require data room uploads</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
+                <span style={{ fontWeight: 600 }}>Status:</span>
+                <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
+                  style={{ padding: '5px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb' }}>
+                  <option value="draft">Draft</option>
+                  <option value="open">Open</option>
+                </select>
+              </label>
+            </div>
 
             {/* Taxonomy selectors */}
             <div>
@@ -222,6 +251,61 @@ export default function CorporateChallenges() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* RFI Question Builder */}
+            <div style={{ border: '1px solid #f0f0f0', borderRadius: 10, padding: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#333', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <FileText size={13} />RFI Questions ({form.rfi_questions.length})
+              </label>
+              {form.rfi_questions.map((q, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+                  <select value={q.type} onChange={e => {
+                    const upd = [...form.rfi_questions]; upd[i] = { ...upd[i], type: e.target.value };
+                    setForm(p => ({ ...p, rfi_questions: upd }));
+                  }} style={{ padding: '6px 8px', fontSize: 11, borderRadius: 6, border: '1px solid #e5e7eb', minWidth: 80 }}>
+                    <option value="text">Text</option>
+                    <option value="mcq">MCQ</option>
+                  </select>
+                  <input placeholder="Question" value={q.question} onChange={e => {
+                    const upd = [...form.rfi_questions]; upd[i] = { ...upd[i], question: e.target.value };
+                    setForm(p => ({ ...p, rfi_questions: upd }));
+                  }} style={{ flex: 1, padding: '6px 10px', fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb', outline: 'none' }} />
+                  {q.type === 'mcq' && (
+                    <input placeholder="Options (comma separated)" value={(q.options || []).join(', ')} onChange={e => {
+                      const upd = [...form.rfi_questions]; upd[i] = { ...upd[i], options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) };
+                      setForm(p => ({ ...p, rfi_questions: upd }));
+                    }} style={{ flex: 1, padding: '6px 10px', fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb', outline: 'none' }} />
+                  )}
+                  <button onClick={() => setForm(p => ({ ...p, rfi_questions: p.rfi_questions.filter((_, j) => j !== i) }))}
+                    style={{ padding: '5px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                </div>
+              ))}
+              <button onClick={() => setForm(p => ({ ...p, rfi_questions: [...p.rfi_questions, { id: `rfi_${Date.now()}`, type: 'text', question: '', options: [] }] }))}
+                style={{ fontSize: 11, color: G, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>+ Add Question</button>
+            </div>
+
+            {/* FAQ Builder */}
+            <div style={{ border: '1px solid #f0f0f0', borderRadius: 10, padding: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#333', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <HelpCircle size={13} />FAQs ({form.faqs.length})
+              </label>
+              {form.faqs.map((faq, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+                  <input placeholder="Question" value={faq.question} onChange={e => {
+                    const upd = [...form.faqs]; upd[i] = { ...upd[i], question: e.target.value };
+                    setForm(p => ({ ...p, faqs: upd }));
+                  }} style={{ flex: 1, padding: '6px 10px', fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb', outline: 'none' }} />
+                  <input placeholder="Answer" value={faq.answer} onChange={e => {
+                    const upd = [...form.faqs]; upd[i] = { ...upd[i], answer: e.target.value };
+                    setForm(p => ({ ...p, faqs: upd }));
+                  }} style={{ flex: 1, padding: '6px 10px', fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb', outline: 'none' }} />
+                  <button onClick={() => setForm(p => ({ ...p, faqs: p.faqs.filter((_, j) => j !== i) }))}
+                    style={{ padding: '5px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                </div>
+              ))}
+              <button onClick={() => setForm(p => ({ ...p, faqs: [...p.faqs, { question: '', answer: '' }] }))}
+                style={{ fontSize: 11, color: G, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>+ Add FAQ</button>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

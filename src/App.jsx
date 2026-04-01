@@ -36,6 +36,7 @@ import EventsRepository     from './pages/dashboard/EventsRepository';
 import SMEManagement        from './pages/dashboard/SMEManagement';
 import StartupFeedback      from './pages/dashboard/StartupFeedback';
 import GovtAPIIntegrations  from './pages/dashboard/GovtAPIIntegrations';
+import Marketplace          from './pages/dashboard/Marketplace';
 import Settings             from './pages/dashboard/Settings';
 
 // ── Guard: redirect to login if not authenticated ─────────────
@@ -95,6 +96,7 @@ export default function App() {
             <Route path="sme"                 element={<SMEManagement />} />
             <Route path="feedback"            element={<StartupFeedback />} />
             <Route path="govt-apis"           element={<GovtAPIIntegrations />} />
+            <Route path="marketplace"         element={<Marketplace />} />
             <Route path="settings"            element={<Settings />} />
           </Route>
         </Routes>

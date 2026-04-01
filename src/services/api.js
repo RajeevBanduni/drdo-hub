@@ -203,10 +203,13 @@ export const corporateAPI = {
   updateCollab:      (id, data)      => put(`/corporate/collaborations/${id}`, data),
 };
 
-// ── Challenge Applications (for startups) ────────────────────
+// ── Challenge Applications (for startups / marketplace) ──────
 export const challengeAPI = {
-  listOpen:  (params = {}) => get(`/challenges/open?${new URLSearchParams(params)}`),
-  apply:     (id, data)    => post(`/challenges/${id}/apply`, data),
+  listOpen:         (params = {}) => get(`/challenges/open?${new URLSearchParams(params)}`),
+  getDetail:        (id)          => get(`/challenges/${id}`),
+  apply:            (id, data)    => post(`/challenges/${id}/apply`, data),
+  getMyApplications: ()           => get('/challenges/my-applications'),
+  profileCheck:     ()            => get('/challenges/profile-check'),
 };
 
 // ── Crawling ────────────────────────────────────────────────

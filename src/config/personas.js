@@ -50,6 +50,7 @@ const COMMON_NAV = [
 export const PERSONA_NAV = {
   startup: [
     ...COMMON_NAV,
+    { to: '/dashboard/marketplace',     label: 'Marketplace',    icon: 'Target' },
     { to: '/dashboard/startups',        label: 'Startups',       icon: 'Rocket' },
     { to: '/dashboard/ipr',             label: 'IPR',            icon: 'Shield' },
     { to: '/dashboard/infrastructure',  label: 'Infrastructure', icon: 'Building2' },
@@ -58,11 +59,13 @@ export const PERSONA_NAV = {
   ],
   student: [
     ...COMMON_NAV,
-    { to: '/dashboard/startups',  label: 'Startups',  icon: 'Rocket' },
-    { to: '/dashboard/mentors',   label: 'Mentors',   icon: 'Users' },
+    { to: '/dashboard/marketplace',  label: 'Marketplace',  icon: 'Target' },
+    { to: '/dashboard/startups',     label: 'Startups',     icon: 'Rocket' },
+    { to: '/dashboard/mentors',      label: 'Mentors',      icon: 'Users' },
   ],
   academia: [
     ...COMMON_NAV,
+    { to: '/dashboard/marketplace',     label: 'Marketplace',    icon: 'Target' },
     { to: '/dashboard/startups',        label: 'Startups',       icon: 'Rocket' },
     { to: '/dashboard/ipr',             label: 'IPR Database',   icon: 'Shield' },
     { to: '/dashboard/infrastructure',  label: 'Infrastructure', icon: 'Building2' },
