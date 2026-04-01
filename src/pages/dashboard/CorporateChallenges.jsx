@@ -86,34 +86,98 @@ export default function CorporateChallenges() {
   // Detail view
   if (selected && detail) {
     const st = STATUS_STYLE[detail.status] || STATUS_STYLE.open;
+    const rfiQuestions = (() => { try { return typeof detail.rfi_questions === 'string' ? JSON.parse(detail.rfi_questions) : (detail.rfi_questions || []); } catch { return []; } })();
+    const faqs = (() => { try { return typeof detail.faqs === 'string' ? JSON.parse(detail.faqs) : (detail.faqs || []); } catch { return []; } })();
+
     return (
       <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
         <button onClick={() => { setSelected(null); setDetail(null); }} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, color: '#888', background: 'none', border: 'none', cursor: 'pointer', marginBottom: 16 }}>
           <ChevronLeft size={16} /> Back to Challenges
         </button>
 
-        <div style={{ ...card, padding: 20, marginBottom: 20 }}>
+        {/* Header card */}
+        <div style={{ ...card, padding: 20, marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>{detail.title}</h2>
             <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: st.bg, color: st.color }}>{st.label}</span>
           </div>
           {detail.description && <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>{detail.description}</p>}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#666' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, fontSize: 12, color: '#666', marginBottom: 12 }}>
             {detail.budget_range && <span><DollarSign size={12} style={{ verticalAlign: -2 }} /> {detail.budget_range}</span>}
             {detail.timeline && <span><Clock size={12} style={{ verticalAlign: -2 }} /> {detail.timeline}</span>}
             {detail.deadline && <span><Calendar size={12} style={{ verticalAlign: -2 }} /> Deadline: {new Date(detail.deadline).toLocaleDateString()}</span>}
+            {detail.location && <span><MapPin size={12} style={{ verticalAlign: -2 }} /> {detail.location}</span>}
+          </div>
+          {/* Settings summary */}
+          <div style={{ display: 'flex', gap: 16, fontSize: 11, color: '#999', marginBottom: 12 }}>
+            <span>Min profile: {detail.min_profile_pct || 25}%</span>
+            <span>Data room: {detail.data_room_required ? 'Required' : 'Optional'}</span>
+            {detail.published_at && <span>Published: {new Date(detail.published_at).toLocaleDateString()}</span>}
           </div>
           {/* Tags */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 12 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {(detail.sectors || []).map(t => <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#eff6ff', color: '#2563eb' }}>{t}</span>)}
             {(detail.technologies || []).map(t => <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#fefce8', color: '#ca8a04' }}>{t}</span>)}
             {(detail.usecases || []).map(t => <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#f0fdf4', color: '#16a34a' }}>{t}</span>)}
           </div>
         </div>
 
+        {/* Problem Statement */}
+        {detail.problem_statement && (
+          <div style={{ ...card, padding: 20, marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 10 }}>
+              <FileText size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Problem Statement
+            </h3>
+            <p style={{ fontSize: 13, color: '#555', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>{detail.problem_statement}</p>
+          </div>
+        )}
+
+        {/* RFI Questions */}
+        {rfiQuestions.length > 0 && (
+          <div style={{ ...card, padding: 20, marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>
+              <FileText size={14} style={{ verticalAlign: -2, marginRight: 6 }} />RFI Questions ({rfiQuestions.length})
+            </h3>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {rfiQuestions.map((q, i) => (
+                <div key={q.id || i} style={{ border: '1px solid #f0f0f0', borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#333', marginBottom: 4 }}>
+                    {i + 1}. {q.question}
+                    <span style={{ fontSize: 10, color: '#999', marginLeft: 8, fontWeight: 400 }}>({q.type === 'mcq' ? 'Multiple Choice' : 'Text Answer'})</span>
+                  </div>
+                  {q.type === 'mcq' && (q.options || []).length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                      {q.options.map(opt => (
+                        <span key={opt} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, background: '#f9fafb', border: '1px solid #e5e7eb', color: '#666' }}>{opt}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FAQs */}
+        {faqs.length > 0 && (
+          <div style={{ ...card, padding: 20, marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>
+              <HelpCircle size={14} style={{ verticalAlign: -2, marginRight: 6 }} />FAQs ({faqs.length})
+            </h3>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {faqs.map((faq, i) => (
+                <div key={i} style={{ border: '1px solid #f0f0f0', borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#333', marginBottom: 4 }}>Q: {faq.question}</div>
+                  <div style={{ fontSize: 12, color: '#666', lineHeight: 1.5 }}>A: {faq.answer}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Applications */}
         <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>
-          Applications ({(detail.applications || []).length})
+          <Users size={15} style={{ verticalAlign: -3, marginRight: 6 }} />Applications ({(detail.applications || []).length})
         </h3>
         {(detail.applications || []).length === 0 ? (
           <div style={{ ...card, padding: 30, textAlign: 'center', color: '#999', fontSize: 13 }}>No applications yet</div>
@@ -121,16 +185,56 @@ export default function CorporateChallenges() {
           <div style={{ display: 'grid', gap: 10 }}>
             {(detail.applications || []).map(app => {
               const as = APP_STATUS[app.status] || APP_STATUS.applied;
+              const appRfiAnswers = (() => { try { return typeof app.rfi_answers === 'string' ? JSON.parse(app.rfi_answers) : (app.rfi_answers || {}); } catch { return {}; } })();
+              const appDataRoom = (() => { try { return typeof app.data_room === 'string' ? JSON.parse(app.data_room) : (app.data_room || []); } catch { return []; } })();
+
               return (
                 <div key={app.id} style={{ ...card, padding: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>{app.startup_name || app.applicant_name}</div>
-                      <div style={{ fontSize: 11, color: '#888' }}>{app.applicant_email} {app.sector ? `| ${app.sector}` : ''} {app.stage ? `| ${app.stage}` : ''}</div>
+                      <div style={{ fontSize: 11, color: '#888' }}>
+                        {app.applicant_email} {app.sector ? `| ${app.sector}` : ''} {app.stage ? `| ${app.stage}` : ''}
+                        {app.profile_pct != null && <span style={{ marginLeft: 8, color: '#16a34a' }}>Profile: {app.profile_pct}%</span>}
+                      </div>
                     </div>
                     <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: as.bg, color: as.color }}>{as.label}</span>
                   </div>
                   {app.pitch && <p style={{ fontSize: 12, color: '#555', marginBottom: 8, lineHeight: 1.5 }}>{app.pitch}</p>}
+                  {app.proposal_url && (
+                    <div style={{ fontSize: 11, marginBottom: 8 }}>
+                      <span style={{ color: '#888' }}>Proposal: </span>
+                      <a href={app.proposal_url} target="_blank" rel="noreferrer" style={{ color: '#2563eb' }}>{app.proposal_url}</a>
+                    </div>
+                  )}
+
+                  {/* RFI Answers */}
+                  {Object.keys(appRfiAnswers).length > 0 && rfiQuestions.length > 0 && (
+                    <div style={{ marginBottom: 8, border: '1px solid #f0f0f0', borderRadius: 8, padding: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#333', marginBottom: 6 }}>RFI Answers</div>
+                      {rfiQuestions.map(q => (
+                        appRfiAnswers[q.id] ? (
+                          <div key={q.id} style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>
+                            <span style={{ fontWeight: 600 }}>{q.question}:</span> {appRfiAnswers[q.id]}
+                          </div>
+                        ) : null
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Data Room */}
+                  {appDataRoom.length > 0 && (
+                    <div style={{ marginBottom: 8, border: '1px solid #f0f0f0', borderRadius: 8, padding: 10 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#333', marginBottom: 6 }}>Data Room</div>
+                      {appDataRoom.map((doc, di) => (
+                        <div key={di} style={{ fontSize: 11, marginBottom: 2 }}>
+                          <span style={{ color: '#888', textTransform: 'capitalize' }}>{(doc.type || 'file').replace(/_/g, ' ')}:</span>{' '}
+                          <a href={doc.url} target="_blank" rel="noreferrer" style={{ color: '#2563eb' }}>{doc.url}</a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', gap: 6 }}>
                     {app.status === 'applied' && (
                       <>
@@ -338,10 +442,16 @@ export default function CorporateChallenges() {
                   <h3 style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a', margin: 0 }}>{ch.title}</h3>
                   <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: st.bg, color: st.color }}>{st.label}</span>
                 </div>
+                {ch.problem_statement && (
+                  <p style={{ fontSize: 12, color: '#666', lineHeight: 1.4, margin: '0 0 6px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                    {ch.problem_statement}
+                  </p>
+                )}
                 <div style={{ display: 'flex', gap: 14, fontSize: 11, color: '#888' }}>
                   <span><Users size={11} style={{ verticalAlign: -2 }} /> {parseInt(ch.application_count) || 0} applications</span>
                   {ch.budget_range && <span><DollarSign size={11} style={{ verticalAlign: -2 }} /> {ch.budget_range}</span>}
                   {ch.deadline && <span><Calendar size={11} style={{ verticalAlign: -2 }} /> {new Date(ch.deadline).toLocaleDateString()}</span>}
+                  {ch.location && <span><MapPin size={11} style={{ verticalAlign: -2 }} /> {ch.location}</span>}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
                   {(ch.sectors || []).map(t => <span key={t} style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: '#eff6ff', color: '#2563eb' }}>{t}</span>)}
