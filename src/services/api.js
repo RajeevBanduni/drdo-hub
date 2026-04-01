@@ -180,6 +180,13 @@ export const govtIntegrationAPI = {
   logs: ()    => get('/integrations/logs'),
 };
 
+// ── Profiles ─────────────────────────────────────────────────
+export const profileAPI = {
+  getMyProfile:   ()        => get('/profile/me'),
+  updateMyProfile:(data)    => put('/profile/me', data),
+  getPublic:      (userId)  => get(`/profile/${userId}`),
+};
+
 // ── Crawling ────────────────────────────────────────────────
 export const crawlAPI = {
   stats:           ()                => get('/crawl/stats'),

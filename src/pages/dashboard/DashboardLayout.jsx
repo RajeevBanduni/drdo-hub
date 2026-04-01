@@ -8,7 +8,10 @@ import {
   Users, Building2, Globe, FileText,
   FolderKanban, MessageSquare, GitBranch, FolderOpen,
   Star, Zap, Calendar, UserCheck, ThumbsUp, Link2,
+  Search, User, CalendarCheck, TrendingUp, Landmark,
+  FlaskConical, Home,
 } from "lucide-react";
+import { PERSONA_NAV, PERSONAS } from "../../config/personas";
 
 // ── OpenI brand tokens (light theme – matches openi.ai) ───────
 const C = {
@@ -29,6 +32,15 @@ const C = {
   activeBg:    "rgba(213,170,91,0.10)",
   activeBorder:"rgba(213,170,91,0.30)",
   hoverBg:     "#f7f3ec",   // nav hover
+};
+
+// Icon lookup for persona nav (string → component)
+const ICON_MAP = {
+  LayoutDashboard, Rocket, ClipboardCheck, BookOpen, Shield, Settings,
+  GraduationCap, Database, Users, Building2, Globe, FileText,
+  FolderKanban, MessageSquare, GitBranch, FolderOpen, Star, Zap,
+  Calendar, UserCheck, ThumbsUp, Link2, Search, User, CalendarCheck,
+  TrendingUp, Landmark, FlaskConical, Home,
 };
 
 // roles: undefined = visible to all, array = only listed roles see it
@@ -72,7 +84,15 @@ export default function DashboardLayout() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState(MOCK_NOTIFS);
   const unreadCount = notifications.filter(n => !n.read).length;
-  const filteredNav = NAV.filter(item => !item.roles || item.roles.includes(user?.role));
+  // For admin/evaluator: use legacy NAV with role filtering
+  // For all other personas: use PERSONA_NAV config
+  const isLegacyRole = user?.role === 'admin' || user?.role === 'evaluator';
+  const filteredNav = isLegacyRole
+    ? NAV.filter(item => !item.roles || item.roles.includes(user?.role))
+    : (PERSONA_NAV[user?.role] || PERSONA_NAV.startup).map(item => ({
+        ...item,
+        Icon: ICON_MAP[item.icon] || LayoutDashboard,
+      }));
 
   const handleLogout = () => {
     logout();
@@ -232,7 +252,7 @@ export default function DashboardLayout() {
                 {user.name || user.email}
               </div>
               <div style={{ color: C.textMuted, fontSize:11, textTransform:"capitalize" }}>
-                {user.role || "User"}
+                {PERSONAS[user.role]?.label || user.role || "User"}
               </div>
             </div>
           </div>

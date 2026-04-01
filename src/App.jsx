@@ -2,10 +2,15 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { AuthProvider } from './context/AuthContext';
 
-// Pages
+// Pages — Auth
+import Landing           from './pages/auth/Landing';
+import Register          from './pages/auth/Register';
+
+// Pages — Dashboard
 import Login             from './pages/dashboard/Login';
 import DashboardLayout   from './pages/dashboard/DashboardLayout';
 import DashboardHome     from './pages/dashboard/DashboardHome';
+import MyProfile         from './pages/dashboard/MyProfile';
 import StartupEvaluation from './pages/dashboard/StartupEvaluation';
 import StartupDiscovery  from './pages/dashboard/StartupDiscovery';
 import StartupProfile    from './pages/dashboard/StartupProfile';
@@ -41,10 +46,12 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Root → dashboard */}
+          {/* Root → landing for unauthenticated, dashboard for authenticated */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-          {/* Auth */}
+          {/* Public auth pages */}
+          <Route path="/landing"         element={<Landing />} />
+          <Route path="/register"        element={<Register />} />
           <Route path="/dashboard/login" element={<Login />} />
 
           {/* Protected dashboard shell */}
@@ -57,6 +64,7 @@ export default function App() {
             }
           >
             <Route index                      element={<DashboardHome />} />
+            <Route path="profile"             element={<MyProfile />} />
             <Route path="evaluate"            element={<StartupEvaluation />} />
             <Route path="startups"            element={<StartupDiscovery />} />
             <Route path="startup-profile"     element={<StartupProfile />} />

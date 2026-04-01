@@ -1,0 +1,303 @@
+/**
+ * OpenI Hub — Persona Configuration
+ * Centralized metadata for all persona types, navigation, and profile fields.
+ */
+
+// ── Persona Categories ─────────────────────────────────────
+export const PERSONA_CATEGORIES = {
+  provider: { label: 'Innovation Provider', description: 'I have innovations to offer' },
+  seeker:   { label: 'Innovation Seeker',   description: 'I am looking for innovations' },
+};
+
+export const PROVIDER_ROLES = ['startup', 'student', 'academia'];
+export const SEEKER_ROLES   = ['corporate', 'government', 'investor', 'mentor', 'lab', 'incubator', 'accelerator'];
+export const ALL_PERSONA_ROLES = [...PROVIDER_ROLES, ...SEEKER_ROLES];
+export const SELF_REGISTER_ROLES = ALL_PERSONA_ROLES; // admin/evaluator are NOT self-register
+
+export function getPersonaCategory(role) {
+  if (PROVIDER_ROLES.includes(role)) return 'provider';
+  if (SEEKER_ROLES.includes(role))   return 'seeker';
+  return null; // admin, evaluator
+}
+
+// ── Persona Definitions ────────────────────────────────────
+export const PERSONAS = {
+  startup:     { label: 'Startup',       category: 'provider', icon: 'Rocket',        color: '#D5AA5B', description: 'Tech startup or early-stage company' },
+  student:     { label: 'Student',       category: 'provider', icon: 'GraduationCap', color: '#3b82f6', description: 'Student innovator or researcher' },
+  academia:    { label: 'Academia',      category: 'provider', icon: 'BookOpen',      color: '#7c3aed', description: 'University or research institute' },
+  corporate:   { label: 'Corporate',     category: 'seeker',   icon: 'Building2',     color: '#16a34a', description: 'Large enterprise seeking innovation' },
+  government:  { label: 'Government',    category: 'seeker',   icon: 'Landmark',      color: '#0ea5e9', description: 'Government body or PSU' },
+  investor:    { label: 'Investor',      category: 'seeker',   icon: 'TrendingUp',    color: '#f59e0b', description: 'Angel, VC, PE, or fund' },
+  mentor:      { label: 'Mentor',        category: 'seeker',   icon: 'Users',         color: '#ec4899', description: 'Industry mentor or advisor' },
+  lab:         { label: 'Lab',           category: 'seeker',   icon: 'FlaskConical',  color: '#14b8a6', description: 'Lab offering resources to innovators' },
+  incubator:   { label: 'Incubator',     category: 'seeker',   icon: 'Home',          color: '#8b5cf6', description: 'Startup incubation program' },
+  accelerator: { label: 'Accelerator',   category: 'seeker',   icon: 'Zap',           color: '#ef4444', description: 'Growth acceleration program' },
+};
+
+// ── Navigation per Persona ─────────────────────────────────
+// Common nav items shared across all personas
+const COMMON_NAV = [
+  { to: '/dashboard',            label: 'Overview',    icon: 'LayoutDashboard', end: true },
+  { to: '/dashboard/profile',    label: 'My Profile',  icon: 'User' },
+  { to: '/dashboard/directory',  label: 'Directory',   icon: 'Search' },
+  { to: '/dashboard/messaging',  label: 'Messaging',   icon: 'MessageSquare' },
+  { to: '/dashboard/meetings',   label: 'Meetings',    icon: 'CalendarCheck' },
+  { to: '/dashboard/events',     label: 'Events',      icon: 'Calendar' },
+  { to: '/dashboard/knowledge',  label: 'Knowledge',   icon: 'BookOpen' },
+  { to: '/dashboard/documents',  label: 'Documents',   icon: 'FolderOpen' },
+];
+
+export const PERSONA_NAV = {
+  startup: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',        label: 'Startups',       icon: 'Rocket' },
+    { to: '/dashboard/ipr',             label: 'IPR',            icon: 'Shield' },
+    { to: '/dashboard/infrastructure',  label: 'Infrastructure', icon: 'Building2' },
+    { to: '/dashboard/deeptech',        label: 'DeepTech Qual.', icon: 'Zap' },
+    { to: '/dashboard/feedback',        label: 'Feedback',       icon: 'ThumbsUp' },
+  ],
+  student: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',  label: 'Startups',  icon: 'Rocket' },
+    { to: '/dashboard/mentors',   label: 'Mentors',   icon: 'Users' },
+  ],
+  academia: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',        label: 'Startups',       icon: 'Rocket' },
+    { to: '/dashboard/ipr',             label: 'IPR Database',   icon: 'Shield' },
+    { to: '/dashboard/infrastructure',  label: 'Infrastructure', icon: 'Building2' },
+    { to: '/dashboard/mentors',         label: 'Mentors',        icon: 'Users' },
+  ],
+  corporate: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',        label: 'Discover Startups', icon: 'Rocket' },
+    { to: '/dashboard/watchlist',       label: 'Watchlist',         icon: 'Star' },
+    { to: '/dashboard/projects',        label: 'Projects',          icon: 'FolderKanban' },
+    { to: '/dashboard/infrastructure',  label: 'Infrastructure',    icon: 'Building2' },
+  ],
+  government: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',        label: 'Discover Startups', icon: 'Rocket' },
+    { to: '/dashboard/evaluations',     label: 'Programs',          icon: 'FileText' },
+    { to: '/dashboard/cohorts',         label: 'Cohorts',           icon: 'GraduationCap' },
+    { to: '/dashboard/projects',        label: 'Projects',          icon: 'FolderKanban' },
+    { to: '/dashboard/govt-apis',       label: 'Govt. APIs',        icon: 'Link2' },
+  ],
+  investor: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',   label: 'Discover Startups', icon: 'Rocket' },
+    { to: '/dashboard/watchlist',  label: 'Watchlist',         icon: 'Star' },
+    { to: '/dashboard/deeptech',   label: 'DeepTech',          icon: 'Zap' },
+  ],
+  mentor: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups', label: 'Startups', icon: 'Rocket' },
+    { to: '/dashboard/mentors',  label: 'Mentors',  icon: 'Users' },
+    { to: '/dashboard/projects', label: 'Projects', icon: 'FolderKanban' },
+    { to: '/dashboard/feedback', label: 'Feedback', icon: 'ThumbsUp' },
+  ],
+  lab: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',        label: 'Startups',       icon: 'Rocket' },
+    { to: '/dashboard/infrastructure',  label: 'Infrastructure', icon: 'Building2' },
+    { to: '/dashboard/ipr',             label: 'IPR Database',   icon: 'Shield' },
+  ],
+  incubator: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',    label: 'Startups',  icon: 'Rocket' },
+    { to: '/dashboard/cohorts',     label: 'Cohorts',   icon: 'GraduationCap' },
+    { to: '/dashboard/mentors',     label: 'Mentors',   icon: 'Users' },
+    { to: '/dashboard/projects',    label: 'Projects',  icon: 'FolderKanban' },
+    { to: '/dashboard/evaluations', label: 'Programs',  icon: 'FileText' },
+  ],
+  accelerator: [
+    ...COMMON_NAV,
+    { to: '/dashboard/startups',    label: 'Startups',  icon: 'Rocket' },
+    { to: '/dashboard/cohorts',     label: 'Cohorts',   icon: 'GraduationCap' },
+    { to: '/dashboard/mentors',     label: 'Mentors',   icon: 'Users' },
+    { to: '/dashboard/projects',    label: 'Projects',  icon: 'FolderKanban' },
+    { to: '/dashboard/evaluations', label: 'Programs',  icon: 'FileText' },
+    { to: '/dashboard/watchlist',   label: 'Watchlist',  icon: 'Star' },
+  ],
+};
+
+// ── Profile Field Definitions per Persona ───────────────────
+// Used by Register.jsx and MyProfile.jsx to render the correct form fields
+export const PROFILE_FIELDS = {
+  startup: [
+    { name: 'company_name',   label: 'Company Name',      type: 'text',     required: true },
+    { name: 'tagline',        label: 'Tagline',            type: 'text' },
+    { name: 'sector',         label: 'Sector',             type: 'select', options: ['AI/ML','Cybersecurity','Robotics','Biotech','CleanTech','HealthTech','EdTech','FinTech','SpaceTech','Defence','IoT','Blockchain','Other'] },
+    { name: 'stage',          label: 'Stage',              type: 'select', options: ['Ideation','Pre-seed','Seed','Series A','Series B','Growth','Listed'] },
+    { name: 'founded_year',   label: 'Founded Year',       type: 'number' },
+    { name: 'city',           label: 'City',               type: 'text' },
+    { name: 'state',          label: 'State',              type: 'text' },
+    { name: 'website',        label: 'Website',            type: 'url' },
+    { name: 'team_size',      label: 'Team Size',          type: 'number' },
+    { name: 'funding_raised', label: 'Funding Raised (INR)', type: 'number' },
+    { name: 'tech_readiness', label: 'Tech Readiness (1-9)', type: 'number', min: 1, max: 9 },
+    { name: 'is_deeptech',    label: 'Is DeepTech?',       type: 'checkbox' },
+    { name: 'dpiit_number',   label: 'DPIIT Number',       type: 'text' },
+    { name: 'technologies',   label: 'Technologies',       type: 'tags', placeholder: 'e.g., React, Python, TensorFlow' },
+    { name: 'focus_areas',    label: 'Focus Areas',        type: 'tags', placeholder: 'e.g., Defence, Healthcare' },
+    { name: 'description',    label: 'About the Company',  type: 'textarea' },
+    { name: 'linkedin_url',   label: 'LinkedIn URL',       type: 'url' },
+    { name: 'pitch_deck_url', label: 'Pitch Deck URL',     type: 'url' },
+  ],
+  student: [
+    { name: 'institution',      label: 'Institution',        type: 'text',   required: true },
+    { name: 'degree',           label: 'Degree',             type: 'text' },
+    { name: 'department',       label: 'Department',         type: 'text' },
+    { name: 'graduation_year',  label: 'Graduation Year',    type: 'number' },
+    { name: 'city',             label: 'City',               type: 'text' },
+    { name: 'state',            label: 'State',              type: 'text' },
+    { name: 'research_areas',   label: 'Research Areas',     type: 'tags', placeholder: 'e.g., AI, Robotics' },
+    { name: 'skills',           label: 'Skills',             type: 'tags', placeholder: 'e.g., Python, CAD' },
+    { name: 'project_title',    label: 'Project Title',      type: 'text' },
+    { name: 'project_desc',     label: 'Project Description', type: 'textarea' },
+    { name: 'bio',              label: 'About Me',           type: 'textarea' },
+    { name: 'looking_for',      label: 'Looking For',        type: 'multiselect', options: ['Mentorship','Funding','Co-founder','Internship','Collaboration','Lab Access'] },
+    { name: 'linkedin_url',     label: 'LinkedIn URL',       type: 'url' },
+    { name: 'portfolio_url',    label: 'Portfolio URL',      type: 'url' },
+  ],
+  academia: [
+    { name: 'institution_name', label: 'Institution Name',    type: 'text',   required: true },
+    { name: 'institution_type', label: 'Institution Type',    type: 'select', options: ['University','Research Institute','College','Think Tank','Other'] },
+    { name: 'department',       label: 'Department',          type: 'text' },
+    { name: 'designation',      label: 'Designation',         type: 'text' },
+    { name: 'city',             label: 'City',                type: 'text' },
+    { name: 'state',            label: 'State',               type: 'text' },
+    { name: 'website',          label: 'Website',             type: 'url' },
+    { name: 'research_areas',   label: 'Research Areas',      type: 'tags', placeholder: 'e.g., AI, Materials Science' },
+    { name: 'publications_count', label: 'Publications Count', type: 'number' },
+    { name: 'patents_count',    label: 'Patents Count',       type: 'number' },
+    { name: 'bio',              label: 'About',               type: 'textarea' },
+    { name: 'offerings',        label: 'What We Offer',       type: 'multiselect', options: ['Research Collaboration','IP Licensing','Consulting','Student Interns','Lab Access','Joint Publications'] },
+    { name: 'linkedin_url',     label: 'LinkedIn URL',        type: 'url' },
+    { name: 'google_scholar_url', label: 'Google Scholar URL', type: 'url' },
+  ],
+  corporate: [
+    { name: 'company_name',        label: 'Company Name',        type: 'text',   required: true },
+    { name: 'industry',            label: 'Industry',            type: 'text' },
+    { name: 'company_size',        label: 'Company Size',        type: 'select', options: ['1-50','51-200','201-1000','1001-5000','5000+'] },
+    { name: 'headquarters',        label: 'Headquarters',        type: 'text' },
+    { name: 'city',                label: 'City',                type: 'text' },
+    { name: 'state',               label: 'State',               type: 'text' },
+    { name: 'website',             label: 'Website',             type: 'url' },
+    { name: 'description',         label: 'About the Company',   type: 'textarea' },
+    { name: 'innovation_areas',    label: 'Innovation Areas',    type: 'tags', placeholder: 'e.g., AI, Robotics, CleanTech' },
+    { name: 'annual_revenue',      label: 'Annual Revenue',      type: 'text' },
+    { name: 'contact_person',      label: 'Contact Person',      type: 'text' },
+    { name: 'contact_designation', label: 'Contact Designation', type: 'text' },
+    { name: 'looking_for',         label: 'Looking For',         type: 'multiselect', options: ['PoC','Pilot','Procurement','Co-development','Investment','Licensing'] },
+    { name: 'linkedin_url',        label: 'LinkedIn URL',        type: 'url' },
+  ],
+  government: [
+    { name: 'body_name',    label: 'Body / Organization Name', type: 'text',   required: true },
+    { name: 'body_type',    label: 'Type',                     type: 'select', options: ['Ministry','PSU','Defence','State Govt','Regulatory','Other'] },
+    { name: 'department',   label: 'Department',               type: 'text' },
+    { name: 'designation',  label: 'Designation',              type: 'text' },
+    { name: 'city',         label: 'City',                     type: 'text' },
+    { name: 'state',        label: 'State',                    type: 'text' },
+    { name: 'website',      label: 'Website',                  type: 'url' },
+    { name: 'description',  label: 'About',                    type: 'textarea' },
+    { name: 'focus_areas',  label: 'Focus Areas',              type: 'tags', placeholder: 'e.g., Defence, Smart Cities' },
+    { name: 'programs',     label: 'Programs',                 type: 'tags', placeholder: 'e.g., iDEX, Make in India' },
+    { name: 'contact_person', label: 'Contact Person',         type: 'text' },
+    { name: 'looking_for',   label: 'Looking For',             type: 'multiselect', options: ['Innovation Partners','PoC','Procurement','Technology Transfer'] },
+    { name: 'linkedin_url',  label: 'LinkedIn URL',            type: 'url' },
+  ],
+  investor: [
+    { name: 'firm_name',       label: 'Firm / Fund Name',      type: 'text' },
+    { name: 'investor_type',   label: 'Investor Type',         type: 'select', options: ['Angel','VC','PE','CVC','Family Office','HNI','Government Fund','Other'], required: true },
+    { name: 'fund_size',       label: 'Fund Size',             type: 'text',   placeholder: 'e.g., $10M - $50M' },
+    { name: 'ticket_size_min', label: 'Ticket Size Min (INR)', type: 'number' },
+    { name: 'ticket_size_max', label: 'Ticket Size Max (INR)', type: 'number' },
+    { name: 'investment_stage', label: 'Investment Stages',    type: 'multiselect', options: ['Pre-seed','Seed','Series A','Series B','Growth','Late Stage'] },
+    { name: 'focus_sectors',   label: 'Focus Sectors',         type: 'tags', placeholder: 'e.g., DeepTech, AI, Defence' },
+    { name: 'portfolio_count', label: 'Portfolio Companies',    type: 'number' },
+    { name: 'city',            label: 'City',                  type: 'text' },
+    { name: 'state',           label: 'State',                 type: 'text' },
+    { name: 'website',         label: 'Website',               type: 'url' },
+    { name: 'bio',             label: 'About',                 type: 'textarea' },
+    { name: 'looking_for',     label: 'Looking For',           type: 'multiselect', options: ['DeepTech','AI/ML','Defence','Healthcare','CleanTech','FinTech','SaaS'] },
+    { name: 'linkedin_url',    label: 'LinkedIn URL',          type: 'url' },
+  ],
+  mentor: [
+    { name: 'designation',      label: 'Designation',           type: 'text' },
+    { name: 'organisation',     label: 'Organisation',          type: 'text' },
+    { name: 'expertise',        label: 'Expertise Areas',       type: 'tags', placeholder: 'e.g., Strategy, Technology, Fundraising' },
+    { name: 'years_experience', label: 'Years of Experience',   type: 'number' },
+    { name: 'city',             label: 'City',                  type: 'text' },
+    { name: 'state',            label: 'State',                 type: 'text' },
+    { name: 'bio',              label: 'About Me',              type: 'textarea' },
+    { name: 'max_mentees',      label: 'Max Mentees',           type: 'number' },
+    { name: 'offering',         label: 'What I Offer',          type: 'multiselect', options: ['Strategy','Technology','Fundraising','Marketing','Operations','Legal','Product','HR'] },
+    { name: 'linkedin_url',     label: 'LinkedIn URL',          type: 'url' },
+  ],
+  lab: [
+    { name: 'lab_name',       label: 'Lab Name',             type: 'text',   required: true },
+    { name: 'parent_org',     label: 'Parent Organisation',  type: 'text' },
+    { name: 'lab_type',       label: 'Lab Type',             type: 'select', options: ['Government','University','Private','Shared','CoWorking'] },
+    { name: 'city',           label: 'City',                 type: 'text' },
+    { name: 'state',          label: 'State',                type: 'text' },
+    { name: 'website',        label: 'Website',              type: 'url' },
+    { name: 'description',    label: 'About the Lab',        type: 'textarea' },
+    { name: 'equipment',      label: 'Equipment Available',  type: 'tags', placeholder: 'e.g., 3D Printer, CNC, Spectrum Analyzer' },
+    { name: 'capabilities',   label: 'Capabilities',         type: 'tags', placeholder: 'e.g., Prototyping, Testing, Simulation' },
+    { name: 'certifications', label: 'Certifications',       type: 'tags', placeholder: 'e.g., ISO 9001, NABL' },
+    { name: 'capacity',       label: 'Capacity (people)',    type: 'number' },
+    { name: 'hourly_rate',    label: 'Hourly Rate (INR)',    type: 'number' },
+    { name: 'daily_rate',     label: 'Daily Rate (INR)',     type: 'number' },
+    { name: 'contact_person', label: 'Contact Person',       type: 'text' },
+    { name: 'linkedin_url',   label: 'LinkedIn URL',         type: 'url' },
+  ],
+  incubator: [
+    { name: 'incubator_name',   label: 'Incubator Name',      type: 'text',   required: true },
+    { name: 'parent_org',       label: 'Parent Organisation', type: 'text' },
+    { name: 'city',             label: 'City',                type: 'text' },
+    { name: 'state',            label: 'State',               type: 'text' },
+    { name: 'website',          label: 'Website',             type: 'url' },
+    { name: 'description',      label: 'About',               type: 'textarea' },
+    { name: 'focus_sectors',    label: 'Focus Sectors',        type: 'tags', placeholder: 'e.g., AI, HealthTech, CleanTech' },
+    { name: 'program_duration', label: 'Program Duration',     type: 'text',   placeholder: 'e.g., 6 months' },
+    { name: 'cohort_size',      label: 'Cohort Size',          type: 'number' },
+    { name: 'equity_taken',     label: 'Equity Taken (%)',     type: 'number' },
+    { name: 'funding_offered',  label: 'Funding Offered',      type: 'text',   placeholder: 'e.g., Up to INR 25L' },
+    { name: 'portfolio_count',  label: 'Portfolio Count',      type: 'number' },
+    { name: 'services',         label: 'Services Offered',     type: 'multiselect', options: ['Office Space','Mentorship','Funding','Legal','Networking','Marketing','Technical Support'] },
+    { name: 'linkedin_url',     label: 'LinkedIn URL',         type: 'url' },
+  ],
+  accelerator: [
+    { name: 'accelerator_name', label: 'Accelerator Name',    type: 'text',   required: true },
+    { name: 'parent_org',       label: 'Parent Organisation', type: 'text' },
+    { name: 'city',             label: 'City',                type: 'text' },
+    { name: 'state',            label: 'State',               type: 'text' },
+    { name: 'website',          label: 'Website',             type: 'url' },
+    { name: 'description',      label: 'About',               type: 'textarea' },
+    { name: 'focus_sectors',    label: 'Focus Sectors',        type: 'tags', placeholder: 'e.g., DeepTech, SaaS' },
+    { name: 'program_duration', label: 'Program Duration',     type: 'text',   placeholder: 'e.g., 3 months' },
+    { name: 'batch_size',       label: 'Batch Size',           type: 'number' },
+    { name: 'equity_taken',     label: 'Equity Taken (%)',     type: 'number' },
+    { name: 'funding_offered',  label: 'Funding Offered',      type: 'text',   placeholder: 'e.g., Up to $150K' },
+    { name: 'portfolio_count',  label: 'Portfolio Count',      type: 'number' },
+    { name: 'demo_day',         label: 'Has Demo Day?',        type: 'checkbox' },
+    { name: 'services',         label: 'Services Offered',     type: 'multiselect', options: ['Office Space','Mentorship','Funding','Legal','Networking','Marketing','Technical Support','Corporate Partnerships'] },
+    { name: 'corporate_partners', label: 'Corporate Partners', type: 'tags', placeholder: 'e.g., Google, Microsoft' },
+    { name: 'linkedin_url',     label: 'LinkedIn URL',         type: 'url' },
+  ],
+};
+
+// Helper: get the primary "org name" field key for each persona
+export const ORG_NAME_FIELD = {
+  startup:     'company_name',
+  student:     'institution',
+  academia:    'institution_name',
+  corporate:   'company_name',
+  government:  'body_name',
+  investor:    'firm_name',
+  mentor:      'organisation',
+  lab:         'lab_name',
+  incubator:   'incubator_name',
+  accelerator: 'accelerator_name',
+};

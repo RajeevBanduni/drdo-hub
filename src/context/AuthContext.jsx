@@ -52,6 +52,28 @@ export function AuthProvider({ children }) {
     throw new Error('Invalid OTP. Demo code: 123456');
   };
 
+  const register = async (name, email, password, role, organization_name) => {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email: email.trim().toLowerCase(), password, role, organization_name }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Registration failed');
+    // Auto-login after registration (skip MFA for new users)
+    const userData = { ...data.user, token: data.token };
+    setUser(userData);
+    localStorage.setItem('openi_token', data.token);
+    localStorage.setItem('openi_user', JSON.stringify(userData));
+    return data;
+  };
+
+  const updateUser = (updates) => {
+    const updated = { ...user, ...updates };
+    setUser(updated);
+    localStorage.setItem('openi_user', JSON.stringify(updated));
+  };
+
   const logout = () => {
     setUser(null);
     setMfaStep(false);
@@ -63,7 +85,7 @@ export function AuthProvider({ children }) {
   if (loading) return null;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, verifyMFA, mfaStep }}>
+    <AuthContext.Provider value={{ user, login, logout, verifyMFA, mfaStep, register, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

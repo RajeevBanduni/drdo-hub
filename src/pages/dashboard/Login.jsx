@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Shield, Eye, EyeOff, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -40,7 +40,14 @@ export default function Login() {
     setLoading(true);
     try {
       await verifyMFA(otp);
-      navigate('/dashboard');
+      // Redirect to profile if not completed, otherwise dashboard
+      const stored = localStorage.getItem('openi_user');
+      const u = stored ? JSON.parse(stored) : null;
+      if (u && u.profile_completed === false) {
+        navigate('/dashboard/profile');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -197,8 +204,18 @@ export default function Login() {
           )}
         </div>
 
+        {/* Registration link */}
+        <div className="text-center mt-5">
+          <p className="text-sm" style={{ color: '#6b7280' }}>
+            Don&apos;t have an account?{' '}
+            <Link to="/landing" className="font-semibold" style={{ color: '#D5AA5B' }}>
+              Join OpenI Hub
+            </Link>
+          </p>
+        </div>
+
         <p className="text-center text-xs mt-6" style={{ color: '#9ca3af' }}>
-          © 2024 OpenI Hub. All rights reserved.
+          &copy; 2024 OpenI Hub. All rights reserved.
         </p>
       </div>
     </div>
