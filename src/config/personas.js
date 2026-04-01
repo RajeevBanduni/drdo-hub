@@ -188,6 +188,7 @@ export const PROFILE_FIELDS = {
   ],
   corporate: [
     { name: 'company_name',        label: 'Company Name',        type: 'text',   required: true },
+    { name: 'logo_url',            label: 'Company Logo URL',    type: 'url',    placeholder: 'https://yoursite.com/logo.png' },
     { name: 'industry',            label: 'Industry',            type: 'text' },
     { name: 'company_size',        label: 'Company Size',        type: 'select', options: ['1-50','51-200','201-1000','1001-5000','5000+'] },
     { name: 'headquarters',        label: 'Headquarters',        type: 'text' },

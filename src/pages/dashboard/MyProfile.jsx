@@ -109,6 +109,25 @@ function FormField({ field, value, onChange }) {
       </div>
     );
   }
+  // Logo URL with preview
+  if (name === 'logo_url') {
+    return (
+      <div>
+        <label className="block text-xs font-medium mb-1" style={{ color: '#374151' }}>{label}</label>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {value && (
+            <img src={value} alt="Logo" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'contain', border: '1px solid #e5e7eb', background: '#f9fafb' }}
+              onError={e => { e.target.style.display = 'none'; }} />
+          )}
+          <input type="url" value={value ?? ''} onChange={e => onChange(e.target.value)}
+            placeholder={placeholder || 'https://yoursite.com/logo.png'} style={{ ...inputStyle, flex: 1 }}
+            onFocus={e => e.target.style.borderColor = '#D5AA5B'}
+            onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
+        </div>
+        <p style={{ fontSize: 10, color: '#999', marginTop: 4 }}>This logo will appear on your challenges in the Marketplace</p>
+      </div>
+    );
+  }
   return (
     <div>
       <label className="block text-xs font-medium mb-1" style={{ color: '#374151' }}>
