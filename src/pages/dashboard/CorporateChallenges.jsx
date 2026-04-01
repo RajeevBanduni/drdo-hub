@@ -1,14 +1,84 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { corporateAPI } from '../../services/api';
 import {
   Target, Plus, ChevronLeft, Clock, CheckCircle, XCircle,
   Users, Loader2, Calendar, DollarSign, AlertCircle, Star,
   MapPin, FileText, HelpCircle, Trash2, ChevronDown, ChevronUp,
+  X, Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const G = '#D5AA5B';
 const card = { background: '#fff', border: '1px solid #eee', borderRadius: 14, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' };
+
+// ── Searchable Multi-Select Dropdown ──────────────────────────
+function TagDropdown({ label, options, selected, onChange, colorScheme = { bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' } }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = options.filter(o => {
+    const name = typeof o === 'string' ? o : o.name;
+    return name.toLowerCase().includes(query.toLowerCase());
+  });
+
+  const toggle = (val) => {
+    onChange(selected.includes(val) ? selected.filter(v => v !== val) : [...selected, val]);
+  };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <label style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 4, display: 'block' }}>{label}</label>
+      {/* Selected pills + input */}
+      <div onClick={() => setOpen(true)}
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '6px 10px', minHeight: 38, border: `1px solid ${open ? G : '#e5e7eb'}`, borderRadius: 10, background: '#f9fafb', cursor: 'text', alignItems: 'center', transition: 'border-color 0.15s' }}>
+        {selected.map(val => (
+          <span key={val} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, padding: '2px 8px', borderRadius: 6, background: colorScheme.bg, color: colorScheme.color, fontWeight: 500 }}>
+            {val}
+            <X size={10} style={{ cursor: 'pointer', opacity: 0.7 }} onClick={e => { e.stopPropagation(); toggle(val); }} />
+          </span>
+        ))}
+        <input
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          placeholder={selected.length === 0 ? `Search ${label.toLowerCase()}...` : ''}
+          style={{ flex: 1, minWidth: 80, border: 'none', outline: 'none', background: 'transparent', fontSize: 12, padding: '2px 0' }}
+        />
+        <ChevronDown size={13} style={{ color: '#aaa', flexShrink: 0 }} />
+      </div>
+      {/* Dropdown */}
+      {open && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, marginTop: 4, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', maxHeight: 220, overflowY: 'auto' }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: '12px 14px', fontSize: 12, color: '#999', textAlign: 'center' }}>No matches found</div>
+          ) : (
+            filtered.map(o => {
+              const name = typeof o === 'string' ? o : o.name;
+              const sub = typeof o === 'object' && o.level > 0;
+              const isSelected = selected.includes(name);
+              return (
+                <div key={name} onClick={() => { toggle(name); setQuery(''); }}
+                  style={{ padding: '8px 14px', paddingLeft: sub ? 28 : 14, fontSize: 12, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isSelected ? colorScheme.bg : 'transparent', color: isSelected ? colorScheme.color : '#333', fontWeight: isSelected ? 600 : 400 }}
+                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#f9fafb'; }}
+                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}>
+                  <span>{sub ? '↳ ' : ''}{name}</span>
+                  {isSelected && <CheckCircle size={12} />}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const STATUS_STYLE = {
   draft:     { bg: '#f3f4f6', color: '#6b7280', label: 'Draft' },
@@ -322,39 +392,22 @@ export default function CorporateChallenges() {
               </label>
             </div>
 
-            {/* Taxonomy selectors */}
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 4, display: 'block' }}>Sectors</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {taxonomy.sectors.map(s => (
-                  <button key={s.id} onClick={() => toggleTag('sectors', s.name)} type="button"
-                    style={{ padding: '3px 10px', fontSize: 11, borderRadius: 20, border: `1px solid ${form.sectors.includes(s.name) ? '#2563eb' : '#e5e7eb'}`, background: form.sectors.includes(s.name) ? '#eff6ff' : '#fff', color: form.sectors.includes(s.name) ? '#2563eb' : '#666', cursor: 'pointer' }}>
-                    {s.name}
-                  </button>
-                ))}
-              </div>
+            {/* Taxonomy selectors — searchable dropdowns */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <TagDropdown label="Sectors" options={taxonomy.sectors} selected={form.sectors}
+                onChange={val => setForm(p => ({ ...p, sectors: val }))}
+                colorScheme={{ bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' }} />
+              <TagDropdown label="Technologies" options={taxonomy.technologies} selected={form.technologies}
+                onChange={val => setForm(p => ({ ...p, technologies: val }))}
+                colorScheme={{ bg: '#fefce8', color: '#ca8a04', border: '#fde68a' }} />
             </div>
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 4, display: 'block' }}>Technologies</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {taxonomy.technologies.filter(t => t.level === 0).map(t => (
-                  <button key={t.id} onClick={() => toggleTag('technologies', t.name)} type="button"
-                    style={{ padding: '3px 10px', fontSize: 11, borderRadius: 20, border: `1px solid ${form.technologies.includes(t.name) ? '#ca8a04' : '#e5e7eb'}`, background: form.technologies.includes(t.name) ? '#fefce8' : '#fff', color: form.technologies.includes(t.name) ? '#ca8a04' : '#666', cursor: 'pointer' }}>
-                    {t.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#555', marginBottom: 4, display: 'block' }}>Use Cases</label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {taxonomy.usecases.map(u => (
-                  <button key={u.id} onClick={() => toggleTag('usecases', u.name)} type="button"
-                    style={{ padding: '3px 10px', fontSize: 11, borderRadius: 20, border: `1px solid ${form.usecases.includes(u.name) ? '#16a34a' : '#e5e7eb'}`, background: form.usecases.includes(u.name) ? '#f0fdf4' : '#fff', color: form.usecases.includes(u.name) ? '#16a34a' : '#666', cursor: 'pointer' }}>
-                    {u.name}
-                  </button>
-                ))}
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <TagDropdown label="Use Cases" options={taxonomy.usecases} selected={form.usecases}
+                onChange={val => setForm(p => ({ ...p, usecases: val }))}
+                colorScheme={{ bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' }} />
+              <TagDropdown label="Functions" options={taxonomy.functions || []} selected={form.functions}
+                onChange={val => setForm(p => ({ ...p, functions: val }))}
+                colorScheme={{ bg: '#faf5ff', color: '#7c3aed', border: '#ddd6fe' }} />
             </div>
 
             {/* RFI Question Builder */}
