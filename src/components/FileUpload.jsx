@@ -56,7 +56,7 @@ export default function FileUpload({
     try {
       const result = await uploadAPI.upload(file, folder);
       onChange(result.url);
-      setLastFilename(result.original_filename || file.name);
+      setLastFilename(file.name || result.original_filename);
       setLastBytes(result.bytes);
     } catch (err) {
       setError(err.message || 'Upload failed');
