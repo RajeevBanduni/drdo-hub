@@ -105,6 +105,8 @@ export default function CorporateChallenges() {
   const [form, setForm] = useState({ title: '', description: '', budget_range: '', timeline: '', deadline: '', sectors: [], functions: [], technologies: [], usecases: [], requirements: '', problem_statement: '', location: '', min_profile_pct: 25, data_room_required: false, rfi_questions: [], faqs: [], status: 'open' });
   const [saving, setSaving] = useState(false);
   const [taxonomy, setTaxonomy] = useState({ sectors: [], functions: [], technologies: [], usecases: [] });
+  const [editMode, setEditMode] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState(null);
 
   useEffect(() => { load(); loadTaxonomy(); }, []);
 
@@ -144,6 +146,45 @@ export default function CorporateChallenges() {
     } catch (err) { toast.error(err.message); }
   };
 
+  const startEdit = () => {
+    const rfi = (() => { try { return typeof detail.rfi_questions === 'string' ? JSON.parse(detail.rfi_questions) : (detail.rfi_questions || []); } catch { return []; } })();
+    const fq = (() => { try { return typeof detail.faqs === 'string' ? JSON.parse(detail.faqs) : (detail.faqs || []); } catch { return []; } })();
+    setForm({
+      title: detail.title || '', description: detail.description || '', budget_range: detail.budget_range || '',
+      timeline: detail.timeline || '', deadline: detail.deadline ? detail.deadline.split('T')[0] : '',
+      sectors: detail.sectors || [], functions: detail.functions || [], technologies: detail.technologies || [],
+      usecases: detail.usecases || [], requirements: detail.requirements || '',
+      problem_statement: detail.problem_statement || '', location: detail.location || '',
+      min_profile_pct: detail.min_profile_pct || 25, data_room_required: detail.data_room_required || false,
+      rfi_questions: rfi, faqs: fq, status: detail.status || 'open',
+    });
+    setEditMode(true);
+    setShowCreate(true);
+  };
+
+  const updateChallenge = async () => {
+    if (!form.title.trim()) return toast.error('Title is required');
+    setSaving(true);
+    try {
+      await corporateAPI.updateChallenge(selected, form);
+      toast.success('Challenge updated');
+      setShowCreate(false);
+      setEditMode(false);
+      loadDetail(selected);
+      load();
+    } catch (err) { toast.error(err.message); }
+    finally { setSaving(false); }
+  };
+
+  const changeStatus = async (newStatus) => {
+    try {
+      await corporateAPI.updateChallenge(selected, { status: newStatus });
+      toast.success(`Status changed to ${newStatus}`);
+      loadDetail(selected);
+      load();
+    } catch (err) { toast.error(err.message); }
+  };
+
   const toggleTag = (field, val) => {
     setForm(p => ({
       ...p,
@@ -168,8 +209,17 @@ export default function CorporateChallenges() {
         {/* Header card */}
         <div style={{ ...card, padding: 20, marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>{detail.title}</h2>
-            <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: st.bg, color: st.color }}>{st.label}</span>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', margin: 0, flex: 1 }}>{detail.title}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <select value={detail.status} onChange={e => changeStatus(e.target.value)}
+                style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20, background: st.bg, color: st.color, border: `1px solid ${st.color}30`, cursor: 'pointer', outline: 'none' }}>
+                {Object.entries(STATUS_STYLE).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+              <button onClick={startEdit}
+                style={{ fontSize: 11, fontWeight: 600, padding: '5px 14px', borderRadius: 8, background: '#fff', color: G, border: `1px solid ${G}`, cursor: 'pointer' }}>
+                Edit
+              </button>
+            </div>
           </div>
           {detail.description && <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, marginBottom: 12 }}>{detail.description}</p>}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, fontSize: 12, color: '#666', marginBottom: 12 }}>
@@ -189,6 +239,7 @@ export default function CorporateChallenges() {
             {(detail.sectors || []).map(t => <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#eff6ff', color: '#2563eb' }}>{t}</span>)}
             {(detail.technologies || []).map(t => <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#fefce8', color: '#ca8a04' }}>{t}</span>)}
             {(detail.usecases || []).map(t => <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#f0fdf4', color: '#16a34a' }}>{t}</span>)}
+            {(detail.functions || []).map(t => <span key={t} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: '#faf5ff', color: '#7c3aed' }}>{t}</span>)}
           </div>
         </div>
 
@@ -199,6 +250,16 @@ export default function CorporateChallenges() {
               <FileText size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Problem Statement
             </h3>
             <p style={{ fontSize: 13, color: '#555', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>{detail.problem_statement}</p>
+          </div>
+        )}
+
+        {/* Requirements */}
+        {detail.requirements && (
+          <div style={{ ...card, padding: 20, marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 10 }}>
+              <AlertCircle size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Requirements
+            </h3>
+            <p style={{ fontSize: 13, color: '#555', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>{detail.requirements}</p>
           </div>
         )}
 
@@ -228,17 +289,23 @@ export default function CorporateChallenges() {
           </div>
         )}
 
-        {/* FAQs */}
+        {/* FAQs — Accordion */}
         {faqs.length > 0 && (
           <div style={{ ...card, padding: 20, marginBottom: 16 }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>
-              <HelpCircle size={14} style={{ verticalAlign: -2, marginRight: 6 }} />FAQs ({faqs.length})
+              <HelpCircle size={14} style={{ verticalAlign: -2, marginRight: 6 }} />Frequently Asked Questions ({faqs.length})
             </h3>
             <div style={{ display: 'grid', gap: 8 }}>
               {faqs.map((faq, i) => (
-                <div key={i} style={{ border: '1px solid #f0f0f0', borderRadius: 10, padding: 12 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#333', marginBottom: 4 }}>Q: {faq.question}</div>
-                  <div style={{ fontSize: 12, color: '#666', lineHeight: 1.5 }}>A: {faq.answer}</div>
+                <div key={i} style={{ border: '1px solid #f0f0f0', borderRadius: 10, overflow: 'hidden' }}>
+                  <button onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
+                    style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: '#fafafa', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>{faq.question}</span>
+                    {expandedFaq === i ? <ChevronUp size={14} color="#999" /> : <ChevronDown size={14} color="#999" />}
+                  </button>
+                  {expandedFaq === i && (
+                    <div style={{ padding: '12px 14px', fontSize: 13, color: '#555', lineHeight: 1.6 }}>{faq.answer}</div>
+                  )}
                 </div>
               ))}
             </div>
@@ -347,7 +414,7 @@ export default function CorporateChallenges() {
       {/* Create form */}
       {showCreate && (
         <div style={{ ...card, padding: 20, marginBottom: 20 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 14 }}>Create Innovation Challenge</h3>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 14 }}>{editMode ? 'Edit Challenge' : 'Create Innovation Challenge'}</h3>
           <div style={{ display: 'grid', gap: 12 }}>
             {/* Basic info */}
             <input placeholder="Challenge title *" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
@@ -388,6 +455,9 @@ export default function CorporateChallenges() {
                   style={{ padding: '5px 8px', fontSize: 12, borderRadius: 6, border: '1px solid #e5e7eb' }}>
                   <option value="draft">Draft</option>
                   <option value="open">Open</option>
+                  {editMode && <option value="reviewing">Reviewing</option>}
+                  {editMode && <option value="closed">Closed</option>}
+                  {editMode && <option value="awarded">Awarded</option>}
                 </select>
               </label>
             </div>
@@ -466,9 +536,9 @@ export default function CorporateChallenges() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setShowCreate(false)} style={{ padding: '8px 16px', fontSize: 13, borderRadius: 8, background: '#f3f4f6', color: '#555', border: 'none', cursor: 'pointer' }}>Cancel</button>
-              <button onClick={create} disabled={saving} style={{ padding: '8px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, background: G, color: '#fff', border: 'none', cursor: 'pointer' }}>
-                {saving ? <Loader2 size={14} className="animate-spin" /> : 'Create Challenge'}
+              <button onClick={() => { setShowCreate(false); setEditMode(false); }} style={{ padding: '8px 16px', fontSize: 13, borderRadius: 8, background: '#f3f4f6', color: '#555', border: 'none', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={editMode ? updateChallenge : create} disabled={saving} style={{ padding: '8px 20px', fontSize: 13, fontWeight: 600, borderRadius: 8, background: G, color: '#fff', border: 'none', cursor: 'pointer' }}>
+                {saving ? <Loader2 size={14} className="animate-spin" /> : (editMode ? 'Update Challenge' : 'Create Challenge')}
               </button>
             </div>
           </div>

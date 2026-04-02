@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { corporateAPI } from '../../services/api';
+import { PERSONAS } from '../../config/personas';
 import {
   Building2, FolderKanban, Target, Link2, Star, Users,
   Search, Plus, ArrowRight, Loader2, TrendingUp, Clock,
@@ -29,8 +30,9 @@ export default function CorporateDashboard() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recs, setRecs] = useState([]);
 
-  useEffect(() => { loadDashboard(); }, []);
+  useEffect(() => { loadDashboard(); loadRecs(); }, []);
 
   const loadDashboard = async () => {
     try {
@@ -38,6 +40,10 @@ export default function CorporateDashboard() {
       setData(d);
     } catch (err) { toast.error('Failed to load dashboard'); }
     finally { setLoading(false); }
+  };
+
+  const loadRecs = async () => {
+    try { const d = await corporateAPI.recommendations(); setRecs(d.recommendations || []); } catch {}
   };
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Loader2 size={28} className="animate-spin" style={{ color: G }} /></div>;
@@ -168,6 +174,55 @@ export default function CorporateDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Recommended Startups */}
+      {recs.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
+              <TrendingUp size={15} style={{ verticalAlign: -3, marginRight: 6, color: G }} />Recommended Startups
+            </h2>
+            <button onClick={() => navigate('/dashboard/corporate/search')}
+              style={{ fontSize: 11, fontWeight: 600, color: G, background: 'none', border: 'none', cursor: 'pointer' }}>
+              See all →
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
+            {recs.slice(0, 6).map(r => (
+              <div key={r.user_id} style={{ ...card, padding: 14, cursor: 'pointer' }}
+                onClick={() => navigate('/dashboard/directory')}
+                onMouseEnter={e => e.currentTarget.style.borderColor = G}
+                onMouseLeave={e => e.currentTarget.style.borderColor = '#eee'}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+                  {r.logo_url || r.avatar ? (
+                    <img src={r.logo_url || r.avatar} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', border: '1px solid #eee' }} />
+                  ) : (
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#999' }}>
+                      {(r.name || r.organization || '?')[0]}
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.organization || r.name}</div>
+                    <div style={{ fontSize: 11, color: '#888' }}>
+                      {r.sector || ''}{r.city ? ` · ${r.city}` : ''}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 6 }}>
+                  {(r.technologies || r.focus_areas || []).slice(0, 3).map(t => (
+                    <span key={t} style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: '#fefce8', color: '#ca8a04' }}>{t}</span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 8, fontSize: 10, color: '#999' }}>
+                  {r.tech_readiness && <span>TRL {r.tech_readiness}</span>}
+                  {r.is_deeptech && <span style={{ color: '#7c3aed', fontWeight: 600 }}>DeepTech</span>}
+                  {r.match_score > 0 && <span style={{ color: G, fontWeight: 600 }}>{r.match_score}pt match</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

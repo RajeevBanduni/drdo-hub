@@ -343,6 +343,88 @@ export default function PersonaDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Recommended Challenges — startup only */}
+      {role === 'startup' && (data?.stats?.recommended_challenges || []).length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
+              <Target size={15} style={{ verticalAlign: -3, marginRight: 6, color: G }} />Recommended Challenges
+            </h2>
+            <button onClick={() => navigate('/dashboard/marketplace')}
+              style={{ fontSize: 11, fontWeight: 600, color: G, background: 'none', border: 'none', cursor: 'pointer' }}>
+              Browse all →
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            {(data.stats.recommended_challenges).slice(0, 4).map(c => (
+              <div key={c.id} style={{ ...card, padding: 14, cursor: 'pointer' }}
+                onClick={() => navigate('/dashboard/marketplace')}
+                onMouseEnter={e => e.currentTarget.style.borderColor = G}
+                onMouseLeave={e => e.currentTarget.style.borderColor = '#eee'}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</div>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>
+                  {c.company_name || 'Corporate'}{c.budget_range ? ` · ${c.budget_range}` : ''}
+                  {c.deadline ? ` · Due ${new Date(c.deadline).toLocaleDateString()}` : ''}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                  {(c.sectors || []).slice(0, 2).map(t => <span key={t} style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: '#eff6ff', color: '#2563eb' }}>{t}</span>)}
+                  {(c.technologies || []).slice(0, 2).map(t => <span key={t} style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: '#fefce8', color: '#ca8a04' }}>{t}</span>)}
+                  {parseInt(c.match_score) > 0 && <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: '#fff7ed', color: '#ea580c', fontWeight: 600 }}>{c.match_score}pt match</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recommended Partners — startup only (investors, mentors, incubators, accelerators) */}
+      {role === 'startup' && (data?.stats?.recommended_partners || []).length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
+              <Users size={15} style={{ verticalAlign: -3, marginRight: 6, color: '#8b5cf6' }} />Recommended for You
+            </h2>
+            <button onClick={() => navigate('/dashboard/directory')}
+              style={{ fontSize: 11, fontWeight: 600, color: '#8b5cf6', background: 'none', border: 'none', cursor: 'pointer' }}>
+              Explore directory →
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+            {(data.stats.recommended_partners).slice(0, 6).map(p => {
+              const persona = PERSONAS[p.persona_type] || {};
+              return (
+                <div key={p.user_id} style={{ ...card, padding: 14, cursor: 'pointer' }}
+                  onClick={() => navigate('/dashboard/directory')}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = persona.color || '#999'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = '#eee'}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 6 }}>
+                    {p.logo_url || p.avatar ? (
+                      <img src={p.logo_url || p.avatar} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', border: '1px solid #eee' }} />
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#999' }}>
+                        {(p.display_name || p.organization || '?')[0]}
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.display_name || p.organization}</div>
+                      <div style={{ fontSize: 10, color: '#888' }}>{p.organization}{p.city ? ` · ${p.city}` : ''}</div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 20, background: `${persona.color || '#999'}14`, color: persona.color || '#999' }}>
+                    {persona.label || p.persona_type}
+                  </span>
+                  {(p.sectors || []).length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 6 }}>
+                      {p.sectors.slice(0, 3).map(t => <span key={t} style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: '#eff6ff', color: '#2563eb' }}>{t}</span>)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
