@@ -212,6 +212,12 @@ export const challengeAPI = {
   profileCheck:     ()            => get('/challenges/profile-check'),
 };
 
+// ── Directory ─────────────────────────────────────────────────
+export const directoryAPI = {
+  search:  (params = {}) => get(`/directory/search?${new URLSearchParams(params)}`),
+  filters: ()            => get('/directory/filters'),
+};
+
 // ── Crawling ────────────────────────────────────────────────
 export const crawlAPI = {
   stats:           ()                => get('/crawl/stats'),

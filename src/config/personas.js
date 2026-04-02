@@ -74,6 +74,7 @@ export const PERSONA_NAV = {
   corporate: [
     { to: '/dashboard/corporate',            label: 'My Dashboard',    icon: 'LayoutDashboard', end: true },
     { to: '/dashboard/profile',              label: 'My Profile',      icon: 'User' },
+    { to: '/dashboard/directory',            label: 'Directory',       icon: 'Search' },
     { to: '/dashboard/corporate/search',     label: 'Find Startups',   icon: 'Search' },
     { to: '/dashboard/corporate/challenges', label: 'Challenges',      icon: 'Target' },
     { to: '/dashboard/corporate/collabs',    label: 'Collaborations',  icon: 'Link2' },
