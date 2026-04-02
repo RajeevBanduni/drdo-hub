@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { authAPI } from '../../services/api';
+import { authAPI, subscriptionAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import {
   User, Mail, Shield, Lock, Save, Eye, EyeOff,
   CheckCircle2, AlertCircle, Bell, Moon, Sun,
+  CreditCard, Loader2, Check, Crown, Zap, X,
 } from 'lucide-react';
 
 const G = '#D5AA5B';
@@ -17,8 +18,15 @@ const card = {
   boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
 };
 
+const FEATURE_LABELS = {
+  challenge_create: 'Challenges Created',
+  application_submit: 'Applications Submitted',
+  meeting_create: 'Meetings Scheduled',
+  file_upload: 'Files Uploaded',
+};
+
 export default function Settings() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [tab, setTab] = useState('profile');
 
   // Profile form
@@ -36,6 +44,86 @@ export default function Settings() {
   // Notification prefs (local only)
   const [emailNotif, setEmailNotif] = useState(true);
   const [pushNotif, setPushNotif] = useState(true);
+
+  // Billing state
+  const [plans, setPlans] = useState([]);
+  const [myPlan, setMyPlan] = useState(null);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+
+  const loadBilling = async () => {
+    setBillingLoading(true);
+    try {
+      const [plansData, myData] = await Promise.all([
+        subscriptionAPI.getPlans(),
+        subscriptionAPI.getMyPlan(),
+      ]);
+      setPlans(plansData.plans || []);
+      setMyPlan(myData);
+    } catch (err) { toast.error('Failed to load billing info'); }
+    finally { setBillingLoading(false); }
+  };
+
+  const handleUpgrade = async (planId, planName) => {
+    setUpgrading(true);
+    try {
+      const orderData = await subscriptionAPI.createOrder({ plan_id: planId, billing_cycle: 'monthly' });
+
+      if (orderData.test_mode || !window.Razorpay) {
+        // Test mode or no Razorpay SDK — simulate payment
+        const result = await subscriptionAPI.verifyPayment({
+          razorpay_payment_id: `pay_test_${Date.now()}`,
+          razorpay_order_id: orderData.order_id,
+          razorpay_signature: 'test_signature',
+          plan_id: planId,
+          billing_cycle: 'monthly',
+        });
+        if (result.success) {
+          toast.success(`Upgraded to ${result.display_name}!`);
+          updateUser({ current_plan: result.plan });
+          loadBilling();
+        }
+      } else {
+        // Real Razorpay checkout
+        const rzp = new window.Razorpay({
+          key: orderData.key,
+          order_id: orderData.order_id,
+          amount: orderData.amount,
+          currency: orderData.currency || 'INR',
+          name: 'OpenI Hub',
+          description: `${planName} - Monthly`,
+          prefill: { email: user?.email, name: user?.name },
+          handler: async (response) => {
+            try {
+              const result = await subscriptionAPI.verifyPayment({
+                ...response,
+                plan_id: planId,
+                billing_cycle: 'monthly',
+              });
+              if (result.success) {
+                toast.success(`Upgraded to ${result.display_name}!`);
+                updateUser({ current_plan: result.plan });
+                loadBilling();
+              }
+            } catch (err) { toast.error(err.message); }
+          },
+          theme: { color: G },
+        });
+        rzp.open();
+      }
+    } catch (err) { toast.error(err.message); }
+    finally { setUpgrading(false); }
+  };
+
+  const handleCancel = async () => {
+    if (!confirm('Are you sure you want to cancel your subscription? You will be reverted to the Free plan.')) return;
+    try {
+      await subscriptionAPI.cancel();
+      toast.success('Subscription cancelled');
+      updateUser({ current_plan: 'free' });
+      loadBilling();
+    } catch (err) { toast.error(err.message); }
+  };
 
   const saveProfile = async () => {
     if (!name.trim()) return toast.error('Name is required');
@@ -75,6 +163,7 @@ export default function Settings() {
   const TABS = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
+    { id: 'billing', label: 'Billing', icon: CreditCard },
     { id: 'notifications', label: 'Notifications', icon: Bell },
   ];
 
@@ -254,6 +343,145 @@ export default function Settings() {
           </div>
         </div>
       )}
+
+      {/* Billing Tab */}
+      {tab === 'billing' && (() => {
+        if (!myPlan && !billingLoading) loadBilling();
+        const currentPlan = myPlan?.plan_name || user?.current_plan || 'free';
+        const planFeatures = myPlan?.plan?.features || {};
+        const usage = myPlan?.usage || {};
+
+        return (
+          <div>
+            {billingLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Loader2 size={28} className="animate-spin" style={{ color: G }} /></div>
+            ) : (
+              <>
+                {/* Current Plan */}
+                <div style={{ ...card, padding: 24, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>Current Plan</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#1a1a1a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {currentPlan === 'enterprise' ? <Crown size={20} style={{ color: '#f59e0b' }} /> : currentPlan === 'pro' ? <Zap size={20} style={{ color: G }} /> : null}
+                        {myPlan?.plan?.display_name || 'Free Plan'}
+                      </div>
+                    </div>
+                    {currentPlan !== 'free' && myPlan?.subscription && (
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 11, color: '#999' }}>Next billing</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>
+                          {myPlan.subscription.current_period_end ? new Date(myPlan.subscription.current_period_end).toLocaleDateString() : '—'}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Usage Meters */}
+                  <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>Usage This Month</h3>
+                  <div style={{ display: 'grid', gap: 10 }}>
+                    {Object.entries(planFeatures).map(([feature, limit]) => {
+                      const used = usage[feature] || 0;
+                      const isUnlimited = limit === -1;
+                      const pct = isUnlimited ? 10 : (limit > 0 ? Math.min((used / limit) * 100, 100) : 0);
+                      const isNearLimit = !isUnlimited && limit > 0 && used >= limit * 0.8;
+                      return (
+                        <div key={feature}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#555', marginBottom: 3 }}>
+                            <span>{FEATURE_LABELS[feature] || feature}</span>
+                            <span style={{ fontWeight: 600, color: isNearLimit ? '#dc2626' : '#333' }}>
+                              {used} / {isUnlimited ? '∞' : limit}
+                            </span>
+                          </div>
+                          <div style={{ height: 6, borderRadius: 3, background: '#f3f4f6' }}>
+                            <div style={{ height: '100%', borderRadius: 3, width: `${pct}%`,
+                              background: isUnlimited ? '#16a34a' : isNearLimit ? '#dc2626' : pct > 50 ? '#f59e0b' : '#16a34a',
+                              transition: 'width 0.3s' }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {currentPlan !== 'free' && (
+                    <button onClick={handleCancel} style={{ marginTop: 16, fontSize: 12, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      Cancel subscription
+                    </button>
+                  )}
+                </div>
+
+                {/* Plan Comparison */}
+                <div style={{ ...card, padding: 24 }}>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 16 }}>Plans</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+                    {plans.map(p => {
+                      const isCurrent = p.name === currentPlan;
+                      const features = p.features || {};
+                      return (
+                        <div key={p.id} style={{ border: isCurrent ? `2px solid ${G}` : '1px solid #eee', borderRadius: 14, padding: 20, background: isCurrent ? '#fffbeb' : '#fff', position: 'relative' }}>
+                          {isCurrent && <div style={{ position: 'absolute', top: -10, right: 14, fontSize: 10, fontWeight: 700, padding: '2px 10px', borderRadius: 20, background: G, color: '#fff' }}>Current</div>}
+                          <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>{p.display_name}</div>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: G, marginBottom: 12 }}>
+                            {parseFloat(p.price_monthly) === 0 ? 'Free' : `₹${parseInt(p.price_monthly)}`}
+                            {parseFloat(p.price_monthly) > 0 && <span style={{ fontSize: 12, fontWeight: 400, color: '#999' }}>/mo</span>}
+                          </div>
+                          <div style={{ display: 'grid', gap: 6, marginBottom: 16 }}>
+                            {Object.entries(features).map(([f, limit]) => (
+                              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#555' }}>
+                                <Check size={12} style={{ color: '#16a34a' }} />
+                                {FEATURE_LABELS[f] || f}: {limit === -1 ? 'Unlimited' : `${limit}/mo`}
+                              </div>
+                            ))}
+                          </div>
+                          {!isCurrent && p.name !== 'free' && (
+                            <button onClick={() => handleUpgrade(p.id, p.display_name)} disabled={upgrading}
+                              style={{ width: '100%', padding: '10px 16px', fontSize: 13, fontWeight: 600, borderRadius: 10,
+                                background: G, color: '#fff', border: 'none', cursor: upgrading ? 'wait' : 'pointer' }}>
+                              {upgrading ? 'Processing...' : `Upgrade to ${p.display_name}`}
+                            </button>
+                          )}
+                          {!isCurrent && p.name === 'free' && currentPlan !== 'free' && (
+                            <button onClick={handleCancel}
+                              style={{ width: '100%', padding: '10px 16px', fontSize: 13, fontWeight: 600, borderRadius: 10,
+                                background: '#fff', color: '#666', border: '1px solid #ddd', cursor: 'pointer' }}>
+                              Downgrade to Free
+                            </button>
+                          )}
+                          {isCurrent && (
+                            <div style={{ textAlign: 'center', fontSize: 12, color: G, fontWeight: 600 }}>Your current plan</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Payment History */}
+                {(myPlan?.payments || []).length > 0 && (
+                  <div style={{ ...card, padding: 24, marginTop: 16 }}>
+                    <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>Payment History</h3>
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {(myPlan.payments || []).map(p => (
+                        <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f5f5f5', fontSize: 12 }}>
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#333' }}>₹{parseInt(p.amount)}</div>
+                            <div style={{ fontSize: 11, color: '#999' }}>{new Date(p.created_at).toLocaleDateString()}</div>
+                          </div>
+                          <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
+                            background: p.status === 'captured' ? '#f0fdf4' : p.status === 'failed' ? '#fef2f2' : '#fefce8',
+                            color: p.status === 'captured' ? '#16a34a' : p.status === 'failed' ? '#dc2626' : '#ca8a04' }}>
+                            {p.status === 'captured' ? 'Paid' : p.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Notifications Tab */}
       {tab === 'notifications' && (

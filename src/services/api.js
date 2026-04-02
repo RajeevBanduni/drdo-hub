@@ -45,6 +45,15 @@ export const uploadAPI = {
   },
 };
 
+// ── Subscriptions ─────────────────────────────────────────────
+export const subscriptionAPI = {
+  getPlans:      ()       => get('/subscription/plans'),
+  getMyPlan:     ()       => get('/subscription/my-plan'),
+  createOrder:   (data)   => post('/subscription/create-order', data),
+  verifyPayment: (data)   => post('/subscription/verify-payment', data),
+  cancel:        ()       => post('/subscription/cancel'),
+};
+
 // ── Auth ────────────────────────────────────────────────────
 export const authAPI = {
   login:          (email, password) => post('/auth/login', { email, password }),
