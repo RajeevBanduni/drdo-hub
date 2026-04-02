@@ -212,6 +212,16 @@ export const challengeAPI = {
   profileCheck:     ()            => get('/challenges/profile-check'),
 };
 
+// ── Meetings ──────────────────────────────────────────────────
+export const meetingAPI = {
+  list:        (params = {}) => get(`/meetings?${new URLSearchParams(params)}`),
+  get:         (id)          => get(`/meetings/${id}`),
+  create:      (data)        => post('/meetings', data),
+  update:      (id, data)    => put(`/meetings/${id}`, data),
+  respond:     (id, rsvp)    => post(`/meetings/${id}/respond`, { rsvp }),
+  searchUsers: (search)      => get(`/meetings/users?search=${encodeURIComponent(search)}`),
+};
+
 // ── Directory ─────────────────────────────────────────────────
 export const directoryAPI = {
   search:  (params = {}) => get(`/directory/search?${new URLSearchParams(params)}`),
