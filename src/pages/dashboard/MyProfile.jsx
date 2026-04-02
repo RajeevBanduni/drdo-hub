@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PERSONAS, PROFILE_FIELDS } from '../../config/personas';
 import { profileAPI } from '../../services/api';
 import { User, Save, Loader2, AlertCircle, Check, X } from 'lucide-react';
+import FileUpload from '../../components/FileUpload';
 import toast from 'react-hot-toast';
 
 const inputStyle = {
@@ -109,23 +110,17 @@ function FormField({ field, value, onChange }) {
       </div>
     );
   }
-  // Logo URL with preview
-  if (name === 'logo_url') {
+  // File upload fields: logo, pitch deck, portfolio, resume
+  const FILE_UPLOAD_FIELDS = {
+    logo_url:       { folder: 'logos',       accept: 'image/*' },
+    pitch_deck_url: { folder: 'pitch_decks', accept: '.pdf,.ppt,.pptx' },
+    portfolio_url:  { folder: 'portfolios',  accept: '.pdf,.doc,.docx' },
+    resume_url:     { folder: 'resumes',     accept: '.pdf,.doc,.docx' },
+  };
+  if (FILE_UPLOAD_FIELDS[name]) {
+    const cfg = FILE_UPLOAD_FIELDS[name];
     return (
-      <div>
-        <label className="block text-xs font-medium mb-1" style={{ color: '#374151' }}>{label}</label>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          {value && (
-            <img src={value} alt="Logo" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'contain', border: '1px solid #e5e7eb', background: '#f9fafb' }}
-              onError={e => { e.target.style.display = 'none'; }} />
-          )}
-          <input type="url" value={value ?? ''} onChange={e => onChange(e.target.value)}
-            placeholder={placeholder || 'https://yoursite.com/logo.png'} style={{ ...inputStyle, flex: 1 }}
-            onFocus={e => e.target.style.borderColor = '#D5AA5B'}
-            onBlur={e => e.target.style.borderColor = '#e5e7eb'} />
-        </div>
-        <p style={{ fontSize: 10, color: '#999', marginTop: 4 }}>This logo will appear on your challenges in the Marketplace</p>
-      </div>
+      <FileUpload value={value || ''} onChange={onChange} folder={cfg.folder} accept={cfg.accept} label={label} />
     );
   }
   return (

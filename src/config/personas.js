@@ -169,7 +169,8 @@ export const PROFILE_FIELDS = {
     { name: 'bio',              label: 'About Me',           type: 'textarea' },
     { name: 'looking_for',      label: 'Looking For',        type: 'multiselect', options: ['Mentorship','Funding','Co-founder','Internship','Collaboration','Lab Access'] },
     { name: 'linkedin_url',     label: 'LinkedIn URL',       type: 'url' },
-    { name: 'portfolio_url',    label: 'Portfolio URL',      type: 'url' },
+    { name: 'portfolio_url',    label: 'Portfolio',          type: 'url' },
+    { name: 'resume_url',       label: 'Resume',             type: 'url' },
   ],
   academia: [
     { name: 'institution_name', label: 'Institution Name',    type: 'text',   required: true },

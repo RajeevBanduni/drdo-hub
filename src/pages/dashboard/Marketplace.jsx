@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { challengeAPI, corporateAPI } from '../../services/api';
+import FileUpload from '../../components/FileUpload';
 import {
   Search, Target, ChevronLeft, Clock, Calendar, DollarSign, MapPin,
   Building2, Users, Loader2, AlertCircle, CheckCircle, FileText,
@@ -293,11 +294,11 @@ export default function Marketplace() {
                           <option value="certifications">Certifications</option>
                           <option value="other">Other</option>
                         </select>
-                        <input type="url" placeholder="Document URL" value={item.url} onChange={e => {
+                        <FileUpload compact value={item.url} onChange={url => {
                           const updated = [...applyForm.data_room];
-                          updated[i] = { ...updated[i], url: e.target.value };
+                          updated[i] = { ...updated[i], url };
                           setApplyForm(p => ({ ...p, data_room: updated }));
-                        }} style={{ flex: 1, padding: '8px 12px', fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb', background: '#f9fafb', outline: 'none' }} />
+                        }} folder="data_room" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.mp4,.mov" />
                         <button onClick={() => setApplyForm(p => ({ ...p, data_room: p.data_room.filter((_, j) => j !== i) }))}
                           style={{ padding: '6px 8px', borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer' }}><X size={14} /></button>
                       </div>

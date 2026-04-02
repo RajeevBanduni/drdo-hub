@@ -36,6 +36,15 @@ const post   = (path, body)  => request('POST',   path, body);
 const put    = (path, body)  => request('PUT',    path, body);
 const del    = (path)        => request('DELETE', path);
 
+// ── File Upload ───────────────────────────────────────────────
+export const uploadAPI = {
+  upload: (file, folder = 'general') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request('POST', `/upload?folder=${folder}`, formData, true);
+  },
+};
+
 // ── Auth ────────────────────────────────────────────────────
 export const authAPI = {
   login:          (email, password) => post('/auth/login', { email, password }),
