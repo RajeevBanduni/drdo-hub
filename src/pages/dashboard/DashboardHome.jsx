@@ -66,8 +66,10 @@ export default function DashboardHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect corporate users to their dedicated dashboard
+  // Redirect persona users to their dedicated dashboards
   if (user?.role === 'corporate') return <Navigate to="/dashboard/corporate" replace />;
+  const PERSONA_ROLES = ['startup','student','academia','government','investor','mentor','lab','incubator','accelerator'];
+  if (PERSONA_ROLES.includes(user?.role)) return <Navigate to="/dashboard/home" replace />;
 
   const firstName = user?.name?.split(" ")[0] || null;
 

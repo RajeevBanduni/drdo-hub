@@ -39,6 +39,7 @@ import GovtAPIIntegrations  from './pages/dashboard/GovtAPIIntegrations';
 import Marketplace          from './pages/dashboard/Marketplace';
 import Directory            from './pages/dashboard/Directory';
 import Meetings             from './pages/dashboard/Meetings';
+import PersonaDashboard     from './pages/dashboard/PersonaDashboard';
 import Settings             from './pages/dashboard/Settings';
 
 // ── Guard: redirect to login if not authenticated ─────────────
@@ -101,6 +102,7 @@ export default function App() {
             <Route path="marketplace"         element={<Marketplace />} />
             <Route path="directory"           element={<Directory />} />
             <Route path="meetings"            element={<Meetings />} />
+            <Route path="home"                element={<PersonaDashboard />} />
             <Route path="settings"            element={<Settings />} />
           </Route>
         </Routes>

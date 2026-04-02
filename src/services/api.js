@@ -212,6 +212,11 @@ export const challengeAPI = {
   profileCheck:     ()            => get('/challenges/profile-check'),
 };
 
+// ── Persona Dashboard ─────────────────────────────────────────
+export const personaDashboardAPI = {
+  dashboard: () => get('/persona/dashboard'),
+};
+
 // ── Meetings ──────────────────────────────────────────────────
 export const meetingAPI = {
   list:        (params = {}) => get(`/meetings?${new URLSearchParams(params)}`),

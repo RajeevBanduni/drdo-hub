@@ -1,0 +1,348 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { personaDashboardAPI, meetingAPI } from '../../services/api';
+import { PERSONAS } from '../../config/personas';
+import {
+  Rocket, GraduationCap, BookOpen, Building2, Landmark, TrendingUp, Users,
+  FlaskConical, Home, Zap, ArrowRight, Loader2, Target, Star, FolderKanban,
+  Shield, Search, MessageSquare, CalendarCheck, Calendar, Clock, Video,
+  FileText, ThumbsUp, MapPin, BarChart2, Briefcase, Eye,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+
+const G = '#D5AA5B';
+const card = { background: '#fff', border: '1px solid #eee', borderRadius: 14, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' };
+
+const ICON_MAP = {
+  Rocket, GraduationCap, BookOpen, Building2, Landmark, TrendingUp, Users,
+  FlaskConical, Home, Zap, Target, Star, FolderKanban, Shield, Search,
+  MessageSquare, CalendarCheck, Calendar, FileText, ThumbsUp, MapPin,
+  BarChart2, Briefcase, Eye, Clock, Video,
+};
+
+// ── Per-persona config: stats, quick actions ─────────────────
+const DASHBOARD_CONFIG = {
+  startup: {
+    subtitle: 'Startup Innovation Dashboard',
+    stats: [
+      { key: 'applications', label: 'My Applications', icon: Target, color: '#2563eb', to: '/dashboard/marketplace' },
+      { key: 'projects', label: 'Projects', icon: FolderKanban, color: '#16a34a', to: '/dashboard/projects' },
+      { key: 'mentors', label: 'Mentors', icon: Users, color: '#ec4899', to: '/dashboard/mentors' },
+      { key: 'ipr_records', label: 'IPR Records', icon: Shield, color: '#7c3aed', to: '/dashboard/ipr' },
+      { key: 'deeptech_assessments', label: 'DeepTech', icon: Zap, color: '#f59e0b', to: '/dashboard/deeptech' },
+    ],
+    quickActions: [
+      { label: 'Browse Challenges', desc: 'Find corporate innovation challenges', icon: Target, to: '/dashboard/marketplace', color: G },
+      { label: 'Find Investors', desc: 'Connect with VCs and angel investors', icon: TrendingUp, to: '/dashboard/directory', color: '#f59e0b' },
+      { label: 'Find Corporates', desc: 'Explore corporate partnerships', icon: Building2, to: '/dashboard/directory', color: '#16a34a' },
+      { label: 'Find Labs', desc: 'Book equipment and lab facilities', icon: FlaskConical, to: '/dashboard/infrastructure', color: '#14b8a6' },
+      { label: 'Find Mentors', desc: 'Get guidance from industry experts', icon: Users, to: '/dashboard/mentors', color: '#ec4899' },
+      { label: 'My IPR', desc: 'Manage patents and IP records', icon: Shield, to: '/dashboard/ipr', color: '#7c3aed' },
+    ],
+  },
+  student: {
+    subtitle: 'Student Innovation Dashboard',
+    stats: [
+      { key: 'applications', label: 'My Applications', icon: Target, color: '#2563eb', to: '/dashboard/marketplace' },
+      { key: 'upcoming_events_count', label: 'Upcoming Events', icon: Calendar, color: '#16a34a', to: '/dashboard/events' },
+    ],
+    quickActions: [
+      { label: 'Browse Challenges', desc: 'Apply to innovation challenges', icon: Target, to: '/dashboard/marketplace', color: G },
+      { label: 'Find Mentors', desc: 'Connect with experienced mentors', icon: Users, to: '/dashboard/mentors', color: '#ec4899' },
+      { label: 'Browse Startups', desc: 'Explore startup opportunities', icon: Rocket, to: '/dashboard/startups', color: '#f59e0b' },
+      { label: 'Explore Directory', desc: 'Discover innovators and labs', icon: Search, to: '/dashboard/directory', color: '#3b82f6' },
+    ],
+  },
+  academia: {
+    subtitle: 'Academic Innovation Dashboard',
+    stats: [
+      { key: 'applications', label: 'My Applications', icon: Target, color: '#2563eb', to: '/dashboard/marketplace' },
+      { key: 'publications', label: 'Publications', icon: FileText, color: '#7c3aed', to: '/dashboard/profile' },
+      { key: 'patents', label: 'Patents', icon: Shield, color: '#16a34a', to: '/dashboard/ipr' },
+      { key: 'lab_bookings', label: 'Lab Bookings', icon: FlaskConical, color: '#14b8a6', to: '/dashboard/infrastructure' },
+    ],
+    quickActions: [
+      { label: 'Browse Challenges', desc: 'Apply to innovation challenges', icon: Target, to: '/dashboard/marketplace', color: G },
+      { label: 'IPR Database', desc: 'Patents and intellectual property', icon: Shield, to: '/dashboard/ipr', color: '#7c3aed' },
+      { label: 'Book Lab', desc: 'Reserve lab infrastructure', icon: FlaskConical, to: '/dashboard/infrastructure', color: '#14b8a6' },
+      { label: 'Find Mentors', desc: 'Connect with industry experts', icon: Users, to: '/dashboard/mentors', color: '#ec4899' },
+      { label: 'Browse Startups', desc: 'Collaborate with startups', icon: Rocket, to: '/dashboard/startups', color: '#f59e0b' },
+    ],
+  },
+  government: {
+    subtitle: 'Government Innovation Dashboard',
+    stats: [
+      { key: 'programs', label: 'Programs', icon: FileText, color: '#0ea5e9', to: '/dashboard/evaluations' },
+      { key: 'cohorts', label: 'Cohorts', icon: GraduationCap, color: '#7c3aed', to: '/dashboard/cohorts' },
+      { key: 'projects', label: 'Projects', icon: FolderKanban, color: '#16a34a', to: '/dashboard/projects' },
+      { key: 'startups_tracked', label: 'Startups', icon: Rocket, color: G, to: '/dashboard/startups' },
+    ],
+    quickActions: [
+      { label: 'Discover Startups', desc: 'Browse the startup ecosystem', icon: Rocket, to: '/dashboard/startups', color: G },
+      { label: 'Manage Programs', desc: 'Track evaluation programs', icon: FileText, to: '/dashboard/evaluations', color: '#0ea5e9' },
+      { label: 'View Cohorts', desc: 'Monitor incubation cohorts', icon: GraduationCap, to: '/dashboard/cohorts', color: '#7c3aed' },
+      { label: 'Govt APIs', desc: 'Integration with govt databases', icon: Landmark, to: '/dashboard/govt-apis', color: '#16a34a' },
+    ],
+  },
+  investor: {
+    subtitle: 'Investor Dashboard',
+    stats: [
+      { key: 'watchlists', label: 'Watchlists', icon: Star, color: '#f59e0b', to: '/dashboard/watchlist' },
+      { key: 'watched_startups', label: 'Tracked Startups', icon: Eye, color: '#2563eb', to: '/dashboard/watchlist' },
+      { key: 'deeptech_assessments', label: 'DeepTech Assessments', icon: Zap, color: '#7c3aed', to: '/dashboard/deeptech' },
+    ],
+    quickActions: [
+      { label: 'Discover Startups', desc: 'Find high-potential startups', icon: Rocket, to: '/dashboard/startups', color: G },
+      { label: 'My Watchlists', desc: 'Curated startup lists', icon: Star, to: '/dashboard/watchlist', color: '#f59e0b' },
+      { label: 'DeepTech Scores', desc: 'Technology readiness assessments', icon: Zap, to: '/dashboard/deeptech', color: '#7c3aed' },
+      { label: 'Explore Directory', desc: 'Find co-investors and labs', icon: Search, to: '/dashboard/directory', color: '#3b82f6' },
+    ],
+  },
+  mentor: {
+    subtitle: 'Mentor Dashboard',
+    stats: [
+      { key: 'active_mentees', label: 'Active Mentees', icon: Users, color: '#ec4899', to: '/dashboard/startups' },
+      { key: 'total_sessions', label: 'Total Sessions', icon: CalendarCheck, color: '#16a34a', to: '/dashboard/meetings' },
+      { key: 'projects', label: 'Projects', icon: FolderKanban, color: '#3b82f6', to: '/dashboard/projects' },
+      { key: 'feedback_given', label: 'Feedback Given', icon: ThumbsUp, color: '#f59e0b', to: '/dashboard/feedback' },
+    ],
+    quickActions: [
+      { label: 'Browse Startups', desc: 'Find startups to mentor', icon: Rocket, to: '/dashboard/startups', color: G },
+      { label: 'My Projects', desc: 'Track mentorship projects', icon: FolderKanban, to: '/dashboard/projects', color: '#3b82f6' },
+      { label: 'Give Feedback', desc: 'Share evaluations and notes', icon: ThumbsUp, to: '/dashboard/feedback', color: '#f59e0b' },
+      { label: 'Explore Directory', desc: 'Connect with other mentors', icon: Search, to: '/dashboard/directory', color: '#ec4899' },
+    ],
+  },
+  lab: {
+    subtitle: 'Lab Management Dashboard',
+    stats: [
+      { key: 'equipment_count', label: 'Equipment', icon: FlaskConical, color: '#14b8a6', to: '/dashboard/infrastructure' },
+      { key: 'active_bookings', label: 'Active Bookings', icon: CalendarCheck, color: '#2563eb', to: '/dashboard/infrastructure' },
+      { key: 'ipr_records', label: 'IPR Records', icon: Shield, color: '#7c3aed', to: '/dashboard/ipr' },
+      { key: 'capacity', label: 'Capacity', icon: Users, color: '#f59e0b', to: '/dashboard/infrastructure' },
+    ],
+    quickActions: [
+      { label: 'Manage Infrastructure', desc: 'Equipment and facility management', icon: Building2, to: '/dashboard/infrastructure', color: '#14b8a6' },
+      { label: 'IPR Database', desc: 'Patents and IP records', icon: Shield, to: '/dashboard/ipr', color: '#7c3aed' },
+      { label: 'Browse Startups', desc: 'Find startups needing lab access', icon: Rocket, to: '/dashboard/startups', color: G },
+      { label: 'Explore Directory', desc: 'Connect with researchers', icon: Search, to: '/dashboard/directory', color: '#3b82f6' },
+    ],
+  },
+  incubator: {
+    subtitle: 'Incubator Dashboard',
+    stats: [
+      { key: 'portfolio', label: 'Portfolio', icon: Briefcase, color: '#8b5cf6', to: '/dashboard/startups' },
+      { key: 'cohorts_active', label: 'Active Cohorts', icon: GraduationCap, color: '#16a34a', to: '/dashboard/cohorts' },
+      { key: 'projects', label: 'Projects', icon: FolderKanban, color: '#3b82f6', to: '/dashboard/projects' },
+    ],
+    quickActions: [
+      { label: 'Browse Startups', desc: 'Scout startups for incubation', icon: Rocket, to: '/dashboard/startups', color: G },
+      { label: 'Manage Cohorts', desc: 'Track incubation cohorts', icon: GraduationCap, to: '/dashboard/cohorts', color: '#16a34a' },
+      { label: 'Find Mentors', desc: 'Engage mentors for your portfolio', icon: Users, to: '/dashboard/mentors', color: '#ec4899' },
+      { label: 'My Projects', desc: 'Track startup projects', icon: FolderKanban, to: '/dashboard/projects', color: '#3b82f6' },
+      { label: 'Explore Directory', desc: 'Connect with ecosystem players', icon: Search, to: '/dashboard/directory', color: '#f59e0b' },
+    ],
+  },
+  accelerator: {
+    subtitle: 'Accelerator Dashboard',
+    stats: [
+      { key: 'portfolio', label: 'Portfolio', icon: Briefcase, color: '#ef4444', to: '/dashboard/startups' },
+      { key: 'cohorts_active', label: 'Active Batches', icon: GraduationCap, color: '#16a34a', to: '/dashboard/cohorts' },
+      { key: 'watchlists', label: 'Watchlists', icon: Star, color: '#f59e0b', to: '/dashboard/watchlist' },
+      { key: 'projects', label: 'Projects', icon: FolderKanban, color: '#3b82f6', to: '/dashboard/projects' },
+    ],
+    quickActions: [
+      { label: 'Browse Startups', desc: 'Find startups for acceleration', icon: Rocket, to: '/dashboard/startups', color: G },
+      { label: 'Manage Cohorts', desc: 'Track acceleration batches', icon: GraduationCap, to: '/dashboard/cohorts', color: '#16a34a' },
+      { label: 'My Watchlists', desc: 'Curated startup lists', icon: Star, to: '/dashboard/watchlist', color: '#f59e0b' },
+      { label: 'My Projects', desc: 'Track portfolio projects', icon: FolderKanban, to: '/dashboard/projects', color: '#3b82f6' },
+      { label: 'Explore Directory', desc: 'Find mentors and investors', icon: Search, to: '/dashboard/directory', color: '#ec4899' },
+    ],
+  },
+};
+
+const fmtDate = (d) => {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+};
+const fmtTime = (d) => {
+  if (!d) return '';
+  return new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+};
+
+export default function PersonaDashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const role = user?.role;
+  const config = DASHBOARD_CONFIG[role];
+  const persona = PERSONAS[role] || {};
+  const PersonaIcon = ICON_MAP[persona.icon] || Rocket;
+
+  useEffect(() => { loadDashboard(); }, []);
+
+  const loadDashboard = async () => {
+    try {
+      const d = await personaDashboardAPI.dashboard();
+      setData(d);
+    } catch (err) { toast.error('Failed to load dashboard'); }
+    finally { setLoading(false); }
+  };
+
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Loader2 size={28} className="animate-spin" style={{ color: G }} /></div>;
+
+  if (!config) return <div style={{ padding: 24, textAlign: 'center', color: '#999' }}>Dashboard not available for this role</div>;
+
+  const stats = (config.stats || []).map(s => ({
+    ...s,
+    value: data?.stats?.[s.key] ?? 0,
+  }));
+
+  return (
+    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+      {/* Welcome Card */}
+      <div style={{ ...card, padding: '20px 24px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${persona.color || G}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <PersonaIcon size={22} style={{ color: persona.color || G }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
+            Welcome, {user?.organization_name || user?.name}
+          </h1>
+          <p style={{ fontSize: 13, color: '#666', margin: 0 }}>{config.subtitle}</p>
+        </div>
+        {/* Profile score */}
+        {data?.profile_score != null && (
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>Profile</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 80, height: 6, borderRadius: 3, background: '#f3f4f6' }}>
+                <div style={{ height: '100%', borderRadius: 3, width: `${data.profile_score}%`,
+                  background: data.profile_score >= 70 ? '#16a34a' : data.profile_score >= 40 ? '#f59e0b' : '#ef4444' }} />
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#555' }}>{data.profile_score}%</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Common mini-stats row */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+        {[
+          { label: 'Meetings', value: data?.upcoming_meetings || 0, icon: CalendarCheck, color: G, to: '/dashboard/meetings' },
+          { label: 'Messages', value: data?.unread_messages || 0, icon: MessageSquare, color: '#3b82f6', to: '/dashboard/messaging' },
+          { label: 'Events', value: data?.upcoming_events || 0, icon: Calendar, color: '#16a34a', to: '/dashboard/events' },
+        ].map(s => (
+          <div key={s.label} onClick={() => navigate(s.to)}
+            style={{ ...card, padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 140px' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = s.color}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#eee'}>
+            <s.icon size={16} style={{ color: s.color }} />
+            <span style={{ fontSize: 12, color: '#666' }}>{s.label}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginLeft: 'auto' }}>{s.value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
+        {stats.map(s => (
+          <div key={s.key} style={{ ...card, padding: 18, cursor: 'pointer' }} onClick={() => navigate(s.to)}
+            onMouseEnter={e => e.currentTarget.style.borderColor = s.color}
+            onMouseLeave={e => e.currentTarget.style.borderColor = '#eee'}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: `${s.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <s.icon size={18} style={{ color: s.color }} />
+              </div>
+              <span style={{ fontSize: 12, color: '#888', fontWeight: 500 }}>{s.label}</span>
+            </div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: '#1a1a1a' }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Two column: Quick Actions + Upcoming Meetings */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        {/* Quick Actions */}
+        <div>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>Quick Actions</h2>
+          <div style={{ display: 'grid', gap: 10 }}>
+            {(config.quickActions || []).map(a => (
+              <div key={a.label} style={{ ...card, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                onClick={() => navigate(a.to)}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = a.color; e.currentTarget.style.background = '#fafafa'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#eee'; e.currentTarget.style.background = '#fff'; }}>
+                <div style={{ width: 36, height: 36, borderRadius: 9, background: `${a.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <a.icon size={17} style={{ color: a.color }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>{a.label}</div>
+                  <div style={{ fontSize: 11, color: '#888' }}>{a.desc}</div>
+                </div>
+                <ArrowRight size={14} style={{ color: '#ccc' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Upcoming Meetings */}
+        <div>
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>Upcoming Meetings</h2>
+          <div style={{ ...card, padding: 0 }}>
+            {(data?.recent_meetings || []).length === 0 ? (
+              <div style={{ padding: 24, textAlign: 'center' }}>
+                <CalendarCheck size={28} style={{ color: '#ddd', marginBottom: 8 }} />
+                <div style={{ fontSize: 13, color: '#999' }}>No upcoming meetings</div>
+                <button onClick={() => navigate('/dashboard/meetings')}
+                  style={{ marginTop: 8, fontSize: 12, fontWeight: 600, color: G, background: 'none', border: 'none', cursor: 'pointer' }}>
+                  Schedule a Meeting
+                </button>
+              </div>
+            ) : (
+              (data?.recent_meetings || []).map((m, i) => (
+                <div key={m.id} onClick={() => navigate('/dashboard/meetings')}
+                  style={{ padding: '12px 16px', borderBottom: i < (data.recent_meetings.length - 1) ? '1px solid #f5f5f5' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: '#fff8ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <CalendarCheck size={16} style={{ color: G }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</div>
+                    <div style={{ fontSize: 11, color: '#888' }}>
+                      {fmtDate(m.start_time)} at {fmtTime(m.start_time)}
+                      {m.participant_count && <span> · {m.participant_count} participants</span>}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
+                    background: m.status === 'confirmed' ? '#f0fdf4' : '#fefce8',
+                    color: m.status === 'confirmed' ? '#16a34a' : '#ca8a04' }}>
+                    {m.status === 'confirmed' ? 'Confirmed' : 'Proposed'}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Directory CTA */}
+          <div style={{ ...card, padding: '16px 18px', marginTop: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+            onClick={() => navigate('/dashboard/directory')}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#fafafa'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = '#eee'; e.currentTarget.style.background = '#fff'; }}>
+            <div style={{ width: 36, height: 36, borderRadius: 9, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Search size={17} style={{ color: '#3b82f6' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a' }}>Explore the Ecosystem</div>
+              <div style={{ fontSize: 11, color: '#888' }}>Discover innovators, mentors, investors & more</div>
+            </div>
+            <ArrowRight size={14} style={{ color: '#ccc' }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
