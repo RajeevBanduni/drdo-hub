@@ -2,12 +2,18 @@
 
 ## OpenI Assessment Platform
 
-**Version:** 2.2
+**Version:** 2.3
 **Last Updated:** 5 April 2026
-**Live URL (current):** https://openi-hub.vercel.app
-**Live URL (target):** https://openi.tech *(go-live in progress)*
-**Backend API (current):** https://openi-hub-production.up.railway.app
-**Backend API (target):** https://api.openi.tech *(go-live in progress)*
+**Live URL:** https://www.openi.tech 🎉 *(soft launched 5 April 2026)*
+**Apex redirect:** https://openi.tech → 308 → https://www.openi.tech
+**Backend API:** https://openi-hub-production.up.railway.app *(api.openi.tech pending Railway SSL)*
+**Fallback URL:** https://openi-hub.vercel.app *(kept for transition)*
+
+### What's New in v2.3 — SOFT LAUNCH DAY
+- **openi.tech is LIVE** 🚀 — Frontend deployed to custom domain `www.openi.tech` with Vercel-issued Let's Encrypt SSL. Apex `openi.tech` redirects to `www` with HTTP 308 Permanent Redirect and HSTS (max-age 63072000). DNS propagated globally within 10 minutes via GoDaddy nameservers.
+- **DNS Configuration at GoDaddy** — 4 records: `A @ 216.198.79.1` (Vercel apex), `CNAME www → 4d8d9078365453ff.vercel-dns-017.com` (Vercel project-specific), `CNAME api → 9yr0x9xw.up.railway.app` (Railway), `TXT _railway-verify.api` (Railway domain verification).
+- **Razorpay KYC Submitted** — Business documents uploaded to Razorpay. Awaiting authorization certificate (1–3 business days). Upon approval, will switch from test keys to live keys and enable real payments.
+- **Partial Backend Custom Domain** — `api.openi.tech` added to Railway, DNS verified, but Let's Encrypt cert provisioning still in progress (Railway's CA queue is slow). Frontend continues to use the Railway-generated URL until cert issuance completes.
 
 ### What's New in v2.2
 - **Production Go-Live Plan** — Complete migration plan to custom domain `openi.tech` captured in Section 14. Covers Vercel + Railway custom domains, GoDaddy DNS configuration, env var changes, Razorpay live mode switch, end-to-end smoke test checklist, and rollback procedures.
@@ -994,4 +1000,4 @@ If this session pauses and resumes later, here's the state at each phase:
 ---
 
 *Documentation for OpenI Hub — Multi-Persona Open Innovation Platform*
-*Last updated: 5 April 2026 (v2.2 — production go-live plan for openi.tech)*
+*Last updated: 5 April 2026 (v2.3 — SOFT LAUNCHED on www.openi.tech)* 🎉
