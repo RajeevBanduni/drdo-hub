@@ -2,10 +2,17 @@
 
 ## OpenI Assessment Platform
 
-**Version:** 2.1
+**Version:** 2.2
 **Last Updated:** 5 April 2026
-**Live URL:** https://openi-hub.vercel.app
-**Backend API:** https://openi-hub-production.up.railway.app
+**Live URL (current):** https://openi-hub.vercel.app
+**Live URL (target):** https://openi.tech *(go-live in progress)*
+**Backend API (current):** https://openi-hub-production.up.railway.app
+**Backend API (target):** https://api.openi.tech *(go-live in progress)*
+
+### What's New in v2.2
+- **Production Go-Live Plan** — Complete migration plan to custom domain `openi.tech` captured in Section 14. Covers Vercel + Railway custom domains, GoDaddy DNS configuration, env var changes, Razorpay live mode switch, end-to-end smoke test checklist, and rollback procedures.
+- **CORS Whitelist Updated** — Backend `src/server.js` now includes `openi.tech`, `www.openi.tech`, and the existing Vercel URL as a transition fallback. Committed as part of the go-live workstream.
+- **Backend Package Rename** — `drdo-hub-backend` → `openi-hub-backend` for brand consistency (commit `a3d63a0`).
 
 ### What's New in v2.1
 - **Razorpay Payment Integration (live)** — Real Razorpay checkout enabled on the Settings → Billing tab. Checkout JS SDK loaded in `index.html`; `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` configured on Railway. Users can now upgrade to Pro (INR 999/mo) or Enterprise (INR 4999/mo) with real payments.
@@ -29,6 +36,7 @@
 11. [Licensing & Payments (Razorpay)](#11-licensing--payments-razorpay)
 12. [Deployment](#12-deployment)
 13. [Test Accounts](#13-test-accounts)
+14. [Production Go-Live Plan (openi.tech)](#14-production-go-live-plan-openitech)
 
 ---
 
@@ -767,6 +775,200 @@ For UPI test mode, use `success@razorpay` (success) or `failure@razorpay` (failu
 
 ---
 
+## 14. Production Go-Live Plan (openi.tech)
+
+**Status (5 April 2026):** Planning complete, execution in progress. Domain `openi.tech` purchased on GoDaddy. Plan below captures every step, who does what, and resume points.
+
+### 14.1 Target Architecture
+
+```
+Users
+  │
+  ▼
+https://openi.tech              ← Vercel (openi-hub frontend)
+https://www.openi.tech          ← Vercel (redirects to openi.tech)
+  │
+  │ API calls (VITE_API_URL)
+  ▼
+https://api.openi.tech          ← Railway (openi-hub-backend)
+  │
+  ▼
+Railway PostgreSQL              ← unchanged
+```
+
+### 14.2 Pre-Work Completed
+
+| Item | Status |
+|---|---|
+| Razorpay integration end-to-end (test mode) | Done |
+| Razorpay checkout.js SDK loaded in `index.html` | Done |
+| Backend `CORS` whitelist updated to include `openi.tech`, `www.openi.tech` in `src/server.js` | Done (local only, not yet committed) |
+| Backend package renamed `drdo-hub-backend` → `openi-hub-backend` | Done + pushed |
+| Documentation migrated to version control (repo `DOCUMENTATION.md`) | Done |
+
+### 14.3 Execution Steps
+
+| # | Step | Owner | Platform | Est. Time |
+|---|------|-------|----------|-----------|
+| 1 | Add `openi.tech` and `www.openi.tech` as custom domains | User | Vercel | 5 min |
+| 2 | Add `api.openi.tech` as custom domain | User (Claude can navigate) | Railway | 3 min |
+| 3 | Configure DNS records (A + CNAME × 2) | User | GoDaddy | 5 min |
+| 4 | Wait for DNS propagation + automatic SSL provisioning | Automatic | Vercel + Railway | 5–30 min |
+| 5 | Update `VITE_API_URL=https://api.openi.tech/api` | User (Claude can guide) | Vercel | 2 min |
+| 6 | Update `CLIENT_URL=https://openi.tech` | User (Claude can navigate) | Railway | 2 min |
+| 7 | Commit + push CORS whitelist update | Claude | GitHub | 2 min |
+| 8 | Submit Razorpay KYC (in parallel with 1–4) | User | Razorpay | 10 min + 1–3 day review |
+| 9 | After KYC approval: generate `rzp_live_xxx` keys | User | Razorpay | 5 min |
+| 10 | Update `RAZORPAY_KEY_ID` + `RAZORPAY_KEY_SECRET` to live values | User (Claude can navigate) | Railway | 2 min |
+| 11 | Configure Razorpay webhook → `https://api.openi.tech/api/subscription/webhook` | User | Razorpay | 5 min |
+| 12 | Add `RAZORPAY_WEBHOOK_SECRET` to Railway | User | Railway | 2 min |
+| 13 | Wait for Vercel + Railway redeploys (automatic on env var change) | Automatic | Both | 2–5 min |
+| 14 | End-to-end smoke test: register → login → upgrade to Pro → real payment | Claude + User | Live site | 10 min |
+| 15 | Update this documentation with final URLs | Claude | GitHub | 3 min |
+
+### 14.4 DNS Records for GoDaddy
+
+Once Vercel and Railway have been added, the following records go into **GoDaddy → My Products → openi.tech → DNS**:
+
+| Type | Name | Value | TTL |
+|------|------|-------|-----|
+| A | `@` | `76.76.21.21` (confirm from Vercel) | 600 |
+| CNAME | `www` | `cname.vercel-dns.com` | 600 |
+| CNAME | `api` | `<Railway CNAME target>` (e.g. `xyz.up.railway.app`) | 600 |
+
+**Important:** Delete any existing GoDaddy default/parked A records for `@` or `www`. Leave all NS records untouched — do not change nameservers.
+
+Verification commands (run locally after propagation):
+```bash
+dig openi.tech +short
+dig www.openi.tech +short
+dig api.openi.tech +short
+curl -sI https://openi.tech | head -5
+curl -sI https://api.openi.tech/health | head -5
+```
+
+### 14.5 Environment Variables — Before vs After
+
+**Vercel (frontend):**
+
+| Variable | Before | After |
+|----------|--------|-------|
+| `VITE_API_URL` | `https://openi-hub-production.up.railway.app/api` | `https://api.openi.tech/api` |
+
+**Railway (backend):**
+
+| Variable | Before | After |
+|----------|--------|-------|
+| `CLIENT_URL` | `https://openi-hub.vercel.app` | `https://openi.tech` |
+| `RAZORPAY_KEY_ID` | `rzp_test_xxx` | `rzp_live_xxx` (after KYC) |
+| `RAZORPAY_KEY_SECRET` | test secret | live secret (after KYC) |
+| `RAZORPAY_WEBHOOK_SECRET` | *(not set)* | new secret from Razorpay webhook config |
+
+### 14.6 CORS Whitelist Update
+
+`src/server.js` has been updated locally (not yet committed) to include:
+
+```javascript
+const allowedOrigins = [
+  // Production custom domain
+  'https://openi.tech',
+  'https://www.openi.tech',
+  // Vercel fallback (kept for transition + preview deploys)
+  'https://openi-hub.vercel.app',
+  // Local dev
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
+if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+```
+
+Commit message ready: *"Add openi.tech custom domain to CORS whitelist"*
+
+### 14.7 Razorpay KYC Requirements
+
+Submit at https://dashboard.razorpay.com → **Account & Settings → KYC**. Required documents:
+
+| Document | Purpose |
+|----------|---------|
+| PAN card | Business or personal PAN (business PAN preferred for companies) |
+| Business proof | One of: GST certificate, Shop & Establishment license, Certificate of Incorporation, Partnership deed |
+| Bank account details | Current account strongly preferred; savings account accepted for sole proprietors |
+| Authorized signatory ID | Aadhaar, passport, or driving license of the person signing |
+| Address proof | Recent utility bill, rental agreement, or bank statement |
+
+**Review time:** 1–3 business days typically. Razorpay will email on approval. After approval, the "Live Mode" toggle becomes available in the dashboard and API Keys page.
+
+**Test vs Live keys:**
+- Test keys start with `rzp_test_` — safe, no real money moves
+- Live keys start with `rzp_live_` — real transactions, real money
+- Keys are shown **once** at generation — save them immediately in a password manager
+
+### 14.8 Razorpay Webhook Configuration
+
+Once live keys are active:
+
+1. Razorpay dashboard → **Settings → Webhooks → Add New Webhook**
+2. URL: `https://api.openi.tech/api/subscription/webhook`
+3. Alert email: your admin email
+4. Secret: auto-generate or provide one — **save it**
+5. Events to subscribe to:
+   - `payment.captured` (reconciliation confirmation)
+   - `payment.failed` (mark payment_history as failed)
+   - `subscription.charged` (optional, for recurring billing)
+   - `subscription.cancelled` (optional)
+6. Click **Create Webhook**
+7. Add the secret to Railway as `RAZORPAY_WEBHOOK_SECRET`
+
+Backend webhook handler at `src/controllers/subscriptionController.js` already verifies HMAC-SHA256 signatures when `RAZORPAY_WEBHOOK_SECRET` is set.
+
+### 14.9 Smoke Test Checklist (Post Go-Live)
+
+Run through these on the live domain `https://openi.tech`:
+
+- [ ] Landing page loads at `https://openi.tech`
+- [ ] `www.openi.tech` redirects to `openi.tech` (308)
+- [ ] SSL padlock green on all three domains (apex, www, api)
+- [ ] Registration flow: pick persona → fill form → account created
+- [ ] Login with demo account (`startup@demo.openi.ai` / `Demo@123`)
+- [ ] MFA OTP (123456) accepted, dashboard loads
+- [ ] API calls visible in browser dev tools hit `api.openi.tech` (not the old Railway URL)
+- [ ] CORS: no errors in console
+- [ ] Settings → Billing tab loads with current plan + usage meters
+- [ ] Click Upgrade on Pro — Razorpay **live** checkout modal opens (not test mode)
+- [ ] Complete a small real payment with a personal card (INR 999)
+- [ ] Verify `users.current_plan = 'pro'` in DB
+- [ ] Verify new row in `payment_history` with real Razorpay IDs (not `pay_test_*`)
+- [ ] Razorpay dashboard shows the captured payment
+- [ ] **Refund the test payment** from Razorpay dashboard (Payments → refund)
+- [ ] Webhook log shows `payment.captured` event received and processed
+- [ ] Downgrade/cancel flow works and reverts to Free plan
+
+### 14.10 Rollback Plan
+
+If anything goes wrong on the live domain:
+
+1. **DNS rollback (fastest)** — In GoDaddy, delete the A/CNAME records for `openi.tech`. Users will fall back to the error page; nothing is broken, just inaccessible on the custom domain.
+2. **Frontend rollback** — In Vercel, remove the custom domain. Users can still access `https://openi-hub.vercel.app` as before.
+3. **Env var rollback** — In Vercel, change `VITE_API_URL` back to the Railway URL; in Railway, change `CLIENT_URL` back to the Vercel URL. Both platforms auto-redeploy on env var change.
+4. **Razorpay rollback** — Switch `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` back to test keys on Railway. Existing captured payments are not affected, but no new real payments will be processed.
+5. **Code rollback** — `git revert` the CORS commit if needed.
+
+No database changes are involved in the go-live — the same Railway Postgres instance serves both old and new URLs. Rollback is fully reversible.
+
+### 14.11 Resume Points
+
+If this session pauses and resumes later, here's the state at each phase:
+
+- **Phase A (DNS):** Check if `dig openi.tech` resolves. If yes, DNS is propagated. If no, wait longer.
+- **Phase B (SSL):** Check `curl -sI https://openi.tech`. If 200, SSL is provisioned. If SSL errors, wait 5 more minutes.
+- **Phase C (Env vars):** Check Vercel + Railway env var values directly in dashboards.
+- **Phase D (Razorpay KYC):** Check Razorpay dashboard → Settings → KYC for status.
+- **Phase E (Go-live):** Run smoke test checklist 14.9.
+
+---
+
 ## Project Statistics
 
 | Metric | Count |
@@ -792,4 +994,4 @@ For UPI test mode, use `success@razorpay` (success) or `failure@razorpay` (failu
 ---
 
 *Documentation for OpenI Hub — Multi-Persona Open Innovation Platform*
-*Last updated: 5 April 2026 (v2.1 — Razorpay integration live)*
+*Last updated: 5 April 2026 (v2.2 — production go-live plan for openi.tech)*
