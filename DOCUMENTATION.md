@@ -1,0 +1,795 @@
+# OpenI Hub - Project Documentation
+
+## OpenI Assessment Platform
+
+**Version:** 2.1
+**Last Updated:** 5 April 2026
+**Live URL:** https://openi-hub.vercel.app
+**Backend API:** https://openi-hub-production.up.railway.app
+
+### What's New in v2.1
+- **Razorpay Payment Integration (live)** — Real Razorpay checkout enabled on the Settings → Billing tab. Checkout JS SDK loaded in `index.html`; `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` configured on Railway. Users can now upgrade to Pro (INR 999/mo) or Enterprise (INR 4999/mo) with real payments.
+- **Subscription Plans & Usage Gating** — 3-tier freemium model (Free / Pro / Enterprise) with monthly usage limits on challenges, applications, meetings, and file uploads. `checkUsageLimit` middleware enforces limits and returns 403 + upgrade URL when exceeded.
+- **File Uploads via Cloudinary** — `POST /api/upload` endpoint with multer + Cloudinary SDK; reusable `FileUpload` component on the frontend (drag-and-drop, preview, URL fallback).
+
+---
+
+## Table of Contents
+
+1. [Project Overview](#1-project-overview)
+2. [Multi-Persona System](#2-multi-persona-system)
+3. [Architecture](#3-architecture)
+4. [Technology Stack](#4-technology-stack)
+5. [Getting Started](#5-getting-started)
+6. [Frontend Modules](#6-frontend-modules)
+7. [Backend API Reference](#7-backend-api-reference)
+8. [Database Schema](#8-database-schema)
+9. [Authentication & Authorization](#9-authentication--authorization)
+10. [Security Features](#10-security-features)
+11. [Licensing & Payments (Razorpay)](#11-licensing--payments-razorpay)
+12. [Deployment](#12-deployment)
+13. [Test Accounts](#13-test-accounts)
+
+---
+
+## 1. Project Overview
+
+OpenI Hub is a **multi-persona open innovation platform** that connects the entire startup ecosystem. It divides stakeholders into **Innovation Providers** (startups, students, academia) and **Innovation Seekers** (corporates, government, investors, mentors, labs, incubators, accelerators), giving each persona a dedicated registration, profile, and navigation experience on a single platform.
+
+The platform enables discovery, evaluation, incubation, and tracking of deep-tech startups across AI/ML, Cybersecurity, Quantum Technology, UAV Systems, Space Tech, and more.
+
+### Key Capabilities
+
+- **Multi-Persona Ecosystem** - 10 distinct persona types with self-service registration, dedicated profiles, and tailored navigation
+- **Cross-Persona Communication** - All personas can message each other and (Phase 2) schedule meetings
+- **Startup Discovery & Registration** - Browse, filter, and register defence-tech startups
+- **8-Vector Evaluation Framework** - Score startups across 103 criteria in 8 vectors (People, Strategy, Revenue, Technology, Financials, Info Visibility, GRC, Step Change)
+- **Pipeline Management** - Track startups through 7 stages: Application > Screening > Evaluation > Selection > Onboarding > Incubation > Graduation
+- **Project & Task Management** - Track projects, milestones, budgets, and tasks per startup
+- **Messaging System** - Real-time internal communications with conversation threading
+- **IPR Database** - Track patents, trademarks, copyrights, and designs
+- **Infrastructure Booking** - Reserve labs, test facilities, and HPC clusters
+- **DeepTech Qualification** - Score startups on a 16-question deep-tech framework
+- **Government API Integrations** - Connect to DPIIT, MCA, GST, UDYAM, MeitY, DigiLocker
+- **Web Crawling** - Discover startups from government portals and incubators
+- **Knowledge Base** - Articles, guides, policies, and training materials
+- **Document Repository** - Centralised document storage with access controls
+- **Watchlists** - Curated startup lists for tracking
+- **Events Management** - Hackathons, workshops, demo days, conferences
+- **Feedback System** - Collect and act on startup feedback with analytics
+- **SME Management** - Subject matter expert directory and mentoring assignments
+- **Cohort Management** - Manage incubation cohorts with startup membership
+- **Audit Logging** - Track all write operations for compliance
+
+---
+
+## 2. Multi-Persona System
+
+### Persona Categories
+
+| Category | Personas | Description |
+|----------|----------|-------------|
+| **Innovation Providers** | Startup, Student, Academia | People/orgs with innovations to offer |
+| **Innovation Seekers** | Corporate, Government, Investor, Mentor, Lab, Incubator, Accelerator | People/orgs looking for innovations |
+| **Platform Admins** | Admin, Evaluator | Platform operators (not self-register) |
+
+### Registration Flow
+
+1. User visits `/landing` and selects their persona type
+2. Redirected to `/register?type=<persona>` (e.g., `?type=investor`)
+3. **Step 1:** Account setup (name, email, password, organization)
+4. **Step 2:** Persona-specific profile fields (auto-generated from `personas.js` config)
+5. **Step 3:** Success — redirected to dashboard or profile editor
+6. Backend creates: user record + persona profile row + directory_profiles entry
+
+### Persona Profile Tables
+
+Each persona has a dedicated profile table with type-specific fields:
+
+| Persona | Table | Key Fields |
+|---------|-------|------------|
+| Startup | `startup_profiles` | company_name, sector, stage, funding_raised, tech_readiness, technologies[] |
+| Student | `student_profiles` | institution, degree, research_areas[], skills[], looking_for[] |
+| Academia | `academia_profiles` | institution_name, institution_type, publications_count, offerings[] |
+| Corporate | `corporate_profiles` | company_name, industry, company_size, innovation_areas[], looking_for[] |
+| Government | `government_profiles` | body_name, body_type, focus_areas[], programs[] |
+| Investor | `investor_profiles` | firm_name, investor_type, fund_size, ticket_size_min/max, focus_sectors[] |
+| Mentor | `mentor_profiles` | designation, expertise[], years_experience, offering[], max_mentees |
+| Lab | `lab_profiles` | lab_name, lab_type, equipment[], capabilities[], hourly_rate |
+| Incubator | `incubator_profiles` | incubator_name, focus_sectors[], cohort_size, equity_taken, services[] |
+| Accelerator | `accelerator_profiles` | accelerator_name, batch_size, demo_day, corporate_partners[] |
+
+### Directory Profiles (Search Layer)
+
+The `directory_profiles` table is a denormalized search layer that aggregates key fields from all persona profiles for fast cross-persona search. Updated automatically when a user saves their profile.
+
+### Persona-Aware Navigation
+
+Each persona type sees a different sidebar navigation. Configured in `src/config/personas.js` via the `PERSONA_NAV` object. Admin/evaluator users see the full legacy navigation (21 items).
+
+### Profile Fields Configuration
+
+All form fields for registration and profile editing are defined in `PROFILE_FIELDS` in `personas.js`. This drives both the Register page and MyProfile page dynamically, supporting field types: text, number, url, select, textarea, checkbox, tags (array), multiselect.
+
+---
+
+## 3. Architecture
+
+```
+Frontend (React + Vite)          Backend (Node.js + Express)        Database
+========================         ============================       ==========
+Vercel (auto-deploy)             Railway (auto-deploy)              Railway PostgreSQL
+
+src/                             src/
+  config/personas.js               startup.js (entry point)
+  context/AuthContext.jsx          server.js (Express app)
+  services/api.js (20 modules)    db/
+  components/LoadingSkeleton         pool.js (pg connection)
+  pages/auth/ (2 pages)             migrate.js (42+ tables)
+  pages/dashboard/ (27 pages)        seed.js (demo data)
+                                   middleware/
+                                     auth.js (JWT + persona fields)
+                                     audit.js (audit logging)
+                                   controllers/ (20 controllers)
+                                   routes/index.js (~58 endpoints)
+```
+
+### Data Flow
+
+1. User logs in via Login page > AuthContext stores JWT in localStorage
+2. Frontend pages call api.js modules > Bearer token attached to all requests
+3. Backend middleware verifies JWT > Controller queries PostgreSQL > Returns JSON
+4. Audit middleware logs write operations asynchronously
+
+---
+
+## 4. Technology Stack
+
+### Frontend
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| React | 18.2.0 | UI framework |
+| React Router | 6.20.0 | Client-side routing |
+| Vite | 5.0.0 | Build tool & dev server |
+| Tailwind CSS | 3.3.6 | Utility-first CSS |
+| Lucide React | 0.294.0 | Icon library (200+ icons) |
+| react-hot-toast | 2.6.0 | Toast notifications |
+
+### Backend
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| Node.js | 18+ | Runtime |
+| Express | 5.2.1 | Web framework |
+| PostgreSQL | 16 | Database |
+| pg | 8.20.0 | PostgreSQL client |
+| jsonwebtoken | 9.0.3 | JWT authentication |
+| bcryptjs | 3.0.3 | Password hashing |
+| helmet | 8.1.0 | Security headers |
+| cors | 2.8.6 | Cross-origin resource sharing |
+| express-rate-limit | 8.3.1 | Rate limiting |
+| morgan | 1.10.1 | HTTP request logging |
+| dotenv | 17.3.1 | Environment variables |
+
+### Infrastructure
+
+| Service | Purpose |
+|---------|---------|
+| Vercel | Frontend hosting (auto-deploy from GitHub) |
+| Railway | Backend hosting + PostgreSQL database |
+| GitHub | Source code (2 repositories) |
+
+---
+
+## 5. Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL 14+ (or Railway database)
+- Git
+
+### Frontend Setup
+
+```bash
+cd openi-hub
+npm install
+cp .env.example .env    # Set VITE_API_URL
+npm run dev             # http://localhost:5173
+```
+
+### Backend Setup
+
+```bash
+cd openi-hub-backend
+npm install
+cp .env.example .env    # Set DATABASE_URL, JWT_SECRET, etc.
+npm run db:migrate      # Create tables
+npm run db:seed         # Load demo data
+npm run dev             # http://localhost:5000
+```
+
+### Environment Variables
+
+**Frontend (.env):**
+```
+VITE_API_URL=http://localhost:5000/api
+```
+
+**Backend (.env):**
+```
+NODE_ENV=production
+PORT=5000
+DATABASE_URL=postgresql://user:pass@host:5432/db
+JWT_SECRET=your_secret_key
+JWT_EXPIRES_IN=7d
+CLIENT_URL=https://openi-hub.vercel.app
+```
+
+---
+
+## 6. Frontend Modules
+
+### 5.1 Pages (26 total)
+
+| # | Page | Route | Description |
+|---|------|-------|-------------|
+| 1 | Login | `/dashboard/login` | Email + password with MFA OTP |
+| 2 | DashboardHome | `/dashboard` | Stats, charts, evaluations, quick actions |
+| 3 | StartupDiscovery | `/dashboard/startups` | Browse & filter startups with scores |
+| 4 | StartupProfile | `/dashboard/startup-profile/:id` | Full startup detail (9 tabs) |
+| 5 | StartupPipeline | `/dashboard/pipeline` | Kanban view by pipeline stage |
+| 6 | RegisterStartup | `/dashboard/register` | 6-step registration wizard |
+| 7 | StartupWatchlist | `/dashboard/watchlist` | Curated startup lists |
+| 8 | StartupEvaluation | `/dashboard/evaluate` | 8-vector scoring form (103 criteria) |
+| 9 | Evaluations | `/dashboard/evaluations` | Program evaluations with stages |
+| 10 | Cohorts | `/dashboard/cohorts` | Incubation cohort management |
+| 11 | Mentors | `/dashboard/mentors` | Mentor directory & assignments |
+| 12 | ProjectManagement | `/dashboard/projects` | Projects with tasks & milestones |
+| 13 | Messaging | `/dashboard/messaging` | Real-time messaging (5s polling) |
+| 14 | EventsRepository | `/dashboard/events` | Hackathons, workshops, conferences |
+| 15 | StartupFeedback | `/dashboard/feedback` | Feedback with analytics & sentiment |
+| 16 | SMEManagement | `/dashboard/sme` | Subject matter experts directory |
+| 17 | StartupCrawling | `/dashboard/crawling` | Web crawler for startup discovery |
+| 18 | IPRDatabase | `/dashboard/ipr` | Patents, trademarks, copyrights |
+| 19 | Infrastructure | `/dashboard/infrastructure` | Labs & facility booking |
+| 20 | Knowledge | `/dashboard/knowledge` | Articles, guides, policies |
+| 21 | DocumentRepository | `/dashboard/documents` | File management with access control |
+| 22 | DeepTechQualification | `/dashboard/deeptech` | 16-question DeepTech assessment |
+| 23 | GovtAPIIntegrations | `/dashboard/govt-apis` | Government API connections |
+| 24 | Settings | `/dashboard/settings` | Profile, password, notifications |
+| 25 | DashboardLayout | (shell) | Sidebar, topbar, notification bell |
+| 26 | LoadingSkeleton | (component) | Shimmer loading animation |
+
+### 5.2 API Service Modules (19 total)
+
+Located in `src/services/api.js`:
+
+| Module | Methods |
+|--------|---------|
+| authAPI | login, me, changePassword, updateProfile |
+| dashboardAPI | stats |
+| startupAPI | list, get, create, update, delete, getEvaluations |
+| evaluationAPI | list, create, update |
+| cohortAPI | list, get, create, addStartup |
+| mentorAPI | list, get, create, assign |
+| projectAPI | list, get, create, update, createTask |
+| messageAPI | listConversations, createConversation, getMessages, sendMessage |
+| eventAPI | list, get, create, register |
+| feedbackAPI | list, create, respond, analytics |
+| smeAPI | list, get, create, update |
+| iprAPI | list, get, create, update |
+| infrastructureAPI | list, get, create, createBooking |
+| knowledgeAPI | list, get, create, update |
+| documentAPI | list, get, create, update, remove |
+| watchlistAPI | list, get, create, remove, addStartup, removeStartup |
+| deeptechAPI | list, get, create |
+| govtIntegrationAPI | list, sync, logs |
+| crawlAPI | stats, listSources, createSource, toggleSource, triggerCrawl, listStartups, getStartup, approveStartup, rejectStartup, listJobs |
+
+### 5.3 Shared Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| LoadingSkeleton | `src/components/LoadingSkeleton.jsx` | Shimmer loading with card/table/list variants |
+| AuthContext | `src/context/AuthContext.jsx` | Auth state, JWT persistence, MFA flow |
+
+### 5.4 UI Features
+
+- **Toast Notifications** - react-hot-toast on all 20 pages (error + success)
+- **Loading Skeletons** - Gold shimmer animation replacing "Loading..." text
+- **Role-Based Sidebar** - Admin sees 21 items, other roles see relevant subset
+- **Notification Bell** - Dropdown with 6 notifications, unread count, mark-as-read
+- **Responsive Design** - Mobile padding/gap fixes via CSS media query
+- **Real-time Messaging** - 5s message polling, 15s conversation polling
+- **Charts** - CSS donut chart (score dist.) + horizontal bar chart (sectors)
+- **Quick Actions** - 4 action cards on dashboard linking to key pages
+
+---
+
+## 7. Backend API Reference
+
+### 6.1 Authentication
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/login` | Public | Login with email + password |
+| GET | `/api/auth/me` | Bearer | Get current user |
+| PUT | `/api/auth/change-password` | Bearer | Change password |
+| PUT | `/api/auth/profile` | Bearer | Update name/avatar |
+
+### 6.2 Dashboard
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/dashboard/stats` | Bearer | Platform statistics |
+
+### 6.3 Startups
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/startups` | Bearer | List with filters (sector, stage, status, pipeline_stage, search) + pagination |
+| POST | `/api/startups` | Bearer | Create startup |
+| GET | `/api/startups/:id` | Bearer | Get startup detail |
+| PUT | `/api/startups/:id` | Bearer | Update startup |
+| DELETE | `/api/startups/:id` | Admin | Delete startup |
+| GET | `/api/startups/:id/evaluations` | Bearer | Get startup's evaluations |
+
+### 6.4 Evaluations
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/evaluations` | Bearer | List with filters + pagination |
+| POST | `/api/evaluations` | Admin/Evaluator | Create evaluation |
+| PUT | `/api/evaluations/:id` | Admin/Evaluator | Update evaluation |
+
+### 6.5 Cohorts
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/cohorts` | Bearer | List all cohorts |
+| POST | `/api/cohorts` | Admin | Create cohort |
+| GET | `/api/cohorts/:id` | Bearer | Get cohort with startups |
+| POST | `/api/cohorts/:id/startups` | Admin | Add startup to cohort |
+
+### 6.6 Mentors
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/mentors` | Bearer | List mentors |
+| POST | `/api/mentors` | Admin | Create mentor |
+| GET | `/api/mentors/:id` | Bearer | Get mentor detail |
+| POST | `/api/mentors/:id/assign` | Admin | Assign mentor to startup |
+
+### 6.7 Projects
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/projects` | Bearer | List with task counts |
+| POST | `/api/projects` | Bearer | Create project |
+| GET | `/api/projects/:id` | Bearer | Get project with tasks |
+| PUT | `/api/projects/:id` | Bearer | Update project |
+| POST | `/api/projects/:id/tasks` | Bearer | Create task |
+
+### 6.8 Messaging
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/conversations` | Bearer | List conversations with unread count |
+| POST | `/api/conversations` | Bearer | Create conversation |
+| GET | `/api/conversations/:id/messages` | Bearer | Get messages (marks as read) |
+| POST | `/api/conversations/:id/messages` | Bearer | Send message |
+
+### 6.9 Events
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/events` | Bearer | List with type/status filters + pagination |
+| POST | `/api/events` | Admin | Create event |
+| GET | `/api/events/:id` | Bearer | Get event detail |
+| POST | `/api/events/:id/register` | Bearer | Register for event |
+
+### 6.10 Feedback
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/feedback` | Bearer | List with filters + pagination |
+| POST | `/api/feedback` | Bearer | Submit feedback (auto-calculates sentiment) |
+| PUT | `/api/feedback/:id/respond` | Admin/Evaluator | Respond to feedback |
+| GET | `/api/feedback/analytics` | Bearer | Aggregated analytics |
+
+### 6.11 SME Experts
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/sme` | Bearer | List with filters + pagination |
+| POST | `/api/sme` | Admin | Create expert |
+| GET | `/api/sme/:id` | Bearer | Get expert detail |
+| PUT | `/api/sme/:id` | Admin | Update expert |
+
+### 6.12 Crawling
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/crawl/stats` | Bearer | Crawl statistics |
+| GET | `/api/crawl/sources` | Bearer | List crawl sources |
+| POST | `/api/crawl/sources` | Admin | Create source |
+| PUT | `/api/crawl/sources/:id/toggle` | Admin | Toggle source active/paused |
+| POST | `/api/crawl/sources/:id/trigger` | Bearer | Trigger crawl |
+| GET | `/api/crawl/startups` | Bearer | List crawled startups |
+| GET | `/api/crawl/startups/:id` | Bearer | Get crawled startup |
+| PUT | `/api/crawl/startups/:id/approve` | Admin/Evaluator | Approve startup |
+| PUT | `/api/crawl/startups/:id/reject` | Admin/Evaluator | Reject startup |
+| GET | `/api/crawl/jobs` | Bearer | List crawl jobs |
+
+### 6.13 IPR Records
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/ipr` | Bearer | List with filters + pagination |
+| POST | `/api/ipr` | Admin | Create IPR record |
+| GET | `/api/ipr/:id` | Bearer | Get record detail |
+| PUT | `/api/ipr/:id` | Admin | Update record |
+
+### 6.14 Infrastructure
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/infrastructure` | Bearer | List facilities |
+| POST | `/api/infrastructure` | Admin | Create facility |
+| GET | `/api/infrastructure/:id` | Bearer | Get facility with bookings |
+| POST | `/api/infrastructure/:id/bookings` | Bearer | Create booking |
+
+### 6.15 Knowledge Base
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/knowledge` | Bearer | List articles + pagination |
+| POST | `/api/knowledge` | Admin | Create article |
+| GET | `/api/knowledge/:id` | Bearer | Get article (increments views) |
+| PUT | `/api/knowledge/:id` | Admin | Update article |
+
+### 6.16 Documents
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/documents` | Bearer | List with filters + pagination |
+| POST | `/api/documents` | Bearer | Create document |
+| GET | `/api/documents/:id` | Bearer | Get document detail |
+| PUT | `/api/documents/:id` | Bearer | Update document |
+| DELETE | `/api/documents/:id` | Admin | Delete document |
+
+### 6.17 Watchlists
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/watchlists` | Bearer | List with startup counts |
+| POST | `/api/watchlists` | Bearer | Create watchlist |
+| GET | `/api/watchlists/:id` | Bearer | Get watchlist with startups |
+| DELETE | `/api/watchlists/:id` | Bearer | Delete watchlist |
+| POST | `/api/watchlists/:id/startups` | Bearer | Add startup |
+| DELETE | `/api/watchlists/:id/startups/:startupId` | Bearer | Remove startup |
+
+### 6.18 DeepTech Assessments
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/deeptech` | Bearer | List assessments + pagination |
+| POST | `/api/deeptech` | Bearer | Create assessment |
+| GET | `/api/deeptech/:id` | Bearer | Get assessment detail |
+
+### 6.19 Government API Integrations
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/integrations` | Bearer | List all integrations |
+| POST | `/api/integrations/:id/sync` | Admin | Trigger manual sync |
+| GET | `/api/integrations/logs` | Bearer | View sync logs |
+
+### 6.20 Audit Logs
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/audit` | Admin | List audit logs with filters + pagination |
+
+---
+
+## 8. Database Schema
+
+### 28 Tables
+
+**Core:**
+- `users` - Platform users (admin, evaluator, startup, mentor)
+- `startups` - Registered startups with full profile data
+- `evaluations` - 8-vector evaluation records with JSONB criteria
+
+**Pipeline & Cohorts:**
+- `cohorts` - Incubation cohorts
+- `cohort_startups` - Many-to-many cohort membership
+
+**Mentorship:**
+- `mentors` - Mentor profiles with expertise arrays
+- `mentor_assignments` - Mentor-startup assignments
+
+**Projects:**
+- `projects` - Projects with budget, progress, status
+- `project_tasks` - Tasks within projects
+
+**Communication:**
+- `conversations` - Direct and group conversations
+- `conversation_members` - Conversation membership
+- `messages` - Chat messages with read status
+
+**IPR:**
+- `ipr_records` - Patents, trademarks, copyrights, designs
+
+**Documents:**
+- `documents` - Files with access control (public/internal/restricted)
+
+**Watchlists:**
+- `watchlists` - Named watchlists with visibility settings
+- `watchlist_startups` - Watchlist membership
+
+**Events:**
+- `events` - Hackathons, workshops, conferences, webinars
+
+**Experts:**
+- `sme_experts` - Subject matter experts with domains array
+
+**Feedback:**
+- `feedback` - Startup feedback with sentiment and response
+
+**Assessments:**
+- `deeptech_assessments` - DeepTech qualification with JSONB answers
+- `govt_api_logs` - Government API integration logs
+
+**Infrastructure:**
+- `infrastructure` - Labs, test facilities, HPC clusters
+- `infrastructure_bookings` - Facility reservations
+
+**Knowledge:**
+- `knowledge_articles` - Articles, guides, policies
+
+**Crawling:**
+- `crawl_sources` - Web crawl source configurations
+- `crawled_startups` - Discovered startups pending review
+- `crawl_jobs` - Crawl job execution history
+
+**Audit:**
+- `audit_logs` - Write operation audit trail
+
+---
+
+## 9. Authentication & Authorization
+
+### Authentication Flow
+
+1. User submits email + password to `POST /api/auth/login`
+2. Backend validates credentials, returns JWT + user object
+3. Frontend triggers MFA step (demo OTP: `123456`)
+4. On success, JWT stored in `localStorage` as `openi_token`
+5. All subsequent API calls include `Authorization: Bearer <token>`
+6. Token expires after 7 days (`JWT_EXPIRES_IN`)
+
+### Role-Based Access Control
+
+| Role | Description | Sidebar Items | Special Permissions |
+|------|-------------|---------------|-------------------|
+| `admin` | Platform administrator | All 21 items | Full CRUD on all entities |
+| `evaluator` | Startup evaluator | 14 items | Create evaluations, respond to feedback |
+| `startup` | Registered startup | 8 items | View own data, submit feedback |
+| `mentor` | Assigned mentor | 9 items | View mentees, messaging |
+
+### Sidebar Visibility by Role
+
+- **All roles:** Overview, Startups, Messaging, Events, Knowledge, Documents
+- **Admin only:** Register, Crawling, Infrastructure, Cohorts, Govt. APIs
+- **Admin + Evaluator:** Evaluation, Programs, Pipeline, Projects, IPR, DeepTech, SME, Feedback
+- **Admin + Evaluator + Mentor:** Mentors
+- **Admin + Startup:** Watchlists
+
+---
+
+## 10. Security Features
+
+| Feature | Implementation |
+|---------|---------------|
+| **Password Hashing** | bcryptjs with 10 salt rounds |
+| **JWT Authentication** | RS256 tokens with 7-day expiry |
+| **MFA** | OTP-based second factor (demo: 123456) |
+| **Rate Limiting** | 500 req/15min (general), 20 req/15min (auth) |
+| **CORS** | Restricted to Vercel + localhost origins |
+| **Security Headers** | helmet.js (XSS, CSP, HSTS, etc.) |
+| **Input Validation** | String length (500/5000), numeric ranges, required fields |
+| **Parameterised Queries** | All SQL uses $N params (no injection) |
+| **Audit Logging** | 10 write routes logged with user, action, IP |
+| **Role-Based Access** | requireRole middleware on sensitive endpoints |
+
+---
+
+## 11. Licensing & Payments (Razorpay)
+
+OpenI Hub uses a **3-tier freemium SaaS model** with Razorpay as the payment gateway for Indian customers (INR). Subscription management, payment capture, and usage gating are fully integrated end-to-end.
+
+### 11.1 Plans
+
+| Plan | Price (Monthly) | Price (Yearly) | Challenges | Applications | Meetings | File Uploads |
+|------|-----------------|----------------|------------|--------------|----------|--------------|
+| **Free** | INR 0 | INR 0 | 1 / month | 3 / month | 5 / month | 5 / month |
+| **Pro** | INR 999 | INR 9,990 | 5 / month | 20 / month | 50 / month | 100 / month |
+| **Enterprise** | INR 4,999 | INR 49,990 | Unlimited | Unlimited | Unlimited | Unlimited |
+
+Limits are stored as JSONB in `subscription_plans.features`. A value of `-1` means unlimited. Limits reset at the start of each calendar month.
+
+### 11.2 Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `subscription_plans` | Plan catalog (name, display_name, price_monthly, price_yearly, currency, features JSONB) |
+| `user_subscriptions` | Active and historical subscriptions per user (plan_id, status, billing_cycle, razorpay_subscription_id, period start/end) |
+| `payment_history` | All payment attempts (razorpay_payment_id, razorpay_order_id, razorpay_signature, amount, status) |
+| `usage_tracking` | Per-user per-feature monthly counter (user_id, feature, period, count) |
+| `users.current_plan` | Column on users table storing the user's current plan name (default `free`) |
+
+### 11.3 Backend API Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/subscription/plans` | Bearer | List all active plans |
+| GET | `/api/subscription/my-plan` | Bearer | Get current user's plan, subscription, usage, and payment history |
+| POST | `/api/subscription/create-order` | Bearer | Create a Razorpay order for a plan upgrade |
+| POST | `/api/subscription/verify-payment` | Bearer | Verify Razorpay HMAC-SHA256 signature and activate the subscription (transactional) |
+| POST | `/api/subscription/cancel` | Bearer | Cancel active subscription and revert to Free plan |
+| POST | `/api/subscription/webhook` | Signature | Razorpay webhook handler for `payment.captured` and `payment.failed` events |
+
+### 11.4 Payment Flow
+
+1. User clicks **Upgrade** on Settings → Billing tab
+2. Frontend calls `POST /api/subscription/create-order` with `plan_id` and `billing_cycle`
+3. Backend creates a Razorpay order via the Razorpay SDK (amount in paise), returns `order_id`, `amount`, `currency`, and the public `RAZORPAY_KEY_ID`
+4. Frontend opens the Razorpay Checkout modal (`window.Razorpay`) with the order details
+5. User completes payment in the modal
+6. Razorpay returns `razorpay_payment_id`, `razorpay_order_id`, and `razorpay_signature` via the `handler` callback
+7. Frontend calls `POST /api/subscription/verify-payment` with those three values
+8. Backend verifies the HMAC-SHA256 signature using `RAZORPAY_KEY_SECRET`
+9. On success, a database transaction: cancels any existing active subscription, inserts a new `user_subscriptions` row, records the payment in `payment_history`, and updates `users.current_plan`
+10. Frontend refreshes the Billing tab and shows the new plan + updated usage meters
+
+### 11.5 Usage Gating Middleware
+
+`src/middleware/subscription.js` exports `checkUsageLimit(feature)` — an Express middleware factory that:
+
+1. Reads the user's `current_plan` from JWT
+2. Fetches the plan's `features` JSONB
+3. Checks `usage_tracking` for the current month
+4. If `currentUsage >= limit`, returns **403** with `{ message, feature, limit, used, plan, upgrade_url }`
+5. Otherwise increments the counter via an upsert and calls `next()`
+6. Fails open on errors so transient DB issues don't block users
+
+**Gated routes:**
+- `POST /api/challenges` — `checkUsageLimit('challenge_create')`
+- `POST /api/challenges/:id/apply` — `checkUsageLimit('application_submit')`
+- `POST /api/meetings` — `checkUsageLimit('meeting_create')`
+- `POST /api/upload` — `checkUsageLimit('file_upload')`
+
+### 11.6 Test Mode (Fallback)
+
+If `RAZORPAY_KEY_ID` or `RAZORPAY_KEY_SECRET` is missing from the environment, the backend lazily skips Razorpay SDK init and returns a fake `order_test_<timestamp>` order. The frontend detects `test_mode: true` and simulates a successful payment by calling verify-payment with placeholder values. This allowed the entire flow (including DB writes) to be built and tested before real keys were issued.
+
+### 11.7 Environment Variables (Backend)
+
+```
+RAZORPAY_KEY_ID=rzp_test_xxx        # or rzp_live_xxx for production
+RAZORPAY_KEY_SECRET=xxx              # never exposed to frontend
+RAZORPAY_WEBHOOK_SECRET=xxx          # optional — for webhook signature verification
+```
+
+The public `RAZORPAY_KEY_ID` is returned to the frontend via `create-order` response (never hardcoded).
+
+### 11.8 Frontend Integration
+
+| File | Purpose |
+|------|---------|
+| `index.html` | Loads Razorpay Checkout SDK: `<script src="https://checkout.razorpay.com/v1/checkout.js"></script>` |
+| `src/services/api.js` | `subscriptionAPI` wrapper with `getPlans`, `getMyPlan`, `createOrder`, `verifyPayment`, `cancel` |
+| `src/pages/dashboard/Settings.jsx` | Billing tab with plan comparison, usage meters, upgrade/cancel buttons, Razorpay checkout handler |
+
+### 11.9 Webhook Reconciliation (Optional)
+
+The webhook endpoint at `POST /api/subscription/webhook` handles:
+- `payment.captured` — logs the event for reconciliation (payment already activated via verify-payment)
+- `payment.failed` — marks the corresponding `payment_history` row as `failed`
+
+To enable webhooks, add the endpoint URL in the Razorpay dashboard (Settings → Webhooks) with events `payment.captured` and `payment.failed`, then set `RAZORPAY_WEBHOOK_SECRET` on Railway.
+
+---
+
+## 12. Deployment
+
+### Frontend (Vercel)
+
+- **Project:** openi-hub
+- **GitHub:** RajeevBanduni/openi-hub (public)
+- **Auto-deploy:** On push to `main` branch
+- **Build Command:** `npm run build`
+- **Output:** `dist/`
+- **Deploy manually:** `cd openi-hub && npx vercel --prod --yes`
+
+### Backend (Railway)
+
+- **Project:** capable-energy
+- **GitHub:** RajeevBanduni/openi-hub-backend (private)
+- **Auto-deploy:** On push to `main` branch
+- **Entry Point:** `src/startup.js` (runs migrate + seed, then starts server)
+
+### Database (Railway PostgreSQL)
+
+- **Auto-migration:** Runs on every deploy via `startup.js`
+- **Seed Data:** 10 startups, 5 projects, 10 tasks, 6 evaluations, 7 messages, 5 feedback, 7 IPR records, 6 infrastructure, 10 documents, 3 watchlists, 4 assessments, 4 knowledge articles, 8 crawl sources, 8 crawled startups, 5 crawl jobs
+
+---
+
+## 13. Test Accounts
+
+### Legacy Accounts (MFA OTP: 123456)
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@drdo.gov.in | Admin@123 |
+| Evaluator | ananya@drdo.gov.in | Eval@123 |
+| Startup | contact@armortech.in | Start@123 |
+| Mentor | suresh@iitd.ac.in | Mentor@123 |
+
+### Multi-Persona Demo Accounts (all password: Demo@123, MFA OTP: 123456)
+
+| Persona | Email | Organisation |
+|---------|-------|--------------|
+| Startup | startup@demo.openi.ai | TechNova Labs |
+| Student | student@demo.openi.ai | IIT Bombay |
+| Academia | academia@demo.openi.ai | IISc Bangalore |
+| Corporate | corporate@demo.openi.ai | Tata Advanced Systems |
+| Government | govt@demo.openi.ai | DRDO Innovation Cell |
+| Investor | investor@demo.openi.ai | Biocon Ventures |
+| Lab | lab@demo.openi.ai | DRDO Materials Testing Lab |
+| Incubator | incubator@demo.openi.ai | T-Hub |
+| Accelerator | accelerator@demo.openi.ai | Surge by Sequoia |
+
+### Razorpay Test Cards (for Pro/Enterprise upgrade testing)
+
+| Card Number | Type | CVV | Expiry |
+|-------------|------|-----|--------|
+| 4111 1111 1111 1111 | Visa (Success) | any 3 digits | any future date |
+| 5267 3181 8797 5449 | Mastercard (Success) | any 3 digits | any future date |
+| 4000 0000 0000 0002 | Card declined | any 3 digits | any future date |
+
+For UPI test mode, use `success@razorpay` (success) or `failure@razorpay` (failure).
+
+---
+
+## Project Statistics
+
+| Metric | Count |
+|--------|-------|
+| Frontend Pages | 29+ |
+| Backend Controllers | 27 |
+| API Endpoints | 92+ |
+| Database Tables | 56+ |
+| API Service Modules | 20+ |
+| Persona Types | 10 |
+| Subscription Plans | 3 (Free / Pro / Enterprise) |
+| Frontend Dependencies | 6 |
+| Backend Dependencies | 13 (incl. razorpay, cloudinary, multer) |
+| Lines of Seed Data | ~300 |
+
+---
+
+## Repository Links
+
+- **Frontend:** https://github.com/RajeevBanduni/openi-hub
+- **Backend:** https://github.com/RajeevBanduni/openi-hub-backend
+
+---
+
+*Documentation for OpenI Hub — Multi-Persona Open Innovation Platform*
+*Last updated: 5 April 2026 (v2.1 — Razorpay integration live)*
