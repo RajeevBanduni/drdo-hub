@@ -2,12 +2,18 @@
 
 ## OpenI Assessment Platform
 
-**Version:** 2.3
+**Version:** 2.4
 **Last Updated:** 5 April 2026
-**Live URL:** https://www.openi.tech 🎉 *(soft launched 5 April 2026)*
+**Live URL:** https://openi.tech 🎉 *(soft launched 5 April 2026)*
+**Production domain:** https://www.openi.tech *(Vercel production)*
 **Apex redirect:** https://openi.tech → 308 → https://www.openi.tech
 **Backend API:** https://openi-hub-production.up.railway.app *(api.openi.tech pending Railway SSL)*
 **Fallback URL:** https://openi-hub.vercel.app *(kept for transition)*
+
+### What's New in v2.4 — Marketing Landing Page + Brand Polish
+- **New Marketing Landing Page** 🎨 — Replaced the direct persona-picker landing with a proper 7-section marketing site: sticky header, hero ("Partner. Source. Invest."), how it works (3 steps), built-for-every-stakeholder (Provider/Seeker split), features grid (8 cards), pricing (Free/Pro/Enterprise), final CTA, and footer. Professional/corporate tone with gold accents and fully mobile responsive.
+- **Brand Logo on Public Pages** — Replaced the hardcoded Lucide Shield placeholder with the actual `/openi-logo.png` brand asset on the Landing and Login pages. Dashboard layout already used the correct logo. Shield fallback preserved via `onError` handler for graceful degradation if the asset ever fails to load.
+- **Root Route Fix** — First-time visitors to `openi.tech` now see the Landing page instead of being redirected straight to the login form. New `RootRoute` component checks auth state and renders `<Landing />` for guests, `<Navigate to="/dashboard" />` for authenticated users. The `/landing` URL is preserved for backward compatibility.
 
 ### What's New in v2.3 — SOFT LAUNCH DAY
 - **openi.tech is LIVE** 🚀 — Frontend deployed to custom domain `www.openi.tech` with Vercel-issued Let's Encrypt SSL. Apex `openi.tech` redirects to `www` with HTTP 308 Permanent Redirect and HSTS (max-age 63072000). DNS propagated globally within 10 minutes via GoDaddy nameservers.
@@ -43,6 +49,7 @@
 12. [Deployment](#12-deployment)
 13. [Test Accounts](#13-test-accounts)
 14. [Production Go-Live Plan (openi.tech)](#14-production-go-live-plan-openitech)
+15. [Marketing Landing Page](#15-marketing-landing-page)
 
 ---
 
@@ -975,6 +982,91 @@ If this session pauses and resumes later, here's the state at each phase:
 
 ---
 
+## 15. Marketing Landing Page
+
+**File:** `src/pages/auth/Landing.jsx`
+**Route:** `/` (for unauthenticated users) and `/landing` (legacy alias)
+**Added:** 5 April 2026 (v2.4)
+
+### 15.1 Purpose
+
+The landing page is the first impression for visitors typing `openi.tech` into a browser. It replaces the earlier version that dumped visitors straight onto a persona picker with no context. The new page tells the OpenI story first and moves persona selection into the registration flow where it logically belongs.
+
+### 15.2 Value Proposition
+
+- **Headline:** "Partner. Source. Invest." (with the word "Invest" highlighted in brand gold)
+- **Subheadline:** "OpenI is the open innovation platform where corporates, investors, and governments connect with India's most promising startups — discover, evaluate, and collaborate on one platform."
+- **Eyebrow tag:** "INDIA'S OPEN INNOVATION PLATFORM"
+- **Micro trust line:** "Built for Deep-Tech · AI · Quantum · Defence · Cybersecurity"
+
+### 15.3 Page Structure (7 sections)
+
+| # | Section | Background | Purpose |
+|---|---------|------------|---------|
+| 1 | **Sticky Header** | White with backdrop blur | Logo, nav (How It Works / Features / Pricing), Sign In + Get Started CTAs |
+| 2 | **Hero** | Gradient (light gray → white) with gold orb glow | Big headline, subheadline, dual CTA, trust line |
+| 3 | **How It Works** | White | 3-step numbered explainer: Register Your Persona → Discover & Connect → Collaborate & Grow |
+| 4 | **Built for Every Stakeholder** | Light gray | Two-column Providers/Seekers split. Gold accent for Providers, blue for Seekers. Each has icon, list of persona types, and "Join as..." CTA |
+| 5 | **Features Grid** | White | 8 feature cards: Challenge Marketplace, Directory Search, 8-Vector Evaluation, Meetings & RSVPs, Real-time Messaging, DeepTech Assessment, IPR Database, Document Repository |
+| 6 | **Simple, Transparent Pricing** | Light gray | 3-tier pricing cards matching `subscription_plans` table: Free ₹0, **Pro ₹999/mo (featured)**, Enterprise ₹4,999/mo |
+| 7 | **Final CTA** | Gold gradient | Network icon, "Ready to Join the Ecosystem?" + single white "Get Started" button |
+| 8 | **Footer** | Dark (#1a1a1a) | 3-column layout with logo (inverted white), Product links, Company links, copyright |
+
+### 15.4 CTA Routing
+
+All CTAs route to one of two destinations:
+
+| CTA | Destination | Purpose |
+|-----|-------------|---------|
+| "Get Started" / "Get Started — It's Free" / "Join as Provider" / "Join as Seeker" | `/register` | Existing persona picker (10 persona types) |
+| "Sign In" | `/dashboard/login` | Existing login form |
+
+The persona picker page at `/register` was preserved as-is — just moved out of the first-impression slot.
+
+### 15.5 Design System
+
+- **Brand gold:** `#D5AA5B` (primary), `#C9983F` (dark hover), `rgba(213,170,91,0.1)` (tint)
+- **Seeker blue:** `#3b82f6` (used only for the Innovation Seekers card accent)
+- **Dark text:** `#1a1a1a`
+- **Body gray:** `#6b7280`
+- **Light gray bg:** `#f5f5f5`
+- **Border:** `#e5e7eb`
+- **Typography:** Plus Jakarta Sans for headlines, Inter for body (already imported in index.html)
+- **Hero headline:** `clamp(2.5rem, 6vw, 5rem)` for fluid scaling across devices
+
+### 15.6 Mobile Responsiveness
+
+- Grid sections use Tailwind's `md:` and `lg:` breakpoints
+- Hero headline scales fluidly via CSS `clamp()`
+- Header nav collapses to logo + CTA only on mobile
+- Feature grid: 1 col mobile → 2 cols tablet → 4 cols desktop
+- Provider/Seeker split: stacked on mobile, side-by-side on desktop
+
+### 15.7 Fallback Behavior
+
+- **Logo fallback:** Each `<img src="/openi-logo.png">` has an `onError` handler that hides the broken image and shows a gold Shield icon instead. Prevents "broken image" placeholders if the asset is ever missing.
+- **Unauthenticated root (`/`):** `RootRoute` component in `App.jsx` renders `<Landing />`. If `user` is present from `AuthContext`, redirects to `/dashboard` instead — so signed-in users never see the landing page when navigating to the root.
+
+### 15.8 Dependencies
+
+No new dependencies were added. Uses existing packages only:
+- `react-router-dom` v6.20.0 (Link, Navigate)
+- `lucide-react` v0.294.0 (icons: ArrowRight, Shield, Users, Briefcase, Target, Network, Sparkles, Search, Calendar, MessageSquare, FileText, Award, Database, Zap, TrendingUp, CheckCircle2, Rocket, Building2, Landmark, GraduationCap, FlaskConical, Home, BookOpen)
+- `tailwindcss` v3.3.6 (responsive grid utilities and spacing)
+
+### 15.9 Future Enhancements (out of scope for v2.4)
+
+Ideas captured here for when they're needed:
+- Real social proof (partner logos, usage stats, testimonials) once real users are onboarded
+- Blog/changelog section for content marketing and SEO
+- Customer case studies for each persona type
+- Video/animation in the hero showing the product in action
+- SEO meta tags, Open Graph tags, and a sitemap
+- Analytics integration (Google Analytics, Plausible, PostHog)
+- A/B testing of hero headlines and CTA copy
+
+---
+
 ## Project Statistics
 
 | Metric | Count |
@@ -1000,4 +1092,4 @@ If this session pauses and resumes later, here's the state at each phase:
 ---
 
 *Documentation for OpenI Hub — Multi-Persona Open Innovation Platform*
-*Last updated: 5 April 2026 (v2.3 — SOFT LAUNCHED on www.openi.tech)* 🎉
+*Last updated: 5 April 2026 (v2.4 — Marketing landing page + brand polish)* 🎉
