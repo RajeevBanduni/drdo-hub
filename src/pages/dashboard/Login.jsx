@@ -60,7 +60,20 @@ export default function Login() {
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-md" style={{ backgroundColor: '#D5AA5B' }}>
+          <img
+            src="/openi-logo.png"
+            alt="OpenI"
+            className="mx-auto mb-4"
+            style={{ height: 60, width: 'auto', maxWidth: 200, objectFit: 'contain', display: 'block' }}
+            onError={e => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'inline-flex';
+            }}
+          />
+          <div
+            className="items-center justify-center w-14 h-14 rounded-2xl mb-4 shadow-md mx-auto"
+            style={{ backgroundColor: '#D5AA5B', display: 'none' }}
+          >
             <Shield size={26} style={{ color: '#ffffff' }} />
           </div>
           <h1 className="text-2xl font-bold" style={{ color: '#1a1a1a', fontFamily: 'Plus Jakarta Sans, Inter, sans-serif' }}>OpenI Hub</h1>

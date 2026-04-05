@@ -45,12 +45,24 @@ export default function Landing() {
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b" style={{ background: '#fff', borderColor: '#e5e7eb' }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#D5AA5B' }}>
+          <img
+            src="/openi-logo.png"
+            alt="OpenI"
+            style={{ height: 40, width: 'auto', maxWidth: 140, objectFit: 'contain' }}
+            onError={e => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <div
+            className="w-10 h-10 rounded-xl items-center justify-center"
+            style={{ background: '#D5AA5B', display: 'none' }}
+          >
             <Shield size={20} color="#fff" />
           </div>
           <div>
             <div className="font-bold text-base" style={{ color: '#1a1a1a' }}>OpenI Hub</div>
-            <div className="text-xs" style={{ color: '#D5AA5B' }}>Open Innovation Platform</div>
+            <div className="text-xs" style={{ color: '#D5AA5B' }}>OpenI Platform</div>
           </div>
         </div>
         <Link
