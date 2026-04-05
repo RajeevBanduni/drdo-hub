@@ -48,14 +48,20 @@ function ProtectedRoute({ children }) {
   return user ? children : <Navigate to="/dashboard/login" replace />;
 }
 
+// ── Root route: show Landing for guests, Dashboard for logged-in users ────
+function RootRoute() {
+  const { user } = useAuth();
+  return user ? <Navigate to="/dashboard" replace /> : <Landing />;
+}
+
 // ── App ───────────────────────────────────────────────────────
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Root → landing for unauthenticated, dashboard for authenticated */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Root → Landing for guests, Dashboard for authenticated users */}
+          <Route path="/" element={<RootRoute />} />
 
           {/* Public auth pages */}
           <Route path="/landing"         element={<Landing />} />
